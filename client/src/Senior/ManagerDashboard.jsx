@@ -1,0 +1,1347 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon
+} from '@heroicons/react/24/outline';
+import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/solid';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectCurrentUser, setCredentials } from '../app/authSlice';
+import { useLogoutMutation } from '../services/apiSlice';
+import { apiSlice } from '../services/apiSlice'; 
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
+import toast from 'react-hot-toast';
+import PastReportsList from '../Employee/PastReports';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import AttendanceCalendar from '../services/AttendanceCalendar';
+import CurrentUserProvider from '../app/CurrentUserProvider';
+import AssignTask from './AssignTask.jsx';
+import TaskApprovals from '../Admin/TaskApprovals';
+import ViewTeamTasks from './ViewTeamTasks.jsx';
+import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
+
+const formatDueDate = (dateObj) => {
+  if (!dateObj) return 'N/A';
+  const today = new Date();
+  if (
+    dateObj.getDate() === today.getDate() &&
+    dateObj.getMonth() === today.getMonth() &&
+    dateObj.getFullYear() === today.getFullYear()
+  ) {
+    return 'Today';
+  }
+  return dateObj.toLocaleDateString();
+};
+
+const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
+  const [comment, setComment] = useState('');
+  const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
+  if (!isOpen || !task) return null;
+
+  const InfoField = ({ label, value, icon: Icon }) => (
+    <div className="flex items-start gap-3">
+      <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
+      <div>
+        <p className="text-xs text-slate-500">{label}</p>
+        <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
+      </div>
+    </div>
+  );
+
+  const handleAddComment = async () => {
+    if (!comment.trim()) return;
+    try {
+      await addComment({ taskId: task._id, text: comment }).unwrap();
+      setComment('');
+      toast.success('Comment added!');
+    } catch (err) {
+      toast.error('Failed to add comment.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
+        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-4">
+              <h4 className="font-bold text-xl text-blue-700">
+                {task.title} 
+                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
+              </h4>
+              <p className="text-sm text-slate-600">{task.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
+                <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
+                <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
+                <InfoField label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
+              </div>
+            </div>
+            <div className="md:col-span-1 bg-slate-50 p-3 rounded-xl border flex flex-col h-[350px] w-full max-w-xs mx-auto">
+              <div className="flex items-center gap-2 mb-2 border-b pb-2">
+                <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-blue-500" />
+                <h5 className="font-semibold text-slate-700 text-base">Comments</h5>
+                <span className="ml-auto text-xs text-slate-400">{task.comments?.length || 0}</span>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {task.comments?.length > 0 ? (
+                  task.comments.map(c => (
+                    <div key={c._id} className="flex items-start gap-2 bg-white rounded-lg p-2 border border-slate-100 shadow-sm">
+                      {c.author.profilePicture ? (
+                        <img
+                          src={c.author.profilePicture}
+                          alt={c.author.name}
+                          className="h-8 w-8 rounded-full object-cover border border-blue-100"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-sm border border-blue-100">
+                          {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-semibold text-xs text-slate-800 truncate">{c.author.name}</span>
+                          <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-xs text-slate-700 mt-0.5 break-words">{c.text}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-400 py-8">
+                    <ChatBubbleLeftEllipsisIcon className="h-7 w-7 mb-2" />
+                    <p className="text-xs">No comments yet.</p>
+                  </div>
+                )}
+              </div>
+              <form
+                className="flex gap-2 pt-2 border-t mt-2"
+                onSubmit={e => { e.preventDefault(); handleAddComment(); }}
+              >
+                <input
+                  type="text"
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200"
+                  disabled={isAddingComment}
+                  maxLength={300}
+                />
+                <button
+                  type="submit"
+                  disabled={isAddingComment || !comment.trim()}
+                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
+                  title="Send"
+                >
+                  <PaperAirplaneIcon className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-end">
+          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TeamReports = ({ seniorId }) => {
+  const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+
+  const teamMembers = useMemo(() => {
+    if (!allEmployees || !seniorId) return [];
+
+    // New logic to get all direct and indirect subordinates
+    const getAllSubordinates = (managerId, employees) => {
+      const subordinates = [];
+      // Start with direct reports of the current manager
+      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
+      const visited = new Set(queue.map(e => e._id)); // Keep track to avoid infinite loops
+
+      while (queue.length > 0) {
+        const currentEmployee = queue.shift();
+        subordinates.push(currentEmployee);
+
+        // Find the direct reports of the current subordinate and add them to the queue
+        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        for (const report of directReports) {
+          if (!visited.has(report._id)) {
+            visited.add(report._id);
+            queue.push(report);
+          }
+        }
+      }
+      return subordinates;
+    };
+
+    return getAllSubordinates(seniorId, allEmployees);
+  }, [allEmployees, seniorId]);
+
+  useEffect(() => {
+    if (teamMembers.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(teamMembers[0]);
+    }
+  }, [teamMembers, selectedEmployee]);
+
+  const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
+    skip: !selectedEmployee,
+  });
+
+  const renderReportContent = (content) => {
+    try {
+      const data = JSON.parse(content);
+      // Handle new progress-based reports
+      if (data.taskUpdates) {
+        return (
+          <div className="space-y-3">
+            {data.taskUpdates.map((update, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-slate-800">
+                    Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
+                  </p>
+                  <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
+                </div>
+                {update.taskId && (
+                  <button onClick={() => {
+                    setViewingTask(update.taskId);
+                    setViewingTaskNumber(i + 1);
+                  }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+      // Fallback for any old report format
+      return (
+        <div className="space-y-6 text-sm">
+          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
+        </div>
+      );
+    } catch (e) {
+      return <p className="whitespace-pre-wrap">{content}</p>;
+    }
+  };
+
+  return (
+    <div className="flex h-full bg-slate-100">
+      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-gray-200 overflow-y-auto">
+        <h2 className="text-lg font-semibold p-4 border-b text-gray-800">Team Members</h2>
+        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading...</p>}
+        {isErrorEmployees && <p className="p-4 text-red-500">Failed to load team.</p>}
+        <ul className="p-2">
+          {teamMembers.map(employee => (
+            <li key={employee._id}>
+              <button
+                onClick={() => setSelectedEmployee(employee)}
+                className={`w-full text-left p-3 my-1 rounded-lg transition-colors duration-200 flex flex-col ${
+                  selectedEmployee?._id === employee._id
+                    ? 'bg-blue-100'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800'}`}>{employee.name}</p>
+                  <p className="text-xs text-gray-500">{employee.employeeId}</p>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
+                  <span>Reports to: <span className="font-medium text-gray-600">{employee.teamLead?.name || 'N/A'}</span></span>
+                  <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{employee.department}</span>
+                </div>
+              </button>
+            </li>
+          ))}
+          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500">No team members assigned.</p>}
+        </ul>
+      </div>
+      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
+        {selectedEmployee ? (
+          <div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Reports for {selectedEmployee.name}</h2>
+            {isLoadingReports && <p>Loading reports...</p>}
+            <div className="space-y-6">
+              {reports?.map(report => (
+                <div key={report._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 flex justify-between">
+                    {new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
+                    <span className={`font-normal text-sm px-2.5 py-0.5 rounded-full ${
+                      report.status === 'Submitted' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>{report.status}</span>
+                  </h3>
+                  {renderReportContent(report.content)}
+                </div>
+              ))}
+              {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">Select a team member to view their reports.</div>
+        )}
+      </div>
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        taskNumber={viewingTaskNumber}
+      />
+    </div>
+  );
+};
+
+const TeamInformation = ({ seniorId }) => {
+  const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  const teamMembers = useMemo(() => {
+    if (!allEmployees || !seniorId) return [];
+
+    const getAllSubordinates = (managerId, employees) => {
+      const subordinates = [];
+      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
+      const visited = new Set(queue.map(e => e._id));
+
+      while (queue.length > 0) {
+        const currentEmployee = queue.shift();
+        subordinates.push(currentEmployee);
+
+        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        for (const report of directReports) {
+          if (!visited.has(report._id)) {
+            visited.add(report._id);
+            queue.push(report);
+          }
+        }
+      }
+      return subordinates;
+    };
+
+    return getAllSubordinates(seniorId, allEmployees);
+  }, [allEmployees, seniorId]);
+
+  if (isLoadingEmployees) {
+    return <div className="p-8 text-center">Loading team information...</div>;
+  }
+
+  const handleSelectEmployee = (employee) => {
+    setSelectedEmployee(employee);
+  };
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Team Information</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {teamMembers.map(employee => (
+          <div key={employee._id} onClick={() => handleSelectEmployee(employee)} className={`bg-white rounded-xl shadow-lg border p-5 transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer ${selectedEmployee?._id === employee._id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}>
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <img
+                  src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
+                  alt={employee.name}
+                  className="h-16 w-16 rounded-full object-cover border-2 border-blue-200"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg text-gray-900 truncate">{employee.name}</h3>
+                <p className="text-sm text-gray-500 truncate">{employee.role}</p>
+                <p className="text-xs text-gray-400 font-mono truncate">{employee.employeeId}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+        {teamMembers.length === 0 && (
+          <div className="col-span-full text-center py-10 text-gray-500">
+            You do not have any team members assigned to you.
+          </div>
+        )}
+      </div>
+      {selectedEmployee && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Attendance for {selectedEmployee.name}
+          </h2>
+          <AttendanceCalendar employeeId={selectedEmployee._id} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Dashboard = ({ user }) => {
+  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
+  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+
+  // Team member IDs (direct & indirect)
+  const teamMemberIds = useMemo(() => {
+    if (!allEmployees || !user?._id) return new Set();
+    const subordinates = [];
+    const queue = allEmployees.filter(emp => emp.teamLead?._id === user._id);
+    const visited = new Set(queue.map(e => e._id));
+    while (queue.length > 0) {
+      const currentEmployee = queue.shift();
+      subordinates.push(currentEmployee);
+      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+      for (const report of directReports) {
+        if (!visited.has(report._id)) {
+          visited.add(report._id);
+          queue.push(report);
+        }
+      }
+    }
+    return new Set(subordinates.map(emp => emp._id));
+  }, [allEmployees, user]);
+
+  // Stats & next due dates
+  const stats = useMemo(() => {
+    const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
+    let teamUpcomingDueDate = null;
+    let teamUpcomingTaskTitle = '';
+    const taskStats = { completed: 0, inProgress: 0, pending: 0, pendingVerification: 0 };
+
+    teamTasks.forEach(task => {
+      if (task.status !== 'Completed' && task.dueDate) {
+        const dueDate = new Date(task.dueDate);
+        if (!teamUpcomingDueDate || dueDate < teamUpcomingDueDate) {
+          teamUpcomingDueDate = dueDate;
+          teamUpcomingTaskTitle = task.title;
+        }
+      }
+      if (task.status === 'Completed') taskStats.completed++;
+      else if (task.status === 'In Progress') taskStats.inProgress++;
+      else if (task.status === 'Pending Verification') taskStats.pendingVerification++;
+      else if (task.status === 'Pending') taskStats.pending++;
+    });
+
+    const myTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
+    let myUpcomingDueDate = null;
+    let myUpcomingTaskTitle = '';
+    myTasks.forEach(task => {
+      if (task.status !== 'Completed' && task.dueDate) {
+        const dueDate = new Date(task.dueDate);
+        if (!myUpcomingDueDate || dueDate < myUpcomingDueDate) {
+          myUpcomingDueDate = dueDate;
+          myUpcomingTaskTitle = task.title;
+        }
+      }
+    });
+
+    const pendingApprovals = notifications.filter(n => n.type === 'task_approval');
+
+    return {
+      teamMemberCount: teamMemberIds.size,
+      totalTeamTasks: teamTasks.length,
+      pendingApprovalsCount: pendingApprovals.length,
+      pendingApprovalTasks: pendingApprovals.slice(0, 5),
+      teamUpcomingDueDate,
+      teamUpcomingTaskTitle,
+      myUpcomingDueDate,
+      myUpcomingTaskTitle,
+      taskStats,
+    };
+  }, [allTasks, teamMemberIds, notifications, user]);
+
+  // Chart data
+  const taskChartData = [
+    { name: 'Completed', value: stats?.taskStats?.completed || 0 },
+    { name: 'In Progress', value: stats?.taskStats?.inProgress || 0 },
+    { name: 'Pending', value: stats?.taskStats?.pending || 0 },
+    { name: 'Verification', value: stats?.taskStats?.pendingVerification || 0 },
+  ].filter(entry => entry.value > 0);
+
+  const TASK_COLORS = { 'Completed': '#10B981', 'In Progress': '#3B82F6', 'Pending': '#F59E0B', 'Verification': '#8B5CF6' };
+
+  if (isLoadingTasks || isLoadingEmployees || isLoadingNotifications) {
+    return <div className="p-8 text-center">Loading dashboard...</div>;
+  }
+
+  // --- Redesigned Attractive Dashboard ---
+  return (
+    <div className="p-0 sm:p-0 lg:p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
+        <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="relative z-10 px-8 py-12 flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg">Welcome, {user.name}!</h1>
+            <p className="mt-3 text-lg text-blue-100/90 font-medium">Here’s a vibrant snapshot of your team’s progress and your own priorities.</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="h-7 w-7 text-white/80" />
+              <span className="font-semibold text-lg">
+                Next Team Due: <span className="text-yellow-200">{formatDueDate(stats.teamUpcomingDueDate)}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="h-7 w-7 text-white/80" />
+              <span className="font-semibold text-lg">
+                My Next Due: <span className="text-green-200">{formatDueDate(stats.myUpcomingDueDate)}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-20 z-20 relative">
+        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
+          <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
+          <p className="text-2xl font-bold text-blue-700">{stats?.teamMemberCount ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500">Team Members</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200">
+          <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
+          <p className="text-2xl font-bold text-purple-700">{stats?.totalTeamTasks ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500">Team Tasks</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200">
+          <CheckBadgeIcon className="h-10 w-10 text-amber-500 mb-2" />
+          <p className="text-2xl font-bold text-amber-700">{stats?.pendingApprovalsCount ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500">Pending Approvals</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-200">
+          <CalendarIcon className="h-10 w-10 text-green-500 mb-2" />
+          <p className="text-2xl font-bold text-green-700">
+            {formatDueDate(stats.teamUpcomingDueDate)}
+          </p>
+          <p className="text-sm font-semibold text-gray-500">Next Team Due</p>
+          <span className="text-xs text-gray-400 mt-1 truncate">{stats.teamUpcomingTaskTitle}</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Team Task Status Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col justify-center">
+          <h3 className="text-xl font-bold text-slate-800 mb-6">Team Task Status</h3>
+          {taskChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie
+                  data={taskChartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={110}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {taskChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={TASK_COLORS[entry.name]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-400">No task data available for your team.</div>
+          )}
+        </div>
+        {/* Pending Approvals */}
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col">
+          <h3 className="text-xl font-bold text-slate-800 mb-6">Pending Your Approval</h3>
+          <div className="space-y-4">
+            {stats.pendingApprovalTasks.length > 0 ? (
+              stats.pendingApprovalTasks.map(notification => (
+                <div key={notification._id} className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                  <p className="font-semibold text-base text-slate-800">{notification.relatedTask?.title}</p>
+                  <p className="text-xs text-slate-500">Submitted by: {notification.subjectEmployee?.name}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-10 text-slate-400">
+                <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
+                <p className="mt-2 font-semibold">All caught up!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Analytics = ({ user }) => {
+  const [view, setView] = useState('my_stats'); // 'my_stats' or 'team_stats'
+  const { data: allTasks = [], isLoading: isLoadingAllTasks } = useGetAllTasksQuery();
+  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+
+  const teamMemberIds = useMemo(() => {
+    if (!allEmployees || !user?._id) return new Set();
+    const subordinates = [];
+    const queue = allEmployees.filter(emp => emp.teamLead?._id === user._id);
+    const visited = new Set(queue.map(e => e._id));
+    while (queue.length > 0) {
+      const currentEmployee = queue.shift();
+      subordinates.push(currentEmployee);
+      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+      for (const report of directReports) {
+        if (!visited.has(report._id)) {
+          visited.add(report._id);
+          queue.push(report);
+        }
+      }
+    }
+    return new Set(subordinates.map(emp => emp._id));
+  }, [allEmployees, user]);
+
+  const { gradeStats, title } = useMemo(() => {
+    const stats = { Completed: 0, Moderate: 0, Low: 0, Pending: 0 };
+    let relevantTasks = [];
+    let viewTitle = '';
+
+    if (view === 'my_stats') {
+      relevantTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
+      viewTitle = "My Performance Analytics";
+    } else if (view === 'team_stats') {
+      relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
+      viewTitle = "Team Performance Analytics";
+    }
+
+    relevantTasks.forEach(task => {
+      if (task.status === 'Completed' && stats.hasOwnProperty(task.completionCategory)) {
+        stats[task.completionCategory]++;
+      }
+    });
+
+    return { gradeStats: stats, title: viewTitle };
+  }, [allTasks, user, view, teamMemberIds]);
+
+  const chartData = Object.entries(gradeStats).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
+
+  const GRADE_COLORS = { Completed: '#10B981', Moderate: '#3B82F6', Low: '#F59E0B', Pending: '#EF4444' };
+  const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
+
+  const StatCard = ({ grade, count }) => {
+    const Icon = GRADE_ICONS[grade];
+    return (
+      <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
+        <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
+          <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-slate-800">{count}</p>
+          <p className="text-sm font-semibold text-slate-500">{grade}</p>
+        </div>
+      </div>
+    );
+  };
+
+  if (isLoadingAllTasks || isLoadingEmployees) {
+    return <div className="p-8 text-center">Loading analytics...</div>;
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
+          <p className="text-slate-500 mt-2">A breakdown of completed tasks by final grade.</p>
+        </div>
+        {user?.canViewTeam && (
+          <div className="flex items-center bg-slate-200 rounded-lg p-1">
+            <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
+            <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {Object.entries(gradeStats).map(([grade, count]) => (
+          <StatCard key={grade} grade={grade} count={count} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-lg p-6">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Grade Distribution</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this view.</div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-6">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
+          <ul className="space-y-3 text-sm text-slate-600">
+            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Completed:</strong><span>Task progress was 100% upon approval.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Moderate:</strong><span>Task progress was 80% - 99% upon approval.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">Low:</strong><span>Task progress was 60% - 79% upon approval.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-red-600 w-20">Pending:</strong><span>Task progress was below 60% upon approval.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ManagerProfile = ({ user }) => {
+  const dispatch = useDispatch();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
+  const token = useSelector(state => state.auth.token);
+  const [formData, setFormData] = useState({
+    name: user.name || '',
+    email: user.email || '',
+    profilePicture: null,
+    address: user.address || '',
+    gender: user.gender || '',
+    country: user.country || '',
+    city: user.city || '',
+    qualification: user.qualification || '',
+  });
+
+  const handleChange = (e) => {
+    if (e.target.type === 'file') {
+      setFormData({ ...formData, profilePicture: e.target.files[0] });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleSave = async () => {
+    const profileData = new FormData();
+    profileData.append('name', formData.name);
+    profileData.append('email', formData.email);
+    if (formData.profilePicture) {
+      profileData.append('profilePicture', formData.profilePicture);
+    }
+    profileData.append('address', formData.address);
+    profileData.append('gender', formData.gender);
+    profileData.append('country', formData.country);
+    profileData.append('city', formData.city);
+    profileData.append('qualification', formData.qualification);
+
+    try {
+      const updatedData = await updateProfile({ id: user._id, formData: profileData }).unwrap();
+      toast.success('Profile updated successfully!', { icon: <CheckCircleIcon className="h-6 w-6 text-green-500" /> });
+      if (updatedData.employee) {
+        dispatch(setCredentials({ user: updatedData.employee, token }));
+      }
+      setIsEditMode(false);
+    } catch (err) {
+      toast.error(err.data?.message || 'Failed to update profile.');
+      console.error('Failed to update profile:', err);
+    }
+  };
+
+  const InfoField = ({ label, value }) => (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="text-md font-semibold text-gray-800">{value || 'N/A'}</p>
+    </div>
+  );
+
+  const EditField = ({ label, name, value, onChange, type = 'text' }) => (
+    <div>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
+      <input
+        type={type}
+        name={name}
+        id={name}
+        value={value}
+        onChange={onChange}
+        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  );
+
+  return (
+    <div className="p-8">
+      <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-8">
+        <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
+            <img
+              src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+              alt="Profile"
+              className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
+            />
+            <div>
+              <h2 className="text-3xl font-bold text-blue-800">{user.name}</h2>
+              <p className="text-gray-600">{user.role}</p>
+              <p className="text-sm text-gray-500 font-mono mt-1">{user.employeeId}</p>
+            </div>
+          </div>
+          {user.canEditProfile && (
+            <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+              {isEditMode ? 'Cancel' : 'Edit Profile'}
+            </button>
+          )}
+        </div>
+
+        {isEditMode ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <EditField label="Full Name" name="name" value={formData.name} onChange={handleChange} />
+              <EditField label="Email" name="email" value={formData.email} onChange={handleChange} type="email" />
+              <div>
+                <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Gender</label>
+                <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="">Select...</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <EditField label="Address" name="address" value={formData.address} onChange={handleChange} />
+              <EditField label="City" name="city" value={formData.city} onChange={handleChange} />
+              <EditField label="Country" name="country" value={formData.country} onChange={handleChange} />
+              <EditField label="Qualification" name="qualification" value={formData.qualification} onChange={handleChange} />
+              <div>
+                <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">Profile Picture</label>
+                <input type="file" name="profilePicture" id="profilePicture" onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2" />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={handleSave} disabled={isUpdating} className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400">
+                {isUpdating ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <InfoField label="Email" value={user.email} />
+            <InfoField label="Gender" value={user.gender} />
+            <InfoField label="Address" value={user.address} />
+            <InfoField label="City" value={user.city} />
+            <InfoField label="Country" value={user.country} />
+            <InfoField label="Qualification" value={user.qualification} />
+            <InfoField label="Experience" value={user.experience} />
+            <InfoField label="Work Type" value={user.workType} />
+            <InfoField label="Company" value={user.company} />
+            <InfoField label="Joining Date" value={user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : 'N/A'} />
+            <InfoField label="Work Location" value={user.workLocation} />
+            <InfoField label="Shift" value={user.shift} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MyTasks = () => {
+  const { data: tasks = [], isLoading } = useGetMyTasksQuery();
+  const [viewingTask, setViewingTask] = useState(null);
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+
+  const priorityStyles = {
+    High: 'bg-red-100 text-red-800',
+    Medium: 'bg-yellow-100 text-yellow-800',
+    Low: 'bg-green-100 text-green-800',
+  };
+
+  const statusColors = {
+    'Pending': 'bg-slate-100 text-slate-800',
+    'In Progress': 'bg-blue-100 text-blue-800',
+  };
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading tasks...</div>;
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
+      <div className="space-y-4">
+        {tasks.length > 0 ? tasks.map((task, index) => (
+          <div key={task._id} className="bg-white rounded-lg shadow-md border border-gray-200 p-5 group">
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-gray-900">
+                  Task {index + 1}: {task.title}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusColors[task.status] || 'bg-gray-100'}`}>{task.status}</span>
+                </div>
+              </div>
+              <div>
+                <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="text-xs font-semibold text-blue-600 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity">View Details</button>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">{task.description}</p>
+            <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
+              <span>Assigned by: <span className="font-medium text-slate-700">{task.assignedBy.name}</span></span>
+              {task.dueDate && <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
+            </div>
+            {task.rejectionReason && (
+              <div className="mt-3 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-xs">
+                <p><strong className="font-semibold">Rejection Feedback:</strong> {task.rejectionReason}</p>
+              </div>
+            )}
+          </div>
+        )) : (
+          <div className="text-center py-10 text-gray-500">
+            <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-gray-400" />
+            <p className="mt-2 font-semibold">No tasks assigned to you.</p>
+          </div>
+        )}
+      </div>
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        taskNumber={viewingTaskNumber}
+      />
+    </div>
+  );
+};
+
+const MyReportHistory = ({ employeeId }) => {
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+
+  const renderReportContent = (content) => {
+    try {
+      const data = JSON.parse(content);
+      if (data.taskUpdates) { // Handle new progress-based reports
+        return (
+          <div className="space-y-4 text-sm">
+            <strong className="font-semibold text-gray-600">Task Progress Updates:</strong>
+            <div className="space-y-2 mt-2">
+              {data.taskUpdates.map((update, i) => (
+                <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex justify-between items-center">
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">
+                      Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
+                    </p>
+                    <p>Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
+                  </div>
+                  {update.taskId && (
+                    <button onClick={() => {
+                      setViewingTask(update.taskId);
+                      setViewingTaskNumber(i + 1);
+                    }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      // Fallback for old report format
+      return (
+        <div className="space-y-6 text-sm">
+          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
+        </div>
+      );
+    } catch (e) {
+      return <p className="whitespace-pre-wrap">{content}</p>;
+    }
+  };
+
+  return (
+    <div className="flex h-full bg-slate-100">
+      <aside className="w-72 flex-shrink-0 border-r border-gray-200 bg-gray-100">
+        <PastReportsList employeeId={employeeId} onSelectReport={setSelectedReport} activeReportId={selectedReport?._id} />
+      </aside>
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {selectedReport ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex justify-between">
+              {new Date(selectedReport.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
+            </h3>
+            {renderReportContent(selectedReport.content)}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">Select a report from the history to view its details.</div>
+        )}
+      </main>
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        taskNumber={viewingTaskNumber}
+      />
+    </div>
+  );
+};
+
+const MyDailyReport = ({ employeeId }) => {
+  const { data: assignedTasks = [], isLoading: isLoadingTasks } = useGetMyTasksQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: todaysReport, isLoading: isLoadingReport } = useGetTodaysReportQuery(employeeId);
+  const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
+  const [progress, setProgress] = useState({});
+
+  const isReadOnly = useMemo(() => {
+    const now = new Date();
+    const isPastCutoff = now.getHours() >= 19;
+    const isSubmitted = todaysReport?.status === 'Submitted';
+    return isPastCutoff || isSubmitted;
+  }, [todaysReport]);
+
+  useEffect(() => {
+    // Initialize or update progress state when tasks or the report status changes
+    const initialProgress = {};
+    if (todaysReport?.status === 'Submitted' && todaysReport?.content) {
+      // If already submitted, try to parse and show the submitted values
+      try {
+        const content = JSON.parse(todaysReport.content);
+        if (content.taskUpdates) {
+          content.taskUpdates.forEach(update => {
+            initialProgress[update.taskId] = update.completion;
+          });
+        }
+      } catch (e) { /* ignore parsing errors */ }
+    } else {
+      // If not submitted or reopened, initialize from the task's last known progress
+      assignedTasks.forEach(task => {
+        initialProgress[task._id] = task.progress || 0;
+      });
+    }
+    setProgress(initialProgress);
+  }, [assignedTasks, todaysReport]);
+
+  const handleProgressChange = (taskId, value) => {
+    setProgress(prev => ({ ...prev, [taskId]: parseInt(value, 10) || 0 }));
+  };
+
+  const handleSubmit = async () => {
+    const taskUpdates = Object.entries(progress)
+      .filter(([taskId, completion]) => completion > 0) // Only submit tasks with progress
+      .map(([taskId, completion]) => ({ taskId, completion }));
+
+    if (taskUpdates.length === 0) {
+      toast.error("No progress updates to submit.");
+      return;
+    }
+
+    try {
+      await updateTodaysReport({
+        employeeId,
+        content: JSON.stringify({ taskUpdates }),
+        status: 'Submitted',
+      }).unwrap();
+      toast.success('Progress submitted successfully!');
+    } catch (err) {
+      toast.error(err.data?.message || 'Failed to submit progress.');
+    }
+  };
+
+  if (isLoadingTasks || isLoadingReport) {
+    return <div className="text-center p-10">Loading Your Report...</div>;
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Today's Progress Report</h1>
+          <p className="text-slate-500 mt-1">Update the completion status for your active tasks.</p>
+        </div>
+        {!isReadOnly && (
+          <button onClick={handleSubmit} disabled={isUpdating} className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm disabled:bg-blue-400 transition-colors shadow-lg shadow-blue-500/30">
+            {isUpdating ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <PaperAirplaneIcon className="h-5 w-5 mr-2" />}
+            Submit Progress
+          </button>
+        )}
+      </div>
+
+      {isReadOnly && (
+        <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-l-4 border-amber-500 text-amber-800 p-4 mb-6 rounded-r-lg shadow-sm" role="alert">
+          <p className="font-bold">Reporting Closed for Today</p>
+          <p className="text-sm">You can submit progress once daily before 7:00 PM. Today's report may have already been submitted or the deadline has passed.</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {assignedTasks.filter(t => t.status !== 'Completed').map((task, index) => (
+          <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
+            <div className="p-5 border-b border-slate-200"> 
+              <h3 className="font-bold text-lg text-slate-800">
+                Task {index + 1}: {task.title}
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">{task.description}</p>
+            </div>
+            <div className="p-5 flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-4">
+                <div className="relative w-full">
+                  <div className="absolute top-1/2 -translate-y-1/2 h-2 w-full bg-slate-200 rounded-full"></div>
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 h-2 bg-blue-500 rounded-full"
+                    style={{ width: `${progress[task._id] || 0}%` }}
+                  ></div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="10"
+                    value={progress[task._id] || 0}
+                    onChange={(e) => handleProgressChange(task._id, e.target.value)}
+                    disabled={isReadOnly}
+                    className="w-full h-2 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
+                  />
+                </div>
+                <span className={`font-bold w-16 text-center text-xl ${isReadOnly ? 'text-slate-500' : 'text-blue-600'}`}>
+                  {progress[task._id] || 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+        {assignedTasks.filter(t => t.status !== 'Completed').length === 0 && (
+          <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
+            <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
+            <p className="mt-4 font-semibold text-lg">All tasks are completed!</p>
+            <p className="text-sm">No pending tasks to report on.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+ 
+const ManagerDashboard = () => {
+
+  const [activeComponent, setActiveComponent] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const notificationRef = useRef(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const user = useSelector(selectCurrentUser);
+  const [logout] = useLogoutMutation();
+  const dispatch = useDispatch();
+  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileRef]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notificationRef]);
+
+  const handleRefresh = () => {
+    dispatch(apiSlice.util.resetApiState());
+    toast.success("Data refreshed!");
+  };
+
+  const navItems = useMemo(() => {
+    const items = [
+      { id: 'dashboard', icon: HomeIcon, label: 'Dashboard' },
+    ];
+    if (user?.canViewTeam) {
+      items.push({ id: 'team-reports', icon: UserGroupIcon, label: 'Team Reports' });
+      items.push({ id: 'team-info', icon: InformationCircleIcon, label: 'Team Information' });
+    }
+    items.push({ id: 'my-report', icon: PencilSquareIcon, label: 'My Daily Report' });
+    items.push({ id: 'my-history', icon: ArchiveBoxIcon, label: 'My Report History' });
+    items.push({ id: 'attendance', icon: CalendarDaysIcon, label: 'My Attendance' });
+    items.push({ id: 'my-tasks', icon: ClipboardDocumentListIcon, label: 'My Tasks' });
+    if (user?.role === 'Admin' || user?.canViewAnalytics) {
+      items.push({ id: 'analytics', icon: ChartBarIcon, label: 'Analytics' });
+    }
+    if (user?.role === 'Admin' || user?.canApproveTask) {
+      items.push({ id: 'task-approvals', icon: CheckBadgeIcon, label: 'Task Approvals' });
+    }
+    if (user?.role === 'Admin' || user?.canAssignTask) {
+      items.push({ id: 'assign-task', icon: ClipboardDocumentListIcon, label: 'Assign Task' });
+    }
+    if (user?.role === 'Admin' || user?.canViewTeam) {
+      items.push({ id: 'view-team-tasks', icon: EyeIcon, label: 'View Team Tasks' });
+    }
+    return items;
+  }, [user]);
+
+  const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+  const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
+  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+
+  const handleBellClick = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+    if (unreadCount > 0) {
+      setTimeout(() => {
+        markNotificationsAsRead();
+      }, 2000);
+    }
+  };
+  const handleClearRead = async () => {
+    try {
+      await deleteReadNotifications().unwrap();
+      toast.success('Read notifications cleared.');
+    } catch {
+      toast.error('Failed to clear notifications.');
+    }
+  };
+
+  const renderActiveComponent = () => {
+    switch (activeComponent) {
+      case 'dashboard': return <Dashboard user={user} />;
+      case 'team-reports': return user?.canViewTeam ? <TeamReports seniorId={user?._id} /> : <Dashboard user={user} />;
+      case 'team-info': return user?.canViewTeam ? <TeamInformation seniorId={user?._id} /> : <Dashboard user={user} />;
+      case 'my-report': return <MyDailyReport employeeId={user?._id} />;
+      case 'my-history': return <MyReportHistory employeeId={user?._id} />;
+      case 'profile': return <ManagerProfile user={user} />;
+      case 'attendance': return <AttendanceCalendar employeeId={user._id} />;
+      case 'my-tasks': return <MyTasks />;
+      case 'analytics': return <Analytics user={user} />;
+      case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} />;
+      case 'assign-task': return user?.canViewTeam ? <AssignTask teamLeadId={user._id} /> : <Dashboard user={user} />;
+      case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} /> : <Dashboard user={user} />;
+      default: return <div className="p-8">Select an option.</div>;
+    }
+  };
+
+  return (
+    <CurrentUserProvider>
+      <div className="flex h-screen bg-slate-100 font-manrope">
+        <style>
+          {`
+            @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+            .font-manrope {
+              font-family: 'Manrope', sans-serif;
+            }
+          `}
+        </style>
+        {/* Mobile Topbar */}
+        <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-[60]">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
+          <BellIcon className="h-6 w-6 text-gray-500" />
+        </header>
+        {/* Sidebar */}
+        <aside className={`fixed md:static z-[70] top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+          <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
+            <img src="/src/assets/fevicon.png" alt="Company Logo" className="h-9 w-9 rounded-full" />
+            <span className="text-lg font-bold text-gray-800 tracking-tight">
+              {user?.company || 'Company Portal'}
+            </span>
+          </div>
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => { setActiveComponent(item.id); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${
+                  activeComponent === item.id
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
+                }`}
+              >
+                <item.icon className="h-6 w-6" />
+                <span className="font-semibold text-sm">{item.label}</span>
+                {activeComponent === item.id && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </aside>
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+          <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-[60] relative">
+            <h1 className="text-xl font-semibold text-gray-800">{navItems.find(i => i.id === activeComponent)?.label}</h1>
+            <div className="flex items-center gap-4">
+              <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
+                <ArrowPathIcon className="h-6 w-6" />
+              </button>
+              <div className="relative" ref={notificationRef}>
+                <button onClick={handleBellClick} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 relative">
+                  <BellIcon className="h-6 w-6" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                  )}
+                </button>
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div className="p-3 font-semibold text-sm border-b">Notifications</div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map(n => (
+                          <div 
+                            key={n._id} 
+                            onClick={() => handleNotificationClick(n)}
+                            className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
+                          >
+                            <p className="text-slate-700">{n.message}</p>
+                            <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
+                      )}
+                    </div>
+                    <div className="p-2 border-t bg-slate-50 text-center">
+                      <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="w-px h-6 bg-gray-200"></div>
+              <div className="relative" ref={profileRef}>
+                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+              <img
+                src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
+                alt="User"
+                className="h-9 w-9 rounded-full object-cover"
+              />
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-semibold text-gray-900">{user?.name || 'Manager'}</div>
+                <div className="text-xs text-gray-500">{user?.role || 'Manager'}</div>
+              </div>
+              <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      <UserCircleIcon className="h-5 w-5" />
+                      My Profile
+                    </button>
+                    <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto bg-slate-100">{renderActiveComponent()}</main>
+        </div>
+      </div>
+    </CurrentUserProvider>
+  );
+}
+
+export default ManagerDashboard;

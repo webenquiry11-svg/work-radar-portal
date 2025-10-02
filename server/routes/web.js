@@ -1,0 +1,74 @@
+const express = require('express');
+const ManageEmployeeController = require('../controllers/manageEmployeeController.js');
+const AssignmentController = require('../controllers/assignmentController.js');
+const ReportController = require('../controllers/reportController.js');
+const NotificationController = require('../controllers/notificationController.js');
+const HolidayController = require('../controllers/holidayController.js');
+const LeaveController = require('../controllers/leaveController.js');
+const AttendanceController = require('../controllers/attendanceController.js');
+const TaskController = require('../controllers/taskController.js');
+const AuthController = require('../controllers/authController.js'); // Keep this if you have other auth routes
+const SetupController = require('../controllers/setupController.js');
+const { protect } = require('../middleware/authMiddleware.js');
+const multer = require('multer');
+const { storage } = require('../config/cloudinary.js');
+const upload = multer({ storage });
+
+const router = express.Router();
+
+router.get('/setup/check', SetupController.checkSetup);
+router.post('/setup/create-admin', SetupController.createAdmin);
+
+// Public route
+router.post('/login', AuthController.login);
+router.get('/auth/me', protect, AuthController.getMe);
+
+// Employee Management Routes
+router.post('/employees', protect, upload.single('profilePicture'), ManageEmployeeController.addEmployee);
+router.put('/employees/:id', protect, upload.single('profilePicture'), ManageEmployeeController.updateEmployee);
+router.delete('/employees/:id', protect, ManageEmployeeController.deleteEmployee);
+router.put('/employees/:id/assign', protect, AssignmentController.assignEmployee);
+router.delete('/employees/:id/unassign', protect, AssignmentController.unassignEmployee);
+router.get('/stats', protect, ManageEmployeeController.getDashboardStats);
+router.get('/manager-stats/:managerId', protect, ManageEmployeeController.getManagerDashboardStats);
+router.get('/employees', protect, ManageEmployeeController.getAllEmployees);
+router.get('/employees/employee-of-the-month', protect, ManageEmployeeController.getEmployeeOfTheMonthCandidates);
+
+// Report Routes
+router.get('/reports/my-today/:employeeId', protect, ReportController.getMyTodaysReport);
+router.post('/reports/my-today/:employeeId', protect, ReportController.updateMyTodaysReport);
+router.get('/reports/my-all/:employeeId', protect, ReportController.getAllMyReports);
+router.get('/reports/employee/:employeeId', protect, ReportController.getReportsForEmployee);
+router.delete('/reports/:id', protect, ReportController.deleteReport);
+
+// Notification Routes
+router.get('/notifications', protect, NotificationController.getMyNotifications);
+router.put('/notifications/mark-read', protect, NotificationController.markNotificationsAsRead);
+router.delete('/notifications/read', protect, NotificationController.deleteReadNotifications);
+
+// Holiday Routes
+router.get('/holidays', protect, HolidayController.getHolidays);
+router.post('/holidays', protect, HolidayController.addHoliday);
+router.delete('/holidays/:id', protect, HolidayController.deleteHoliday);
+router.get('/holidays/today', protect, HolidayController.isTodayHoliday);
+
+// Leave Routes
+router.get('/leaves/:employeeId', protect, LeaveController.getLeavesForEmployee);
+router.post('/leaves/:employeeId', protect, LeaveController.addLeave);
+router.delete('/leaves/:leaveId', protect, LeaveController.removeLeave);
+
+// Attendance Route
+router.get('/attendance/:employeeId', protect, AttendanceController.getAttendanceForMonth);
+
+// Task Routes
+router.post('/tasks', protect, TaskController.createTask);
+router.get('/tasks/my-tasks', protect, TaskController.getMyTasks);
+router.get('/tasks/all', protect, TaskController.getAllTasks);
+router.put('/tasks/:id', protect, TaskController.updateTask);
+router.put('/tasks/:id/approve', protect, TaskController.approveTaskCompletion);
+router.put('/tasks/:id/reject', protect, TaskController.rejectTaskCompletion);
+router.post('/tasks/:id/comments', protect, TaskController.addTaskComment);
+router.delete('/tasks/:id', protect, TaskController.deleteTask);
+router.post('/tasks/process-due-tasks', protect, TaskController.processPastDueTasks);
+
+module.exports = router;
