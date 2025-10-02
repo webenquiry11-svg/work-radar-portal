@@ -2,7 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
  
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:2000/api',
+  baseUrl: 'https://rmss-cd6o.onrender.com/api',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) {
