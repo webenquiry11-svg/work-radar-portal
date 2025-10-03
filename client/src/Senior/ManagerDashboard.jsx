@@ -58,7 +58,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
@@ -1231,7 +1231,7 @@ const ManagerDashboard = () => {
           `}
         </style>
         {/* Mobile Topbar */}
-        <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-[60]">
+        <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-50">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
             <Bars3Icon className="h-6 w-6" />
           </button>
@@ -1239,7 +1239,7 @@ const ManagerDashboard = () => {
           <BellIcon className="h-6 w-6 text-gray-500" />
         </header>
         {/* Sidebar */}
-        <aside className={`fixed md:static z-[70] top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
           <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
             <img src="/src/assets/fevicon.png" alt="Company Logo" className="h-9 w-9 rounded-full" />
             <span className="text-lg font-bold text-gray-800 tracking-tight">
@@ -1267,10 +1267,10 @@ const ManagerDashboard = () => {
           </nav>
         </aside>
         {/* Overlay for mobile sidebar */}
-        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-          <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-[60] relative">
+          <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-50 relative">
             <h1 className="text-xl font-semibold text-gray-800">{navItems.find(i => i.id === activeComponent)?.label}</h1>
             <div className="flex items-center gap-4">
               <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
@@ -1284,7 +1284,7 @@ const ManagerDashboard = () => {
                   )}
                 </button>
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
                     <div className="p-3 font-semibold text-sm border-b">Notifications</div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length > 0 ? (
@@ -1323,7 +1323,7 @@ const ManagerDashboard = () => {
               <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
                     <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                       <UserCircleIcon className="h-5 w-5" />
                       My Profile

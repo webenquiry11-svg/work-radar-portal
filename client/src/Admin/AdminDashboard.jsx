@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
+import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
 import { useSelector, useDispatch } from 'react-redux';
@@ -48,7 +49,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
@@ -145,7 +146,7 @@ const DeleteReportModal = ({ isOpen, onClose, onConfirm, report, isDeleting }) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
         <div className="p-6 text-center">
           <div className="mx-auto bg-red-100 rounded-full h-12 w-12 flex items-center justify-center my-4">
@@ -684,7 +685,7 @@ const AdminProfile = ({ user }) => {
   );
 };
 
-const Sidebar = ({ activeComponent, setActiveComponent, profileRef, isProfileOpen, setIsProfileOpen, user }) => {
+const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
   const navItems = [
     { id: 'dashboard', icon: HomeIcon, label: 'Dashboard' },
     { id: 'employees', icon: UsersIcon, label: 'Manage Employees' },
@@ -699,7 +700,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, profileRef, isProfileOpe
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-white/80 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl">
+    <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       <div className="h-16 flex items-center justify-center px-4 text-indigo-900 text-xl font-bold border-b border-gray-200 drop-shadow">
         Report Management
       </div>
@@ -707,7 +708,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, profileRef, isProfileOpe
         {navItems.map(item => (
           <button
             key={item.id}
-            onClick={() => setActiveComponent(item.id)}
+            onClick={() => { setActiveComponent(item.id); setSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-left relative ${
               activeComponent === item.id
                 ? 'bg-indigo-600 text-white shadow-lg'
@@ -726,7 +727,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, profileRef, isProfileOpe
   );
 };
 
-const AppHeader = ({ pageTitle, user, setActiveComponent }) => {
+const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const [logout] = useLogoutMutation();
@@ -780,8 +781,11 @@ const AppHeader = ({ pageTitle, user, setActiveComponent }) => {
   };
 
   return (
-    <header className="relative z-[60] h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow">
-      <div>
+    <header className="relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow">
+      <div className="flex items-center gap-2">
+        <button onClick={onMenuClick} className="md:hidden text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50">
+          <Bars3Icon className="h-6 w-6" />
+        </button>
         <h1 className="text-xl font-semibold text-indigo-900 drop-shadow">{pageTitle}</h1>
       </div>
       <div className="flex items-center gap-4">
@@ -798,7 +802,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent }) => {
               <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
             )}
           </button>
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+          <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-60">
             <div className="p-3 font-semibold text-sm border-b">Notifications</div>
             <div className="max-h-80 overflow-y-auto">
               {notifications.length > 0 ? notifications.map(n => (
@@ -834,7 +838,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent }) => {
             <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
           </button>
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
               <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 <UserCircleIcon className="h-5 w-5" />
                 My Profile
@@ -856,6 +860,7 @@ export default function AdminPageLayout() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const user = useSelector(selectCurrentUser);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
 
   const pageTitles = {
@@ -902,9 +907,10 @@ export default function AdminPageLayout() {
             }
           `}
         </style>
-        <Sidebar activeComponent={activeComponent} setActiveComponent={setActiveComponent} profileRef={profileRef} isProfileOpen={isProfileOpen} setIsProfileOpen={setIsProfileOpen} user={user} />
+        <Sidebar activeComponent={activeComponent} setActiveComponent={setActiveComponent} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <AppHeader pageTitle={pageTitles[activeComponent]} user={user} setActiveComponent={setActiveComponent} />
+          <AppHeader pageTitle={pageTitles[activeComponent]} user={user} setActiveComponent={setActiveComponent} onMenuClick={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-y-auto">{renderActiveComponent()}</main>
         </div>
       </div>

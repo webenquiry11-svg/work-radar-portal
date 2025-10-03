@@ -3,7 +3,7 @@ import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployees
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
@@ -42,7 +42,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
@@ -1100,9 +1100,24 @@ const EmployeeDashboard = ({ employeeId }) => {
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
 
+  const pageTitles = {
+    dashboard: 'Dashboard',
+    'my-report': "Today's Report",
+    'team-reports': 'Team Reports',
+    'team-info': 'Team Information',
+    analytics: 'Analytics',
+    attendance: 'My Attendance',
+    'my-tasks': 'My Tasks',
+    'my-history': 'My Report History',
+    'task-approvals': 'Task Approvals',
+    'assign-task': 'Assign Task',
+    'view-team-tasks': 'View Team Tasks',
+    profile: 'My Profile',
+  };
   const hasTeam = useMemo(() => {
     if (!user?.canViewTeam || !allEmployees.length) {
       return false;
@@ -1216,7 +1231,7 @@ const EmployeeDashboard = ({ employeeId }) => {
 
   return (
     <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-sans text-gray-800 font-manrope">
-      <aside className="w-72 flex-shrink-0 border-r border-gray-200 bg-white/80 backdrop-blur-lg shadow-lg z-[70] flex flex-col">
+      <aside className={`fixed md:static z-50 top-0 left-0 h-full w-72 flex-shrink-0 border-r border-gray-200 bg-white/80 backdrop-blur-lg shadow-lg flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
           <img
             src="/src/assets/fevicon.png"
@@ -1231,67 +1246,74 @@ const EmployeeDashboard = ({ employeeId }) => {
           </span>
         </div>
         <nav className="p-4 space-y-2">
-          <button onClick={() => setActiveComponent('dashboard')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <HomeIcon className="h-6 w-6" />
             <span className="font-semibold">Dashboard</span>
           </button>
-          <button onClick={() => setActiveComponent('my-report')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <DocumentTextIcon className="h-6 w-6" />
             <span className="font-semibold">Today's Report</span>
           </button>
           {hasTeam && (
-            <button onClick={() => setActiveComponent('team-reports')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
               <UserGroupIcon className="h-6 w-6" />
               <span className="font-semibold">Team Reports</span>
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => setActiveComponent('team-info')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
               <InformationCircleIcon className="h-6 w-6" />
               <span className="font-semibold">Team Information</span>
             </button>
           )}
           {(user?.role === 'Admin' || user?.canViewAnalytics) && (
-            <button onClick={() => setActiveComponent('analytics')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
               <ChartBarIcon className="h-6 w-6" />
               <span className="font-semibold">Analytics</span>
             </button>
           )}
-          <button onClick={() => setActiveComponent('attendance')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <CalendarDaysIcon className="h-6 w-6" />
             <span className="font-semibold">My Attendance</span>
           </button>
-          <button onClick={() => setActiveComponent('my-tasks')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <ClipboardDocumentListIcon className="h-6 w-6" />
             <span className="font-semibold">My Tasks</span>
           </button>
-          <button onClick={() => setActiveComponent('my-history')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <ArchiveBoxIcon className="h-6 w-6" />
             <span className="font-semibold">My Report History</span>
           </button>
           
           {hasTeam && (user?.role === 'Admin' || user?.canApproveTask) && (
-          <button onClick={() => setActiveComponent('task-approvals')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <CheckBadgeIcon className="h-6 w-6" />
             <span className="font-semibold">Task Approvals</span>
           </button>
           )}
           {hasTeam && (user?.role === 'Admin' || user?.canAssignTask) && (
-            <button onClick={() => setActiveComponent('assign-task')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
               <ClipboardDocumentListIcon className="h-6 w-6" />
               <span className="font-semibold">Assign Task</span>
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => setActiveComponent('view-team-tasks')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
               <EyeIcon className="h-6 w-6" />
               <span className="font-semibold">View Team Tasks</span>
             </button>
           )}
         </nav>
       </aside>
-      <div className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200 flex items-center justify-end px-6 h-16 flex-shrink-0 shadow z-[60]">
+      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+          <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-50 fixed top-0 left-0 right-0 md:relative md:left-auto">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600">
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-800 md:text-xl">
+              {pageTitles[activeComponent] || 'Dashboard'}
+            </h1>
             <div className="flex items-center gap-4">
               <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
                 <ArrowPathIcon className="h-6 w-6" />
@@ -1304,7 +1326,7 @@ const EmployeeDashboard = ({ employeeId }) => {
                   )}
                 </button>
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
                     <div className="p-3 font-semibold text-sm border-b">Notifications</div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length > 0 ? notifications.map(n => (
@@ -1342,7 +1364,7 @@ const EmployeeDashboard = ({ employeeId }) => {
                   <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
                     {user?.canEditProfile && (
                       <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <UserCircleIcon className="h-5 w-5" />
@@ -1358,7 +1380,7 @@ const EmployeeDashboard = ({ employeeId }) => {
               </div>
             </div>
           </header>
-          <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto bg-slate-50">
             {renderContent()}
           </main>
         </div>

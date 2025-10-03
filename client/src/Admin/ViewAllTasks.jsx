@@ -42,7 +42,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Edit Task</h3>
@@ -78,7 +78,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, task, isDeleting 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
         <div className="p-6 text-center">
           <div className="mx-auto bg-red-100 rounded-full h-12 w-12 flex items-center justify-center my-4">
@@ -128,7 +128,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center"> 
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
