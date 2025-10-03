@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useGetEmployeeOfTheMonthCandidatesQuery } from '../services/EmployeApi';
+import { useGetEmployeeOfTheMonthCandidatesQuery } from '../services/EmployeApi.js';
 import { TrophyIcon, UserCircleIcon, ChartBarIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const EmployeeOfTheMonth = () => {
   const currentMonth = new Date().getMonth() + 1; // 1-indexed
@@ -52,7 +52,10 @@ const EmployeeOfTheMonth = () => {
           c.employee.employeeId,
           c.totalScore,
           c.totalTasks,
-          c.stats.Completed, c.stats.Moderate, c.stats.Low, c.stats.Pending
+          c.stats.Completed.count, 
+          c.stats.Moderate.count, 
+          c.stats.Low.count, 
+          c.stats.Pending.count
         ].join(',')
       )
     ].join('\n');
@@ -67,49 +70,48 @@ const EmployeeOfTheMonth = () => {
     document.body.removeChild(link);
   };
 
-  const CandidateCard = ({ candidate, rank }) => {
-    const chartData = Object.entries(candidate.stats)
-      .map(([name, value]) => ({ name, value }))
-      .filter(item => item.value > 0);
+  const CandidateCard = ({ candidate, rank, isWinner }) => {
+    const chartData = Object.entries(candidate.stats).map(([name, { count, percentage = 0 }]) => ({
+      name,
+      count: count,
+      label: `${name} (${percentage.toFixed(0)}%)`,
+      color: GRADE_COLORS[name],
+    })).filter(d => d.count > 0);
 
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex flex-col">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative">
+      <div className={`bg-white rounded-2xl shadow-lg border border-slate-200 p-6 flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isWinner ? 'lg:col-span-2' : ''}`}>
+        <div className={`flex flex-col ${isWinner ? 'sm:flex-row' : ''} items-center gap-5 mb-5`}>
+          <div className={`relative flex-shrink-0 ${isWinner ? 'self-start' : ''}`}>
             <img
               src={candidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${candidate.employee.name}&background=random`}
               alt={candidate.employee.name}
-              className="h-20 w-20 rounded-full object-cover border-4 border-blue-200"
+              className={`${isWinner ? 'h-24 w-24' : 'h-20 w-20'} rounded-full object-cover border-4 ${isWinner ? 'border-amber-400' : 'border-blue-200'}`}
             />
-            <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">#{rank}</span>
+            <span className={`absolute -top-2 -left-2 ${isWinner ? 'bg-amber-500' : 'bg-blue-600'} text-white text-sm font-bold px-3 py-1 rounded-full shadow-md`}>#{rank}</span>
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-800">{candidate.employee.name}</h3>
+          <div className={`${isWinner ? '' : 'text-center'}`}>
+            <h3 className={`${isWinner ? 'text-2xl' : 'text-xl'} font-bold text-slate-800`}>{candidate.employee.name}</h3>
             <p className="text-sm text-slate-500">{candidate.employee.employeeId}</p>
-            <p className="text-xs text-slate-600 mt-1">Total Score: <span className="font-bold text-blue-700">{candidate.totalScore}</span></p>
+            <p className="text-sm text-slate-600 mt-1">Total Score: <span className={`font-bold ${isWinner ? 'text-amber-600 text-lg' : 'text-blue-700'}`}>{candidate.totalScore}</span></p>
           </div>
         </div>
-        <p className="text-sm text-slate-600 mb-4 flex-1">{candidate.reason}</p>
+        <blockquote className="text-sm text-slate-600 mb-5 flex-1 border-l-4 border-slate-200 pl-4 italic">
+          {candidate.reason}
+        </blockquote>
         
         {chartData.length > 0 && (
-          <div className="h-40 w-full">
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />
+              <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="label" hide />
+                <Tooltip cursor={{fill: '#f1f5f9'}} />
+                <Bar dataKey="count" barSize={20} radius={[0, 10, 10, 0]}>
+                  {chartData.map((entry) => (
+                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
-                </Pie>
-                <Tooltip />
-                <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '12px' }} />
-              </PieChart>
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -119,7 +121,7 @@ const EmployeeOfTheMonth = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Employee of the Month</h1>
           <p className="text-slate-500 mt-2">Identify top performers based on task completion grades.</p>
@@ -156,10 +158,13 @@ const EmployeeOfTheMonth = () => {
       ) : (
         <>
           {candidates.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {candidates.map((candidate, index) => (
-                <CandidateCard key={candidate.employee._id} candidate={candidate} rank={index + 1} />
-              ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <CandidateCard key={candidates[0].employee._id} candidate={candidates[0]} rank={1} isWinner={true} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {candidates.slice(1, 3).map((candidate, index) => (
+                  <CandidateCard key={candidate.employee._id} candidate={candidate} rank={index + 2} />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">

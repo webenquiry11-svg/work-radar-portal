@@ -74,7 +74,7 @@ class TaskController {
     const updaterId = req.user._id;
 
     try {
-      const task = await Task.findById(id);
+      const task = await Task.findById(id).populate('assignedTo', 'name');
 
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
@@ -109,49 +109,61 @@ class TaskController {
 
   static approveTaskCompletion = async (req, res) => {
     const { id } = req.params;
+    const { finalPercentage, comment } = req.body;
     const approverId = req.user._id;
 
     try {
-      const task = await Task.findById(id);
+      const task = await Task.findById(id).populate('assignedTo', 'name');
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== approverId.toString()) {
+      if (task.assignedBy.toString() !== approverId.toString() && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'You are not authorized to approve this task.' });
       }
 
-      // Find the latest report for this task to get the completion percentage.
-      const reports = await Report.find({ employee: task.assignedTo }).sort({ reportDate: -1 });
-      let finalCompletion = 0;
+      const finalProgress = parseInt(finalPercentage, 10);
 
-      for (const report of reports) {
-        try {
-          const content = JSON.parse(report.content);
-          if (content.taskUpdates) {
-            const taskUpdate = content.taskUpdates.find(u => u.taskId.toString() === id);
-            if (taskUpdate) {
-              finalCompletion = parseInt(taskUpdate.completion, 10);
-              break; // Found the latest update for this task
-            }
-          }
-        } catch (e) { /* ignore */ }
-      }
-
-      // Set completion category based on the final percentage
-      if (finalCompletion === 100) {
+      // Set completion category based on the manager's final percentage
+      if (finalProgress === 100) {
         task.completionCategory = 'Completed';
-      } else if (finalCompletion >= 80) {
+      } else if (finalProgress >= 80) {
         task.completionCategory = 'Moderate';
-      } else if (finalCompletion >= 60) {
+      } else if (finalProgress >= 60) {
         task.completionCategory = 'Low';
       } else {
         task.completionCategory = 'Pending';
       }
 
       task.status = 'Completed';
-      task.completionDate = new Date();
+      task.completionDate = task.submittedForCompletionDate || new Date();
+      task.progress = finalProgress;
       task.rejectionReason = ''; // Clear any previous rejection reason
+
+      // If there's a comment, add it to the task
+      if (comment && comment.trim() !== '') {
+        task.comments.push({
+          text: `Approval comment: ${comment}`,
+          author: approverId,
+        });
+      }
+
       await task.save();
+
+      // Create a notification for the employee
+      await Notification.create({
+        recipient: task.assignedTo,
+        subjectEmployee: approverId,
+        message: `Your task "${task.title}" has been approved with a final grade of ${task.completionCategory}.`,
+        type: 'info',
+        relatedTask: task._id,
+        isRead: false,
+      });
+
+      // After approval, delete the corresponding 'task_approval' notification
+      await Notification.findOneAndDelete({
+        relatedTask: task._id,
+        type: 'task_approval',
+      });
 
       res.status(200).json({ message: 'Task approved successfully.', task });
     } catch (error) {
@@ -170,39 +182,31 @@ class TaskController {
     }
 
     try {
-      const task = await Task.findById(id);
+      const task = await Task.findById(id).populate('assignedTo', 'name');
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== rejectorId.toString()) {
+      if (task.assignedBy.toString() !== rejectorId.toString() && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'You are not authorized to reject this task.' });
       }
 
-      const finalProgress = parseInt(finalPercentage, 10);
-
-      // Set completion category based on the manager's final percentage
-      if (finalProgress === 100) {
-        task.completionCategory = 'Completed';
-      } else if (finalProgress >= 80) {
-        task.completionCategory = 'Moderate';
-      } else if (finalProgress >= 60) {
-        task.completionCategory = 'Low';
-      } else {
-        task.completionCategory = 'Pending';
-      }
-
-      task.status = 'Completed'; // The task is now considered done, but with a specific grade.
+      task.status = 'In Progress'; // Revert status
       task.rejectionReason = reason;
-      task.progress = finalProgress;
+      task.progress = parseInt(finalPercentage, 10);
       await task.save();
 
-      // Notify the employee about the rejection and reopened report.
       await Notification.create({
         recipient: task.assignedTo,
         subjectEmployee: rejectorId,
-        message: `Your task "${task.title}" was reviewed. Final progress was set to ${finalProgress}%. Reason: ${reason}`,
+        message: `Your task "${task.title}" was rejected and has been reopened. Reason: ${reason}`,
         type: 'info',
         relatedTask: task._id,
+      });
+
+      // After rejection, delete the corresponding 'task_approval' notification
+      await Notification.findOneAndDelete({
+        relatedTask: task._id,
+        type: 'task_approval',
       });
 
       res.status(200).json({ message: 'Task rejected successfully.', task });
@@ -296,15 +300,24 @@ class TaskController {
 
       for (const task of pastDueTasks) {
         task.status = 'Pending Verification';
+        task.submittedForCompletionDate = task.dueDate; // Set submission date to the due date
         await task.save();
 
-        await Notification.create({
-          recipient: task.assignedBy,
-          subjectEmployee: task.assignedTo,
-          message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
-          type: 'task_approval',
+        // Check if an approval notification already exists for this task
+        const existingNotification = await Notification.findOne({
           relatedTask: task._id,
+          type: 'task_approval'
         });
+
+        if (!existingNotification) {
+            await Notification.create({
+              recipient: task.assignedBy._id,
+              subjectEmployee: task.assignedTo,
+              message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
+              type: 'task_approval',
+              relatedTask: task._id,
+            });
+        }
       }
       res.status(200).json({ message: `${pastDueTasks.length} past-due tasks processed.` });
     } catch (error) {

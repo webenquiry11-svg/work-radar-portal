@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
@@ -43,7 +43,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full md:max-w-2xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -176,7 +176,7 @@ const EmployeeProfile = ({ user }) => {
   );
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-8">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-4 sm:p-8">
       <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
         <img
@@ -332,15 +332,15 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // --- Redesigned Employee Dashboard ---
   return (
-    <div className="p-0 sm:p-0 lg:p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
+    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="relative z-10 px-8 py-12 flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+        <div className="relative z-10 px-4 sm:px-8 py-10 sm:py-12 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 md:gap-8">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg">Welcome, {user.name}!</h1>
-            <p className="mt-3 text-lg text-blue-100/90 font-medium">Here’s your daily snapshot. Stay productive and keep growing!</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg text-center md:text-left">Welcome, {user.name}!</h1>
+            <p className="mt-3 text-base sm:text-lg text-blue-100/90 font-medium text-center md:text-left">Here’s your daily snapshot. Stay productive and keep growing!</p>
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ const Dashboard = ({ user, onNavigate }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
         <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700">{stats.taskStats.pending + stats.taskStats.inProgress}</p>
@@ -386,7 +386,7 @@ const Dashboard = ({ user, onNavigate }) => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions & Performance */}
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6">
@@ -571,108 +571,113 @@ const Analytics = ({ user }) => {
 };
 
 const MyTasks = () => {
-  const { data: tasks = [], isLoading } = useGetMyTasksQuery();
+  const { data: myTasks = [], isLoading } = useGetMyTasksQuery();
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
-  const { data: allTasks = [] } = useGetAllTasksQuery();
-  const { data: allEmployees = [] } = useGetEmployeesQuery();
-  const user = useSelector(selectCurrentUser);
+  const [activeTab, setActiveTab] = useState('Active');
 
-  // Find next due date for user's own tasks
-  const nextMyTaskDueDate = useMemo(() => {
-    const upcoming = tasks
-      .filter(task => task.dueDate && (task.status === 'Pending' || task.status === 'In Progress'))
-      .map(task => new Date(task.dueDate))
-      .filter(date => date >= new Date())
-      .sort((a, b) => a - b);
-    return upcoming.length > 0 ? upcoming[0] : null;
-  }, [tasks]);
+  const { stats, tasksToShow } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Find next due date for team tasks assigned by this user (if they have assigned any)
-  const nextTeamTaskDueDate = useMemo(() => {
-    if (!user?.canAssignTask) return null;
-    // Find all tasks assigned by this user to their team
-    const teamMemberIds = allEmployees
-      .filter(emp => emp.teamLead?._id === user._id)
-      .map(emp => emp._id);
-    const teamTasks = allTasks
-      .filter(task =>
-        task.assignedBy?._id === user._id &&
-        teamMemberIds.includes(task.assignedTo?._id) &&
-        task.dueDate &&
-        (task.status === 'Pending' || task.status === 'In Progress')
-      )
-      .map(task => new Date(task.dueDate))
-      .filter(date => date >= new Date())
-      .sort((a, b) => a - b);
-    return teamTasks.length > 0 ? teamTasks[0] : null;
-  }, [allTasks, allEmployees, user]);
+    const active = myTasks.filter(t => t.status !== 'Completed');
+    const completed = myTasks.filter(t => t.status === 'Completed');
+    const overdue = active.filter(t => t.dueDate && new Date(t.dueDate) < today);
 
-  const priorityStyles = {
-    High: 'bg-red-100 text-red-800',
-    Medium: 'bg-yellow-100 text-yellow-800',
-    Low: 'bg-green-100 text-green-800',
-  };
+    const stats = {
+      active: active.length,
+      overdue: overdue.length,
+      completed: completed.length,
+    };
 
-  const statusColors = {
-    'Pending': 'bg-slate-100 text-slate-800',
-    'In Progress': 'bg-blue-100 text-blue-800',
-  };
+    let tasks = [];
+    if (activeTab === 'Active') {
+      tasks = active;
+    } else if (activeTab === 'Completed') {
+      tasks = completed;
+    } else {
+      tasks = myTasks;
+    }
+
+    return { stats, tasksToShow: tasks };
+  }, [myTasks, activeTab]);
+
   if (isLoading) {
     return <div className="p-8 text-center">Loading tasks...</div>;
   }
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {nextMyTaskDueDate && (
-          <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg shadow font-semibold text-sm flex items-center gap-2">
-            <ClockIcon className="h-5 w-5 text-blue-500" />
-            Next Task Due: {nextMyTaskDueDate.toLocaleDateString()}
-          </div>
-        )}
-        {user?.canViewTeam && nextTeamTaskDueDate && (
-          <div className="bg-indigo-50 text-indigo-800 px-4 py-2 rounded-lg shadow font-semibold text-sm flex items-center gap-2">
-            <UserGroupIcon className="h-5 w-5 text-indigo-500" />
-            Next Team Task Due: {nextTeamTaskDueDate.toLocaleDateString()}
-          </div>
-        )}
+  const StatCard = ({ title, value, icon: Icon, color }) => (
+    <div className={`bg-white p-5 rounded-xl shadow-lg border border-slate-200 flex items-center gap-4`}>
+      <div className={`p-3 rounded-full ${color.bg}`}>
+        <Icon className={`h-6 w-6 ${color.text}`} />
       </div>
-      <div className="space-y-4">
-        {tasks.length > 0 ? tasks.map((task, index) => (
-          <div key={task._id} className="bg-white rounded-lg shadow-md border border-gray-200 p-5">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-gray-900">
-                  Task {index + 1}: {task.title}
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span>
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusColors[task.status] || 'bg-gray-100'}`}>{task.status}</span>
-                </div>
-              </div>
-              <div>
-                <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">View Details</button>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">{task.description}</p>
-            <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
-              <span>Assigned by: <span className="font-medium text-slate-700">{task.assignedBy.name}</span></span>
-              {task.dueDate && <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
-            </div>
-            {task.rejectionReason && (
-              <div className="mt-3 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-xs">
-                <p><strong className="font-semibold">Rejection Feedback:</strong> {task.rejectionReason}</p>
-              </div>
-            )}
+      <div>
+        <p className="text-2xl font-bold text-slate-800">{value}</p>
+        <p className="text-sm font-semibold text-slate-500">{title}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Tasks</h1>
+        <p className="text-slate-500 mt-2">Stay on top of your assigned tasks and deadlines.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Active Tasks" value={stats.active} icon={ClipboardDocumentListIcon} color={{ bg: 'bg-blue-100', text: 'text-blue-600' }} />
+        <StatCard title="Overdue" value={stats.overdue} icon={ExclamationTriangleIcon} color={{ bg: 'bg-red-100', text: 'text-red-600' }} />
+        <StatCard title="Completed" value={stats.completed} icon={CheckCircleIcon} color={{ bg: 'bg-emerald-100', text: 'text-emerald-600' }} />
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-lg flex-1 flex flex-col">
+        <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            {['All', 'Active', 'Completed'].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === tab ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}>
+                {tab}
+              </button>
+            ))}
           </div>
-        )) : (
-          <div className="text-center py-10 text-gray-500">
-            <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-gray-400" />
-            <p className="mt-2 font-semibold">No tasks assigned to you.</p>
-          </div>
-        )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2 sm:p-4">
+          {tasksToShow.length > 0 ? (
+            <ul className="space-y-4">
+              {tasksToShow.map((task, index) => {
+                const priorityStyles = { High: 'bg-red-500', Medium: 'bg-amber-500', Low: 'bg-green-500' };
+                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
+                const isOverdue = task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) < new Date();
+                return (
+                  <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-4">
+                    <span className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${priorityStyles[task.priority]}`} title={`${task.priority} Priority`}></span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-slate-800">{task.title}</h3>
+                      <p className={`text-xs mt-1 ${isOverdue ? 'font-bold text-red-600' : 'text-slate-500'}`}
+                      >
+                        Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="w-full sm:w-1/4 flex items-center gap-2">
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${task.progress}%` }}></div>
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 w-10 text-right">{task.progress}%</span>
+                    </div>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full self-start sm:self-center ${statusStyles[task.status]}`}>{task.status}</span>
+                    <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="text-xs font-semibold text-blue-600 hover:underline sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-end sm:self-center">Details</button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="text-center py-16 text-slate-500">
+              <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-slate-400" />
+              <p className="mt-2 font-semibold">No {activeTab.toLowerCase()} tasks.</p>
+            </div>
+          )}
+        </div>
       </div>
       <TaskDetailsModal
         isOpen={!!viewingTask}
@@ -685,57 +690,78 @@ const MyTasks = () => {
 };
 
 const MyReportHistory = ({ employeeId }) => {
-  const [selectedReport, setSelectedReport] = useState(null);
+  const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId);
+  const [expandedReportId, setExpandedReportId] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+
+  useEffect(() => {
+    if (reports.length > 0 && !expandedReportId) {
+      setExpandedReportId(reports[0]._id);
+    }
+  }, [reports, expandedReportId]);
 
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
-      if (data.taskUpdates) { // Handle new progress-based reports
+      if (data.taskUpdates) {
         return (
-          <div className="space-y-4 text-sm">
-            <strong className="font-semibold text-gray-600">Task Progress Updates:</strong>
-            <div className="space-y-2 mt-2">
-              {data.taskUpdates.map((update, i) => (
-                <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex justify-between items-center">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
-                      Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
-                    </p>
-                    <p>Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
-                  </div>
-                  {update.taskId && (
-                    <button onClick={() => {
-                      setViewingTask(update.taskId);
-                      setViewingTaskNumber(i + 1);
-                    }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
-                  )}
+          <div className="space-y-3 p-6 bg-slate-50">
+            {data.taskUpdates.map((update, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+                <div className="flex justify-between items-start">
+                  <p className="font-semibold text-slate-800">{update.taskId?.title || 'Unknown Task'}</p>
+                  <button onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }} className="text-xs font-semibold text-blue-600 hover:underline">Details</button>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${update.completion}%` }}></div>
+                  </div>
+                  <span className="text-sm font-bold text-blue-600 w-12 text-right tabular-nums">{update.completion}%</span>
+                </div>
+              </div>
+            ))}
           </div>
         );
       }
-      return <p className="whitespace-pre-wrap">{content}</p>;
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{JSON.stringify(data, null, 2)}</p>;
     } catch (e) {
-      return <p className="whitespace-pre-wrap">{content}</p>;
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{content}</p>;
     }
   };
 
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading report history...</div>;
+  }
+
   return (
-    <div className="flex h-full bg-slate-100">
-      <aside className="w-72 flex-shrink-0 border-r border-gray-200 bg-gray-100">
-        <PastReportsList employeeId={employeeId} onSelectReport={setSelectedReport} activeReportId={selectedReport?._id} />
-      </aside>
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        {selectedReport ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">{new Date(selectedReport.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</h3>
-            {renderReportContent(selectedReport.content)}
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 font-manrope">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Report History</h1>
+        <p className="text-slate-500 mt-2">Review your previously submitted daily progress reports.</p>
+      </div>
+      <div className="space-y-4">
+        {reports.length > 0 ? (
+          reports.map(report => (
+            <div key={report._id} className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden transition-all duration-300">
+              <button onClick={() => setExpandedReportId(expandedReportId === report._id ? null : report._id)} className="w-full text-left p-5 flex justify-between items-center hover:bg-slate-50/50">
+                <span className="font-bold text-slate-800">{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
+                <div className="flex items-center gap-4">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{report.status}</span>
+                  <ChevronDownIcon className={`h-5 w-5 text-slate-500 transition-transform ${expandedReportId === report._id ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+              {expandedReportId === report._id && renderReportContent(report.content)}
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-white rounded-2xl border-2 border-dashed p-16">
+            <ArchiveBoxIcon className="h-16 w-16 text-slate-400 mb-4" />
+            <p className="font-semibold">No Report History Found</p>
+            <p className="text-sm">You have not submitted any reports yet.</p>
           </div>
-        ) : <div className="flex items-center justify-center h-full text-gray-500">Select a report from the history to view its details.</div>}
-      </main>
+        )}
+      </div>
       <TaskDetailsModal isOpen={!!viewingTask} onClose={() => setViewingTask(null)} task={viewingTask} taskNumber={viewingTaskNumber} />
     </div>
   );
@@ -743,6 +769,7 @@ const MyReportHistory = ({ employeeId }) => {
 
 const TeamInformation = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const teamMembers = useMemo(() => {
@@ -771,50 +798,73 @@ const TeamInformation = ({ seniorId }) => {
     return getAllSubordinates(seniorId, allEmployees);
   }, [allEmployees, seniorId]);
 
+  useEffect(() => {
+    if (teamMembers.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(teamMembers[0]);
+    } else if (teamMembers.length === 0) {
+      setSelectedEmployee(null);
+    }
+  }, [teamMembers, selectedEmployee]);
+
+  const filteredTeamMembers = useMemo(() => {
+    if (!searchTerm) return teamMembers;
+    return teamMembers.filter(emp =>
+      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [teamMembers, searchTerm]);
+
   if (isLoadingEmployees) {
     return <div className="p-8 text-center">Loading team information...</div>;
   }
 
-  const handleSelectEmployee = (employee) => {
-    setSelectedEmployee(employee);
-  };
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Team Information</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {teamMembers.map(employee => (
-          <div key={employee._id} onClick={() => handleSelectEmployee(employee)} className={`bg-white rounded-xl shadow-lg border p-5 transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer ${selectedEmployee?._id === employee._id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}>
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <img
-                  src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
-                  alt={employee.name}
-                  className="h-16 w-16 rounded-full object-cover border-2 border-blue-200"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg text-gray-900 truncate">{employee.name}</h3>
-                <p className="text-sm text-gray-500 truncate">{employee.role}</p>
-                <p className="text-xs text-gray-400 font-mono truncate">{employee.employeeId}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-        {teamMembers.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500">
-            You do not have any team members assigned to you.
-          </div>
-        )}
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 font-manrope">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Information</h1>
+        <p className="text-slate-500 mt-2">View details and attendance for your team members.</p>
       </div>
-      {selectedEmployee && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Attendance for {selectedEmployee.name}
-          </h2>
-          <AttendanceCalendar employeeId={selectedEmployee._id} />
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-lg flex flex-col">
+          <div className="p-4 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-800">Team Members ({teamMembers.length})</h2>
+            <input type="text" placeholder="Search team..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="mt-3 w-full text-sm border-slate-300 rounded-lg p-2 focus:ring-blue-500" />
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {filteredTeamMembers.map(employee => (
+              <button key={employee._id} onClick={() => setSelectedEmployee(employee)} className={`w-full text-left p-3 my-1 rounded-lg transition-all flex items-center gap-3 ${selectedEmployee?._id === employee._id ? 'bg-blue-100' : 'hover:bg-slate-100'}`}>
+                <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-10 w-10 rounded-full object-cover" />
+                <div>
+                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-slate-800'}`}>{employee.name}</p>
+                  <p className="text-xs text-slate-500">{employee.role}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+        <div className="md:col-span-2 lg:col-span-3">
+          {selectedEmployee ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b">
+                <img src={selectedEmployee.profilePicture || `https://ui-avatars.com/api/?name=${selectedEmployee.name}&background=random`} alt={selectedEmployee.name} className="h-20 w-20 rounded-full object-cover" />
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-800">{selectedEmployee.name}</h3>
+                  <p className="text-slate-500">{selectedEmployee.role} &middot; {selectedEmployee.department}</p>
+                  <p className="text-sm text-slate-400 font-mono">{selectedEmployee.employeeId}</p>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">Attendance Calendar</h3>
+              <AttendanceCalendar employeeId={selectedEmployee._id} />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-white rounded-2xl border-2 border-dashed p-8">
+              <UserGroupIcon className="h-16 w-16 text-slate-400 mb-4" />
+              <p className="font-semibold">No Team Members Found</p>
+              <p className="text-sm">You do not have any team members assigned to you.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -1008,7 +1058,7 @@ const MyDailyReport = ({ employeeId }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto bg-slate-50/50">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Today's Progress Report</h1>
@@ -1030,7 +1080,14 @@ const MyDailyReport = ({ employeeId }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {assignedTasks.filter(t => t.status !== 'Completed').map((task, index) => (
+        {assignedTasks
+          .filter(t => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+          })
+          .map((task, index) => (
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
             <div className="p-5 border-b border-slate-200"> 
               <h3 className="font-bold text-lg text-slate-800">
@@ -1038,33 +1095,38 @@ const MyDailyReport = ({ employeeId }) => {
               </h3>
               <p className="text-sm text-slate-500 mt-1">{task.description}</p>
             </div>
-            <div className="p-5 flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-4">
-                <div className="relative w-full">
-                  <div className="absolute top-1/2 -translate-y-1/2 h-2 w-full bg-slate-200 rounded-full"></div>
+            <div className="p-6 flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-5">
+                <span className={`font-bold w-16 text-center text-2xl tabular-nums ${isReadOnly ? 'text-slate-500' : 'text-blue-600'}`}>
+                  {progress[task._id] || 0}%
+                </span>
+                <div className="relative w-full h-4 flex items-center">
+                  <div className="absolute h-1.5 w-full bg-slate-200 rounded-full"></div>
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 h-2 bg-blue-500 rounded-full"
+                    className="absolute h-1.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
                     style={{ width: `${progress[task._id] || 0}%` }}
                   ></div>
                   <input
                     type="range"
                     min="0"
                     max="100"
-                    step="10"
+                    step="5"
                     value={progress[task._id] || 0}
                     onChange={(e) => handleProgressChange(task._id, e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full h-2 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
+                        disabled={isTaskReadOnly}
+                    className="w-full h-4 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
                   />
                 </div>
-                <span className={`font-bold w-16 text-center text-xl ${isReadOnly ? 'text-slate-500' : 'text-blue-600'}`}>
-                  {progress[task._id] || 0}%
-                </span>
               </div>
             </div>
           </div>
         ))}
-        {assignedTasks.filter(t => t.status !== 'Completed').length === 0 && (
+        {assignedTasks.filter(t => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+          }).length === 0 && (
           <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
             <p className="mt-4 font-semibold text-lg">All tasks are completed!</p>
@@ -1076,22 +1138,69 @@ const MyDailyReport = ({ employeeId }) => {
   );
 };
 
-const EmployeeDashboard = ({ employeeId }) => {
-  // Inject Manrope font style once
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-      .font-manrope {
-        font-family: 'Manrope', sans-serif;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+const MyAttendance = ({ employeeId }) => {
+  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery();
 
+  const legendItems = [
+    { label: 'Present', color: 'bg-emerald-500' },
+    { label: 'Absent', color: 'bg-red-500' },
+    { label: 'Holiday', color: 'bg-amber-500' },
+    { label: 'Leave', color: 'bg-sky-500' },
+    { label: 'Future', color: 'bg-slate-200' },
+  ];
+
+  const upcomingHolidays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return holidays
+      .filter(h => new Date(h.date) >= today)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [holidays]);
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Attendance</h1>
+        <p className="text-slate-500 mt-2">Review your monthly attendance record.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+          <AttendanceCalendar employeeId={employeeId} />
+        </div>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Legend</h3>
+            <div className="space-y-3">
+              {legendItems.map(item => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <span className={`h-4 w-4 rounded-full ${item.color}`}></span>
+                  <span className="text-sm font-medium text-slate-600">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 mt-6 italic">Click on a date to apply for leave. Sundays are default holidays.</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Upcoming Holidays</h3>
+            <div className="space-y-3">
+              {isLoadingHolidays ? <p className="text-sm text-slate-400">Loading...</p> : upcomingHolidays.length > 0 ? upcomingHolidays.slice(0, 5).map(holiday => (
+                <div key={holiday._id} className="p-3 rounded-lg bg-amber-50">
+                  <p className="font-semibold text-sm text-amber-800">{holiday.name}</p>
+                  <p className="text-xs text-amber-600">{new Date(holiday.date).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })}</p>
+                </div>
+              )) : (
+                <p className="text-sm text-slate-400">No upcoming holidays found.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EmployeeDashboard = ({ employeeId }) => {
   const user = useSelector(selectCurrentUser);
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
@@ -1125,6 +1234,16 @@ const EmployeeDashboard = ({ employeeId }) => {
     // Check if anyone has this user as their teamLead
     return allEmployees.some(emp => emp.teamLead?._id === user._id);
   }, [user, allEmployees]);
+
+  const companyLogo = useMemo(() => {
+    if (user?.company === 'Volga Infosys') {
+      return '/src/assets/volgainfosys.png';
+    }
+    if (user?.company === 'Star Publicity') {
+      return '/src/assets/fevicon.png';
+    }
+    return '/src/assets/fevicon.png';
+  }, [user?.company]);
 
   useEffect(() => {
     // If the active component is a team-only component and the user has no team,
@@ -1205,7 +1324,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       case 'my-report':
         return <MyDailyReport employeeId={user._id} />;
       case 'team-reports':
-        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={setActiveComponent} />;
+        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={onNavigate} />;
       case 'my-history':
         return <MyReportHistory employeeId={user._id} />;
       case 'team-info':
@@ -1215,7 +1334,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       case 'profile':
         return <EmployeeProfile user={user} />;
       case 'attendance':
-        return <AttendanceCalendar employeeId={user._id} />;
+        return <MyAttendance employeeId={user._id} />;
       case 'my-tasks':
         return <MyTasks />;
       case 'task-approvals':
@@ -1230,11 +1349,21 @@ const EmployeeDashboard = ({ employeeId }) => {
   };
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-sans text-gray-800 font-manrope">
+    <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-gray-800 font-manrope">
+      <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+          .font-manrope {
+            font-family: 'Manrope', sans-serif;
+          }
+          .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+          .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        `}
+      </style>
       <aside className={`fixed md:static z-50 top-0 left-0 h-full w-72 flex-shrink-0 border-r border-gray-200 bg-white/80 backdrop-blur-lg shadow-lg flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
           <img
-            src="/src/assets/fevicon.png"
+            src={companyLogo}
             alt="Company Logo"
             className="h-9 w-9"
           />

@@ -18,7 +18,7 @@ const AdminSetup = ({ onSetupComplete }) => {
     qualification: '',
     experience: '',
     workType: 'Full-time',
-    company: '',
+    company: '', // This was already here, which is great.
     joiningDate: '',
     workLocation: '',
     shift: 'Day',
@@ -155,6 +155,16 @@ const AdminSetup = ({ onSetupComplete }) => {
                 onChange={handleChange}
                 className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
                 placeholder="••••••••"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="company" className="text-sm font-semibold text-gray-700">Company Name</label>
+            <div className="relative mt-1">
+              <BuildingOfficeIcon className="h-5 w-5 text-blue-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                id="company" name="company" type="text" value={formData.company} onChange={handleChange}
+                className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg bg-gray-50" placeholder="Your Company Name"
               />
             </div>
           </div>

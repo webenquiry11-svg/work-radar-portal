@@ -57,14 +57,22 @@ class ReportController {
 
                 if (completion === 100) {
                   task.status = 'Pending Verification';
-                  // Create a notification for the person who assigned the task
-                  await Notification.create({
-                    recipient: task.assignedBy,
-                    subjectEmployee: employeeId,
-                    message: `${req.user.name} has marked the task "${task.title}" as 100% complete.`,
-                    type: 'task_approval',
+                  task.submittedForCompletionDate = today; // Set submission date
+                  // Check if an approval notification already exists for this task
+                  const existingNotification = await Notification.findOne({
                     relatedTask: task._id,
+                    type: 'task_approval'
                   });
+
+                  if (!existingNotification) {
+                    await Notification.create({
+                      recipient: task.assignedBy,
+                      subjectEmployee: employeeId,
+                      message: `${req.user.name} has marked the task "${task.title}" as 100% complete.`,
+                      type: 'task_approval',
+                      relatedTask: task._id,
+                    });
+                  }
                 } else if (completion > 0) {
                   task.status = 'In Progress';
                 } else {

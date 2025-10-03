@@ -325,10 +325,10 @@ class ManageEmployeeController {
           employeePerformance[employeeId] = {
             employee: task.assignedTo,
             stats: {
-              Completed: 0,
-              Moderate: 0,
-              Low: 0,
-              Pending: 0,
+              Completed: { count: 0, percentage: 0 },
+              Moderate: { count: 0, percentage: 0 },
+              Low: { count: 0, percentage: 0 },
+              Pending: { count: 0, percentage: 0 },
             },
             totalScore: 0,
             totalTasks: 0,
@@ -336,7 +336,7 @@ class ManageEmployeeController {
         }
 
         if (employeePerformance[employeeId].stats.hasOwnProperty(task.completionCategory)) {
-          employeePerformance[employeeId].stats[task.completionCategory]++;
+          employeePerformance[employeeId].stats[task.completionCategory].count++;
         }
         employeePerformance[employeeId].totalTasks++;
 
@@ -362,21 +362,21 @@ class ManageEmployeeController {
       const topCandidates = sortedEmployees.slice(0, 2).map(candidate => {
         const { employee, stats, totalScore, totalTasks } = candidate;
         let reason = '';
-        if (totalTasks === 0) {
-          reason = 'No completed tasks found for this period.';
-        } else {
-          const completedPercentage = (stats.Completed / totalTasks * 100).toFixed(0);
-          const moderatePercentage = (stats.Moderate / totalTasks * 100).toFixed(0);
-          const lowPercentage = (stats.Low / totalTasks * 100).toFixed(0);
-          const pendingPercentage = (stats.Pending / totalTasks * 100).toFixed(0);
+        if (totalTasks > 0) {
+          stats.Completed.percentage = (stats.Completed.count / totalTasks) * 100;
+          stats.Moderate.percentage = (stats.Moderate.count / totalTasks) * 100;
+          stats.Low.percentage = (stats.Low.count / totalTasks) * 100;
+          stats.Pending.percentage = (stats.Pending.count / totalTasks) * 100;
 
-          reason = `${employee.name} demonstrated outstanding performance, completing ${stats.Completed} tasks (${completedPercentage}%). They also achieved a moderate grade on ${stats.Moderate} tasks (${moderatePercentage}%) and a low grade on ${stats.Low} tasks (${lowPercentage}%). Their overall score of ${totalScore} points reflects their dedication and high-quality work.`;
+          reason = `${employee.name} demonstrated outstanding performance, completing ${stats.Completed.count} tasks (${stats.Completed.percentage.toFixed(0)}%). They also achieved a moderate grade on ${stats.Moderate.count} tasks (${stats.Moderate.percentage.toFixed(0)}%) and a low grade on ${stats.Low.count} tasks (${stats.Low.percentage.toFixed(0)}%). Their overall score of ${totalScore} points reflects their dedication and high-quality work.`;
           
-          if (stats.Completed === totalTasks) {
+          if (stats.Completed.count === totalTasks) {
             reason = `${employee.name} achieved a perfect record, completing all ${totalTasks} tasks with a 'Completed' grade. Their exceptional performance earned them a total score of ${totalScore} points.`;
-          } else if (stats.Pending > 0) {
-            reason += ` Note: ${stats.Pending} tasks (${pendingPercentage}%) were graded as 'Pending' completion.`;
+          } else if (stats.Pending.count > 0) {
+            reason += ` Note: ${stats.Pending.count} tasks (${stats.Pending.percentage.toFixed(0)}%) were graded as 'Pending' completion.`;
           }
+        } else {
+          reason = 'No completed tasks found for this period.';
         }
 
         return {

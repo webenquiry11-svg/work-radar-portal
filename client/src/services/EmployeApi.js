@@ -284,18 +284,19 @@ export const employeApi = apiSlice.injectEndpoints({
     }),
 
     approveTask: builder.mutation({
-      query: (id) => ({
+      query: ({ id, finalPercentage, comment }) => ({
         url: `/tasks/${id}/approve`,
         method: 'PUT',
+        body: { finalPercentage, comment },
       }),
       invalidatesTags: ['Task', 'Notification'],
     }),
 
     rejectTask: builder.mutation({
-      query: ({ id, reason }) => ({
+      query: ({ id, reason, finalPercentage }) => ({
         url: `/tasks/${id}/reject`,
         method: 'PUT',
-        body: { reason },
+        body: { reason, finalPercentage },
       }),
       invalidatesTags: ['Task', 'Notification'],
     }),

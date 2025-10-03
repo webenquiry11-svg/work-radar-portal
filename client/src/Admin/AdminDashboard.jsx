@@ -171,6 +171,7 @@ const TeamReports = () => {
   const { data: employees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [deletingReport, setDeletingReport] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
@@ -178,6 +179,13 @@ const TeamReports = () => {
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
     skip: !selectedEmployee,
   });
+
+  const filteredEmployees = useMemo(() => {
+    if (!employees) return [];
+    return employees.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [employees, searchTerm]);
 
   const handleDownloadSheet = () => {
     if (!selectedEmployee || !reports || reports.length === 0) {
@@ -317,38 +325,50 @@ const TeamReports = () => {
   };
 
   return (
-    <div className="flex h-full bg-gradient-to-br from-indigo-50 via-white to-blue-50">
-      <div className="w-full md:w-1/3 max-w-sm bg-white/80 backdrop-blur-lg border-r border-gray-200 overflow-y-auto shadow-lg rounded-r-3xl">
-        <h2 className="text-lg font-semibold p-4 border-b border-gray-200 text-indigo-700">Employees</h2>
-        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading employees...</p>}
-        {isErrorEmployees && <p className="p-4 text-red-500">Failed to load employees.</p>}
-        <ul className="p-2">
-          {employees?.map(employee => (
-            <li key={employee._id}>
-              <button
-                onClick={() => setSelectedEmployee(employee)}
-                className={`w-full text-left p-3 my-1 rounded-xl transition-all duration-200 flex flex-col border-2 ${
-                  selectedEmployee?._id === employee._id
-                    ? 'bg-indigo-100 border-indigo-400 shadow'
-                    : 'hover:bg-gray-100 border-transparent'
-                }`}
-              >
-                <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-indigo-800' : 'text-gray-800'}`}>{employee.name}</p>
-                <p className="text-xs text-gray-500">
-                  Reports to: {employee.teamLead?.name || <span className="italic">N/A</span>}
-                </p>
-              </button>
-            </li>
-          ))}
-        </ul>
+    <div className="flex flex-col md:flex-row h-full bg-slate-50">
+      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-slate-200 flex flex-col">
+        <div className="p-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800">Employees</h2>
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mt-3 w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {isLoadingEmployees && <p className="p-4 text-slate-500">Loading employees...</p>}
+          {isErrorEmployees && <p className="p-4 text-red-500">Failed to load employees.</p>}
+          <ul className="p-2">
+            {filteredEmployees.map(employee => (
+              <li key={employee._id}>
+                <button
+                  onClick={() => setSelectedEmployee(employee)}
+                  className={`w-full text-left p-3 my-1 rounded-lg transition-all duration-200 flex items-center gap-3 ${
+                    selectedEmployee?._id === employee._id
+                      ? 'bg-blue-100'
+                      : 'hover:bg-slate-100'
+                  }`}
+                >
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-10 w-10 rounded-full object-cover" />
+                  <div>
+                    <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-slate-800'}`}>{employee.name}</p>
+                    <p className="text-xs text-slate-500">{employee.role}</p>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
         {!selectedEmployee ? (
           <div className="flex items-center justify-center h-full text-gray-500">Select an employee to view their reports.</div>
         ) : (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-indigo-800">Reports for {selectedEmployee.name}</h2>
+              <h2 className="text-2xl font-bold text-slate-800">Reports for {selectedEmployee.name}</h2>
               <button
                 onClick={handleDownloadSheet}
                 disabled={!reports || reports.length === 0}
@@ -361,8 +381,8 @@ const TeamReports = () => {
 
             {isLoadingReports && <p>Loading reports...</p>}
             <div className="space-y-6">
-              {reports?.map(report => (
-                <div key={report._id} className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
+              {reports?.length > 0 ? reports.map(report => (
+                <div key={report._id} className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex flex-col sm:flex-row justify-between gap-2">
                     <span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -374,7 +394,9 @@ const TeamReports = () => {
                     <button onClick={() => setDeletingReport(report)} className="inline-flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700"><TrashIcon className="h-4 w-4" /> Delete Report</button>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-10 text-slate-400">No reports found for this employee.</div>
+              )}
               {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
             </div>
           </div>
@@ -469,54 +491,57 @@ const Analytics = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
           <p className="text-slate-500 mt-2">Select a manager to view their team's performance.</p>
         </div>
-        <select 
-          onChange={(e) => {
-            const manager = managers.find(m => m._id === e.target.value);
-            setSelectedManager(manager);
-            setView('team_stats'); // Default to team view when manager changes
-          }} 
-          className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">-- Select a Manager --</option>
-          {managers.map(manager => (
-            <option key={manager._id} value={manager._id}>{manager.name}</option>
-          ))}
-        </select>
+        <div className="relative">
+          <select 
+            onChange={(e) => {
+              const manager = managers.find(m => m._id === e.target.value);
+              setSelectedManager(manager);
+              setView('team_stats'); // Default to team view when manager changes
+            }} 
+            className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
+          >
+            <option value="">-- Select a Manager --</option>
+            {managers.map(manager => (
+              <option key={manager._id} value={manager._id}>{manager.name}</option>
+            ))}
+          </select>
+          <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+        </div>
       </div>
 
       {selectedManager ? (
         <>
-          <div className="flex items-center bg-slate-200 rounded-lg p-1 mb-8 w-fit mx-auto sm:mx-0">
+          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-1 mb-8 w-fit mx-auto sm:mx-0">
             <button onClick={() => setView('manager_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'manager_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Manager Stats</button>
             <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             {Object.entries(gradeStats).map(([grade, count]) => (
               <StatCard key={grade} grade={grade} count={count} />
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-lg p-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
               <h3 className="text-lg font-bold text-slate-800 mb-4">Grade Distribution</h3>
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
-                    <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                    <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={120} fill="#8884d8" dataKey="value">
                       {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />)}
                     </Pie>
                     <Tooltip />
-                    <Legend />
+                    <Legend iconType="circle" />
                   </PieChart>
                 </ResponsiveContainer>
               ) : <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this team.</div>}
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
               <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
               <ul className="space-y-3 text-sm text-slate-600">
                 <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Completed:</strong><span>Task progress was 100% upon approval.</span></li>
@@ -669,23 +694,12 @@ const AdminProfile = ({ user }) => {
           </div>
         )}
       </div>
-      <TaskDetailsModal
-        isOpen={!!viewingTask}
-        onClose={() => setViewingTask(null)}
-        task={viewingTask}
-      />
-      <DeleteReportModal
-        isOpen={!!deletingReport}
-        onClose={() => setDeletingReport(null)}
-        onConfirm={handleConfirmDelete}
-        report={deletingReport}
-        isDeleting={isDeleting}
-      />
     </div>
   );
 };
 
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
+  const user = useSelector(selectCurrentUser);
   const navItems = [
     { id: 'dashboard', icon: HomeIcon, label: 'Dashboard' },
     { id: 'employees', icon: UsersIcon, label: 'Manage Employees' },
@@ -699,10 +713,23 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'analytics', icon: ChartBarIcon, label: 'Analytics' },
   ];
 
+  const companyLogo = useMemo(() => {
+    if (user?.company === 'Volga Infosys') {
+      return '/src/assets/volgainfosys.png';
+    }
+    if (user?.company === 'Star Publicity') {
+      return '/src/assets/fevicon.png';
+    }
+    return '/src/assets/fevicon.png';
+  }, [user?.company]);
+
   return (
     <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-      <div className="h-16 flex items-center justify-center px-4 text-indigo-900 text-xl font-bold border-b border-gray-200 drop-shadow">
-        Report Management
+      <div className="h-16 flex items-center gap-3 px-4 text-indigo-900 text-xl font-bold border-b border-gray-200 drop-shadow">
+        <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
+        <span className="text-lg font-bold text-blue-800 truncate" title={user?.company}>
+          {user?.company || 'Company Portal'}
+        </span>
       </div>
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navItems.map(item => (
@@ -909,7 +936,7 @@ export default function AdminPageLayout() {
         </style>
         <Sidebar activeComponent={activeComponent} setActiveComponent={setActiveComponent} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
           <AppHeader pageTitle={pageTitles[activeComponent]} user={user} setActiveComponent={setActiveComponent} onMenuClick={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-y-auto">{renderActiveComponent()}</main>
         </div>

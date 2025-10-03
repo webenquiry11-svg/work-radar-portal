@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useGetEmployeesQuery, useCreateTaskMutation } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
-import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, ClipboardDocumentListIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-
+import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, ClipboardDocumentListIcon, PlusIcon, TrashIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+ 
 const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) => {
   const initialTask = {
     id: Date.now(),
@@ -14,6 +14,10 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
   };
   const [tasks, setTasks] = useState([initialTask]);
 
+  React.useEffect(() => {
+    if (isOpen) setTasks([initialTask]);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleChange = (index, e) => {
@@ -24,6 +28,10 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (tasks.some(task => !task.title.trim())) {
+      toast.error('Each task must have a title.');
+      return;
+    }
     onAssign(tasks.map(task => ({ ...task, assignedTo: employee._id })));
   };
 
@@ -66,8 +74,8 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
               <PlusIcon className="h-4 w-4" /> Add Another Task
             </button>
           </div>
-          <div className="p-4 bg-slate-50 flex justify-end">
-            <button type="submit" disabled={isAssigning} className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-blue-400">
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="submit" disabled={isAssigning} className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg text-sm disabled:bg-blue-400 transition-colors shadow-sm">
               {isAssigning && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
               Assign Tasks
             </button>
@@ -130,48 +138,57 @@ const AssignTask = ({ teamLeadId }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
-        <div className="mb-8 text-center">
-            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Assign Task to Team</h1>
-            <p className="text-slate-500 mt-2">Delegate tasks to your team members.</p>
+    <div className="p-4 sm:p-8 lg:p-12 h-full flex flex-col bg-gradient-to-br from-slate-50 to-white">
+      <div className="mb-8 text-center">
+        <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-lg mb-4">
+          <ClipboardDocumentListIcon className="h-8 w-8 text-white" />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-lg flex-1 flex flex-col">
-            <div className="p-6 border-b border-slate-200">
-                <input
-                    type="text"
-                    placeholder="Search team members..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2.5"
-                />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-                <table className="w-full text-sm text-left text-slate-600">
-                    <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Team Member</th>
-                            <th scope="col" className="px-6 py-3">Role</th>
-                            <th scope="col" className="px-6 py-3">Department</th>
-                            <th scope="col" className="px-6 py-3 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredEmployees.map(employee => (
-                            <tr key={employee._id} className="bg-white border-b hover:bg-slate-50/50">
-                                <td className="px-6 py-4 font-semibold text-slate-900">{employee.name}</td>
-                                <td className="px-6 py-4">{employee.role}</td>
-                                <td className="px-6 py-4">{employee.department}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button onClick={() => setSelectedEmployee(employee)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 font-bold py-1.5 px-3 rounded-lg text-xs">
-                                        Assign Task
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Task Assignment</h1>
+        <p className="text-slate-500 mt-2">Delegate tasks to your team members. Click "Assign Task" to add one or more tasks.</p>
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg flex-1 flex flex-col">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-6 border-b border-slate-200">
+          <div className="relative w-full sm:w-80">
+            <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search team members by name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2.5 w-full text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+          </div>
         </div>
+        <div className="flex-1 overflow-y-auto rounded-b-2xl p-4">
+          {filteredEmployees.length === 0 ? (
+            <div className="text-center text-slate-400 py-16">No team members found.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredEmployees.map(employee => (
+                <div key={employee._id} className="bg-gradient-to-br from-white to-blue-50 border border-slate-200 rounded-xl shadow hover:shadow-lg transition-shadow p-6 flex flex-col items-center">
+                  <img
+                    src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
+                    alt={employee.name}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 mb-3"
+                  />
+                  <div className="text-center">
+                    <div className="font-bold text-slate-900 text-lg">{employee.name}</div>
+                    <div className="text-xs text-slate-500 font-mono">{employee.employeeId}</div>
+                    <div className="text-sm text-slate-600 mt-1">{employee.role}</div>
+                    <div className="text-xs text-slate-400">{employee.department || 'N/A'}</div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedEmployee(employee)}
+                    className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition-colors shadow"
+                  >
+                    Assign Task
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
         <AssignTaskModal isOpen={!!selectedEmployee} onClose={() => setSelectedEmployee(null)} employee={selectedEmployee} isAssigning={isAssigning} onAssign={handleAssignTask} />
     </div>
   );

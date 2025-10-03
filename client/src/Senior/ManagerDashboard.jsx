@@ -4,7 +4,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectCurrentUser, setCredentials } from '../app/authSlice';
+import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice'; 
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import PastReportsList from '../Employee/PastReports';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import AttendanceCalendar from '../services/AttendanceCalendar';
+import { useGetAllMyReportsQuery } from '../services/EmployeApi';
 import CurrentUserProvider from '../app/CurrentUserProvider';
 import AssignTask from './AssignTask.jsx';
 import TaskApprovals from '../Admin/TaskApprovals';
@@ -59,7 +60,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full md:max-w-3xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -300,6 +301,7 @@ const TeamReports = ({ seniorId }) => {
 
 const TeamInformation = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const teamMembers = useMemo(() => {
@@ -328,50 +330,73 @@ const TeamInformation = ({ seniorId }) => {
     return getAllSubordinates(seniorId, allEmployees);
   }, [allEmployees, seniorId]);
 
+  useEffect(() => {
+    if (teamMembers.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(teamMembers[0]);
+    } else if (teamMembers.length === 0) {
+      setSelectedEmployee(null);
+    }
+  }, [teamMembers, selectedEmployee]);
+
+  const filteredTeamMembers = useMemo(() => {
+    if (!searchTerm) return teamMembers;
+    return teamMembers.filter(emp =>
+      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [teamMembers, searchTerm]);
+
   if (isLoadingEmployees) {
     return <div className="p-8 text-center">Loading team information...</div>;
   }
 
-  const handleSelectEmployee = (employee) => {
-    setSelectedEmployee(employee);
-  };
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Team Information</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {teamMembers.map(employee => (
-          <div key={employee._id} onClick={() => handleSelectEmployee(employee)} className={`bg-white rounded-xl shadow-lg border p-5 transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer ${selectedEmployee?._id === employee._id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}>
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <img
-                  src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
-                  alt={employee.name}
-                  className="h-16 w-16 rounded-full object-cover border-2 border-blue-200"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg text-gray-900 truncate">{employee.name}</h3>
-                <p className="text-sm text-gray-500 truncate">{employee.role}</p>
-                <p className="text-xs text-gray-400 font-mono truncate">{employee.employeeId}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-        {teamMembers.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500">
-            You do not have any team members assigned to you.
-          </div>
-        )}
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 font-manrope">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Information</h1>
+        <p className="text-slate-500 mt-2">View details and attendance for your team members.</p>
       </div>
-      {selectedEmployee && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Attendance for {selectedEmployee.name}
-          </h2>
-          <AttendanceCalendar employeeId={selectedEmployee._id} />
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-lg flex flex-col">
+          <div className="p-4 border-b">
+            <h2 className="text-lg font-semibold text-slate-800">Team Members ({teamMembers.length})</h2>
+            <input type="text" placeholder="Search team..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="mt-3 w-full text-sm border-slate-300 rounded-lg p-2 focus:ring-blue-500" />
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {filteredTeamMembers.map(employee => (
+              <button key={employee._id} onClick={() => setSelectedEmployee(employee)} className={`w-full text-left p-3 my-1 rounded-lg transition-all flex items-center gap-3 ${selectedEmployee?._id === employee._id ? 'bg-blue-100' : 'hover:bg-slate-100'}`}>
+                <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-10 w-10 rounded-full object-cover" />
+                <div>
+                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-slate-800'}`}>{employee.name}</p>
+                  <p className="text-xs text-slate-500">{employee.role}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+        <div className="md:col-span-2 lg:col-span-3">
+          {selectedEmployee ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b">
+                <img src={selectedEmployee.profilePicture || `https://ui-avatars.com/api/?name=${selectedEmployee.name}&background=random`} alt={selectedEmployee.name} className="h-20 w-20 rounded-full object-cover" />
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-800">{selectedEmployee.name}</h3>
+                  <p className="text-slate-500">{selectedEmployee.role} &middot; {selectedEmployee.department}</p>
+                  <p className="text-sm text-slate-400 font-mono">{selectedEmployee.employeeId}</p>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">Attendance Calendar</h3>
+              <AttendanceCalendar employeeId={selectedEmployee._id} />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-white rounded-2xl border-2 border-dashed p-8">
+              <UserGroupIcon className="h-16 w-16 text-slate-400 mb-4" />
+              <p className="font-semibold">No Team Members Found</p>
+              <p className="text-sm">You do not have any team members assigned to you.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -466,7 +491,7 @@ const Dashboard = ({ user }) => {
 
   // --- Redesigned Attractive Dashboard ---
   return (
-    <div className="p-0 sm:p-0 lg:p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
+    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
@@ -494,7 +519,7 @@ const Dashboard = ({ user }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 -mt-20 z-20 relative">
         <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700">{stats?.teamMemberCount ?? 0}</p>
@@ -521,7 +546,7 @@ const Dashboard = ({ user }) => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Team Task Status Chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col justify-center">
           <h3 className="text-xl font-bold text-slate-800 mb-6">Team Task Status</h3>
@@ -769,7 +794,7 @@ const ManagerProfile = ({ user }) => {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-8">
         <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
@@ -842,61 +867,113 @@ const ManagerProfile = ({ user }) => {
 };
 
 const MyTasks = () => {
-  const { data: tasks = [], isLoading } = useGetMyTasksQuery();
+  const { data: myTasks = [], isLoading } = useGetMyTasksQuery();
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [activeTab, setActiveTab] = useState('Active');
 
-  const priorityStyles = {
-    High: 'bg-red-100 text-red-800',
-    Medium: 'bg-yellow-100 text-yellow-800',
-    Low: 'bg-green-100 text-green-800',
-  };
+  const { stats, tasksToShow } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const statusColors = {
-    'Pending': 'bg-slate-100 text-slate-800',
-    'In Progress': 'bg-blue-100 text-blue-800',
-  };
+    const active = myTasks.filter(t => t.status !== 'Completed');
+    const completed = myTasks.filter(t => t.status === 'Completed');
+    const overdue = active.filter(t => t.dueDate && new Date(t.dueDate) < today);
+
+    const stats = {
+      active: active.length,
+      overdue: overdue.length,
+      completed: completed.length,
+    };
+
+    let tasks = [];
+    if (activeTab === 'Active') {
+      tasks = active;
+    } else if (activeTab === 'Completed') {
+      tasks = completed;
+    } else {
+      tasks = myTasks;
+    }
+
+    return { stats, tasksToShow: tasks };
+  }, [myTasks, activeTab]);
+
   if (isLoading) {
     return <div className="p-8 text-center">Loading tasks...</div>;
   }
 
+  const StatCard = ({ title, value, icon: Icon, color }) => (
+    <div className={`bg-white p-5 rounded-xl shadow-lg border border-slate-200 flex items-center gap-4`}>
+      <div className={`p-3 rounded-full ${color.bg}`}>
+        <Icon className={`h-6 w-6 ${color.text}`} />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-slate-800">{value}</p>
+        <p className="text-sm font-semibold text-slate-500">{title}</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
-      <div className="space-y-4">
-        {tasks.length > 0 ? tasks.map((task, index) => (
-          <div key={task._id} className="bg-white rounded-lg shadow-md border border-gray-200 p-5 group">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-gray-900">
-                  Task {index + 1}: {task.title}
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span>
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusColors[task.status] || 'bg-gray-100'}`}>{task.status}</span>
-                </div>
-              </div>
-              <div>
-                <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="text-xs font-semibold text-blue-600 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity">View Details</button>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">{task.description}</p>
-            <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
-              <span>Assigned by: <span className="font-medium text-slate-700">{task.assignedBy.name}</span></span>
-              {task.dueDate && <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
-            </div>
-            {task.rejectionReason && (
-              <div className="mt-3 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-xs">
-                <p><strong className="font-semibold">Rejection Feedback:</strong> {task.rejectionReason}</p>
-              </div>
-            )}
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Tasks</h1>
+        <p className="text-slate-500 mt-2">Stay on top of your assigned tasks and deadlines.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Active Tasks" value={stats.active} icon={ClipboardDocumentListIcon} color={{ bg: 'bg-blue-100', text: 'text-blue-600' }} />
+        <StatCard title="Overdue" value={stats.overdue} icon={ExclamationTriangleIcon} color={{ bg: 'bg-red-100', text: 'text-red-600' }} />
+        <StatCard title="Completed" value={stats.completed} icon={CheckCircleIcon} color={{ bg: 'bg-emerald-100', text: 'text-emerald-600' }} />
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-lg flex-1 flex flex-col">
+        <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            {['All', 'Active', 'Completed'].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === tab ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}>
+                {tab}
+              </button>
+            ))}
           </div>
-        )) : (
-          <div className="text-center py-10 text-gray-500">
-            <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-gray-400" />
-            <p className="mt-2 font-semibold">No tasks assigned to you.</p>
-          </div>
-        )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2 sm:p-4">
+          {tasksToShow.length > 0 ? (
+            <ul className="space-y-4">
+              {tasksToShow.map((task, index) => {
+                const priorityStyles = { High: 'bg-red-500', Medium: 'bg-amber-500', Low: 'bg-green-500' };
+                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
+                const isOverdue = task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) < new Date();
+                return (
+                  <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-4">
+                    <span className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${priorityStyles[task.priority]}`} title={`${task.priority} Priority`}></span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-slate-800">{task.title}</h3>
+                      <p className={`text-xs mt-1 ${isOverdue ? 'font-bold text-red-600' : 'text-slate-500'}`}
+                      >
+                        Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="w-full sm:w-1/4 flex items-center gap-2">
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${task.progress}%` }}></div>
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 w-10 text-right">{task.progress}%</span>
+                    </div>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full self-start sm:self-center ${statusStyles[task.status]}`}>{task.status}</span>
+                    <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="text-xs font-semibold text-blue-600 hover:underline sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-end sm:self-center">Details</button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="text-center py-16 text-slate-500">
+              <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-slate-400" />
+              <p className="mt-2 font-semibold">No {activeTab.toLowerCase()} tasks.</p>
+            </div>
+          )}
+        </div>
       </div>
       <TaskDetailsModal
         isOpen={!!viewingTask}
@@ -909,66 +986,79 @@ const MyTasks = () => {
 };
 
 const MyReportHistory = ({ employeeId }) => {
+  const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId);
   const [selectedReport, setSelectedReport] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
 
+  useEffect(() => {
+    if (reports.length > 0 && !selectedReport) {
+      setSelectedReport(reports[0]);
+    }
+  }, [reports, selectedReport]);
+
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
-      if (data.taskUpdates) { // Handle new progress-based reports
+      if (data.taskUpdates) {
         return (
-          <div className="space-y-4 text-sm">
-            <strong className="font-semibold text-gray-600">Task Progress Updates:</strong>
-            <div className="space-y-2 mt-2">
-              {data.taskUpdates.map((update, i) => (
-                <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex justify-between items-center">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
-                      Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
-                    </p>
-                    <p>Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
-                  </div>
-                  {update.taskId && (
-                    <button onClick={() => {
-                      setViewingTask(update.taskId);
-                      setViewingTaskNumber(i + 1);
-                    }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
-                  )}
+          <div className="space-y-3">
+            {data.taskUpdates.map((update, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <div className="flex justify-between items-start">
+                  <p className="font-semibold text-slate-800">{update.taskId?.title || 'Unknown Task'}</p>
+                  <button onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }} className="text-xs font-semibold text-blue-600 hover:underline">Details</button>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="w-full bg-slate-200 rounded-full h-1.5">
+                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${update.completion}%` }}></div>
+                  </div>
+                  <span className="text-sm font-bold text-blue-600 w-12 text-right">{update.completion}%</span>
+                </div>
+              </div>
+            ))}
           </div>
         );
       }
-      // Fallback for old report format
-      return (
-        <div className="space-y-6 text-sm">
-          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
-        </div>
-      );
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{JSON.stringify(data, null, 2)}</p>;
     } catch (e) {
-      return <p className="whitespace-pre-wrap">{content}</p>;
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{content}</p>;
     }
   };
 
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading report history...</div>;
+  }
+
   return (
-    <div className="flex h-full bg-slate-100">
-      <aside className="w-72 flex-shrink-0 border-r border-gray-200 bg-gray-100">
-        <PastReportsList employeeId={employeeId} onSelectReport={setSelectedReport} activeReportId={selectedReport?._id} />
-      </aside>
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        {selectedReport ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex justify-between">
-              {new Date(selectedReport.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
-            </h3>
-            {renderReportContent(selectedReport.content)}
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Report History</h1>
+        <p className="text-slate-500 mt-2">Review your previously submitted daily progress reports.</p>
+      </div>
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-lg flex flex-col">
+          <h2 className="text-lg font-semibold p-4 border-b text-slate-800">Report Dates</h2>
+          <div className="flex-1 overflow-y-auto">
+            <PastReportsList reports={reports} onSelectReport={setSelectedReport} activeReportId={selectedReport?._id} />
           </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">Select a report from the history to view its details.</div>
-        )}
-      </main>
+        </div>
+        <div className="lg:col-span-3">
+          {selectedReport ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+              <h3 className="text-xl font-bold text-slate-800 mb-1">{new Date(selectedReport.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</h3>
+              <p className="text-sm text-slate-500 mb-6">Task progress submitted on this day.</p>
+              {renderReportContent(selectedReport.content)}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-white rounded-2xl border-2 border-dashed p-8">
+              <ArchiveBoxIcon className="h-16 w-16 text-slate-400 mb-4" />
+              <p className="font-semibold">No Report History Found</p>
+              <p className="text-sm">You have not submitted any reports yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
       <TaskDetailsModal
         isOpen={!!viewingTask}
         onClose={() => setViewingTask(null)}
@@ -1045,7 +1135,7 @@ const MyDailyReport = ({ employeeId }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto bg-slate-50/50">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Today's Progress Report</h1>
@@ -1067,41 +1157,66 @@ const MyDailyReport = ({ employeeId }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {assignedTasks.filter(t => t.status !== 'Completed').map((task, index) => (
-          <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
+        {assignedTasks
+          .filter(t => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+          })
+          .map((task, index) => (
+          <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col relative">
             <div className="p-5 border-b border-slate-200"> 
               <h3 className="font-bold text-lg text-slate-800">
                 Task {index + 1}: {task.title}
               </h3>
               <p className="text-sm text-slate-500 mt-1">{task.description}</p>
             </div>
-            <div className="p-5 flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-4">
-                <div className="relative w-full">
-                  <div className="absolute top-1/2 -translate-y-1/2 h-2 w-full bg-slate-200 rounded-full"></div>
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const startDate = task.startDate ? new Date(task.startDate) : null;
+              if (startDate && startDate > today) {
+                return (
+                  <div className="absolute inset-0 bg-slate-100/50 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
+                    <p className="font-bold text-slate-500 bg-white/70 px-4 py-2 rounded-lg shadow-sm">Starts on {startDate.toLocaleDateString()}</p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            <div className="p-6 flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-5">
+                <span className={`font-bold w-16 text-center text-2xl tabular-nums ${isReadOnly ? 'text-slate-500' : 'text-blue-600'}`}>
+                  {progress[task._id] || 0}%
+                </span>
+                <div className="relative w-full h-4 flex items-center">
+                  <div className="absolute h-1.5 w-full bg-slate-200 rounded-full"></div>
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 h-2 bg-blue-500 rounded-full"
+                    className="absolute h-1.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
                     style={{ width: `${progress[task._id] || 0}%` }}
                   ></div>
                   <input
                     type="range"
                     min="0"
                     max="100"
-                    step="10"
+                    step="5"
                     value={progress[task._id] || 0}
                     onChange={(e) => handleProgressChange(task._id, e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full h-2 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
+                    disabled={isReadOnly || (task.startDate && new Date(task.startDate) > new Date())}
+                    className="w-full h-4 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
                   />
                 </div>
-                <span className={`font-bold w-16 text-center text-xl ${isReadOnly ? 'text-slate-500' : 'text-blue-600'}`}>
-                  {progress[task._id] || 0}%
-                </span>
               </div>
             </div>
           </div>
         ))}
-        {assignedTasks.filter(t => t.status !== 'Completed').length === 0 && (
+        {assignedTasks.filter(t => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+          }).length === 0 && (
           <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
             <p className="mt-4 font-semibold text-lg">All tasks are completed!</p>
@@ -1116,6 +1231,27 @@ const MyDailyReport = ({ employeeId }) => {
 const ManagerDashboard = () => {
 
   const [activeComponent, setActiveComponent] = useState('dashboard');
+
+  // Inject slider thumb styles
+  useEffect(() => {
+    const styleId = 'slider-thumb-styles';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+      .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -1125,6 +1261,36 @@ const ManagerDashboard = () => {
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+
+  useEffect(() => {
+    const styleId = 'slider-thumb-styles';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+      .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
+
+  const companyLogo = useMemo(() => {
+    if (user?.company === 'Volga Infosys') {
+      return '/src/assets/volgainfosys.png';
+    }
+    if (user?.company === 'Star Publicity') {
+      return '/src/assets/fevicon.png';
+    }
+    return '/src/assets/fevicon.png';
+  }, [user?.company]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1209,7 +1375,7 @@ const ManagerDashboard = () => {
       case 'my-report': return <MyDailyReport employeeId={user?._id} />;
       case 'my-history': return <MyReportHistory employeeId={user?._id} />;
       case 'profile': return <ManagerProfile user={user} />;
-      case 'attendance': return <AttendanceCalendar employeeId={user._id} />;
+      case 'attendance': return <MyAttendance employeeId={user._id} />;
       case 'my-tasks': return <MyTasks />;
       case 'analytics': return <Analytics user={user} />;
       case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} />;
@@ -1241,7 +1407,7 @@ const ManagerDashboard = () => {
         {/* Sidebar */}
         <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
           <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
-            <img src="/src/assets/fevicon.png" alt="Company Logo" className="h-9 w-9 rounded-full" />
+            <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
             <span className="text-lg font-bold text-gray-800 tracking-tight">
               {user?.company || 'Company Portal'}
             </span>

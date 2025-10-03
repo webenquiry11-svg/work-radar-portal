@@ -1,130 +1,174 @@
-import React, { useMemo, useState } from 'react';
-import { useGetAllTasksQuery } from '../services/EmployeApi';
-import { CheckCircleIcon, ClockIcon, FunnelIcon } from '@heroicons/react/24/outline';
-
-const TaskList = ({ title, tasks, icon: Icon, iconColor }) => {
-  const priorityStyles = {
-    High: 'bg-red-100 text-red-800',
-    Medium: 'bg-yellow-100 text-yellow-800',
-    Low: 'bg-green-100 text-green-800',
-  };
-
-  const completionCategoryStyles = {
-    Pending: 'bg-red-100 text-red-800',
-    Low: 'bg-yellow-100 text-yellow-800',
-    Moderate: 'bg-blue-100 text-blue-800',
-    Completed: 'bg-emerald-100 text-emerald-800',
-  };
-
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-lg flex-1 flex flex-col">
-      <div className={`p-5 border-b border-slate-200 flex items-center gap-3 ${iconColor}`}>
-        <Icon className="h-6 w-6" />
-        <h2 className="text-xl font-bold">{title}</h2>
-      </div>
-      <div className="overflow-y-auto">
-        {tasks.length > 0 ? (
-          <ul className="divide-y divide-slate-200">
-            {tasks.map(task => (
-              <li key={task._id} className="p-4 hover:bg-slate-50/50">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold text-slate-800">{task.title}</p>
-                    <p className="text-xs text-slate-500 mt-1 max-w-md truncate" title={task.description}>{task.description}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${priorityStyles[task.priority]}`}>
-                    {task.priority}
-                  </span>
-                </div>
-                {title === 'Completed Tasks' && task.completionCategory !== 'N/A' && (
-                  <div className="mt-2">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${completionCategoryStyles[task.completionCategory]}`}>
-                      Final Grade: {task.completionCategory}
-                    </span>
-                  </div>
-                )}
-                <div className="mt-3 flex justify-between items-center text-xs text-slate-500">
-                  <div>
-                    Assigned to: <span className="font-medium text-slate-700">{task.assignedTo?.name || 'N/A'}</span>
-                  </div>
-                  <div>
-                    By: <span className="font-medium text-slate-700">{task.assignedBy?.name || 'N/A'}</span>
-                  </div>
-                  {task.dueDate && (
-                    <div>
-                      Due: <span className="font-medium text-slate-700">{new Date(task.dueDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="p-10 text-center text-slate-500">
-            No tasks in this category.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+import React, { useMemo } from 'react';
+import { useGetAllTasksQuery } from '../services/EmployeApi.js';
+import {
+  ClockIcon,
+  PlayIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/solid';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const TaskOverview = () => {
   const { data: allTasks = [], isLoading } = useGetAllTasksQuery();
-  const [completionFilter, setCompletionFilter] = useState('');
 
-  const { completedTasks, pendingTasks } = useMemo(() => {
-    const allCompleted = allTasks.filter(task => task.status === 'Completed');
-    const allPending = allTasks.filter(task => task.status !== 'Completed');
+  const overviewData = useMemo(() => {
+    if (!allTasks || allTasks.length === 0) {
+      return {
+        chartData: [],
+        highPriorityTasks: [],
+        overdueTasks: [],
+        totalTasks: 0,
+      };
+    }
 
-    const filteredCompleted = completionFilter
-      ? allCompleted.filter(task => task.completionCategory === completionFilter)
-      : allCompleted;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    return { completedTasks: filteredCompleted, pendingTasks: allPending };
-  }, [allTasks, completionFilter]);
+    const statusCounts = {
+      Pending: 0,
+      'In Progress': 0,
+      'Pending Verification': 0,
+      Completed: 0,
+    };
+
+    allTasks.forEach(task => {
+      if (statusCounts.hasOwnProperty(task.status)) {
+        statusCounts[task.status]++;
+      }
+    });
+
+    const chartData = [
+      { name: 'Pending', value: statusCounts.Pending },
+      { name: 'In Progress', value: statusCounts['In Progress'] },
+      { name: 'Verification', value: statusCounts['Pending Verification'] },
+      { name: 'Completed', value: statusCounts.Completed },
+    ];
+
+    const activeTasks = allTasks.filter(t => t.status !== 'Completed');
+
+    return {
+      chartData,
+      highPriorityTasks: activeTasks.filter(t => t.priority === 'High'),
+      overdueTasks: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < today),
+      totalTasks: allTasks.length,
+    };
+  }, [allTasks]);
+
+  const TASK_COLORS = {
+    'Pending': '#F59E0B', // Amber
+    'In Progress': '#3B82F6', // Blue
+    'Verification': '#8B5CF6', // Purple
+    'Completed': '#10B981', // Emerald
+  };
+
+  const TaskListItem = ({ task, isOverdue }) => (
+    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 transition-colors">
+      <div className="flex items-center gap-3">
+        <img src={task.assignedTo?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo?.name || '?'}`} alt={task.assignedTo?.name} className="h-8 w-8 rounded-full object-cover" />
+        <div>
+          <p className="font-semibold text-sm text-slate-800">{task.title}</p>
+          <p className="text-xs text-slate-500">To: {task.assignedTo?.name || 'N/A'}</p>
+        </div>
+      </div>
+      {isOverdue && task.dueDate && (
+        <div className="text-right">
+          <p className="text-sm font-bold text-red-600">Overdue</p>
+          <p className="text-xs text-red-500">{new Date(task.dueDate).toLocaleDateString()}</p>
+        </div>
+      )}
+    </li>
+  );
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading task overview...</div>;
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
-      <div className="mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-8 text-center">
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Tasks Overview</h1>
         <p className="text-slate-500 mt-2">Monitor the status of all tasks across the organization.</p>
       </div>
-      <div className="mb-6 flex justify-end">
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="h-5 w-5 text-slate-400" />
-          <label htmlFor="completionFilter" className="text-sm font-medium text-slate-700">Filter Completed by Grade:</label>
-          <select
-            id="completionFilter"
-            onChange={(e) => setCompletionFilter(e.target.value)}
-            value={completionFilter}
-            className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500"
-          >
-            <option value="">All Grades</option>
-            <option value="Completed">Completed</option>
-            <option value="Moderate">Moderate</option>
-            <option value="Low">Low</option>
-            <option value="Pending">Pending</option>
-          </select>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="relative h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={overviewData.chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={80}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {overviewData.chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={TASK_COLORS[entry.name]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-5xl font-bold text-slate-800">{overviewData.totalTasks}</p>
+              <p className="text-sm font-semibold text-slate-500">Total Tasks</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-lg">
+              <ClockIcon className="h-7 w-7 text-yellow-500 mb-2" />
+              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Pending')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600">Pending</p>
+            </div>
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-5 rounded-lg">
+              <PlayIcon className="h-7 w-7 text-blue-500 mb-2" />
+              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'In Progress')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600">In Progress</p>
+            </div>
+            <div className="bg-purple-50 border-l-4 border-purple-400 p-5 rounded-lg">
+              <ExclamationTriangleIcon className="h-7 w-7 text-purple-500 mb-2" />
+              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Verification')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600">Verification</p>
+            </div>
+            <div className="bg-emerald-50 border-l-4 border-emerald-400 p-5 rounded-lg">
+              <CheckCircleIcon className="h-7 w-7 text-emerald-500 mb-2" />
+              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Completed')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600">Completed</p>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <TaskList
-          title="Pending & In-Progress Tasks"
-          tasks={pendingTasks}
-          icon={ClockIcon}
-          iconColor="text-blue-500"
-        />
-        <TaskList
-          title="Completed Tasks"
-          tasks={completedTasks}
-          icon={CheckCircleIcon}
-          iconColor="text-emerald-500"
-        />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 flex flex-col">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">High-Priority Active Tasks</h3>
+          <div className="flex-1 overflow-y-auto -mr-2 pr-2">
+            {overviewData.highPriorityTasks.length > 0 ? (
+              <ul className="space-y-2">
+                {overviewData.highPriorityTasks.map(task => <TaskListItem key={task._id} task={task} />)}
+              </ul>
+            ) : (
+              <p className="text-center text-sm text-slate-400 pt-10">No high-priority tasks are active.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 flex flex-col">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">Overdue Tasks</h3>
+          <div className="flex-1 overflow-y-auto -mr-2 pr-2">
+            {overviewData.overdueTasks.length > 0 ? (
+              <ul className="space-y-2">
+                {overviewData.overdueTasks.map(task => <TaskListItem key={task._id} task={task} isOverdue={true} />)}
+              </ul>
+            ) : (
+              <p className="text-center text-sm text-slate-400 pt-10">No tasks are currently overdue.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

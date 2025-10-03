@@ -143,8 +143,8 @@ const Dashboard = () => {
             <p className="font-bold text-slate-800">{dashboardData.topCandidate.employee.name}</p>
             <p className="text-sm text-slate-500">Score: {dashboardData.topCandidate.totalScore}</p>
             <div className="mt-2 flex gap-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">C: {dashboardData.topCandidate.stats.Completed}</span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">M: {dashboardData.topCandidate.stats.Moderate}</span>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">C: {dashboardData.topCandidate.stats.Completed.count}</span>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">M: {dashboardData.topCandidate.stats.Moderate.count}</span>
             </div>
           </div>
         ) : (
