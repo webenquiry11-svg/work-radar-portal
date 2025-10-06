@@ -81,15 +81,16 @@ class TaskController {
       }
 
       // Allow the user who assigned the task OR the user it is assigned to, to update it.
-      const isAssignee = task.assignedTo.toString() === updaterId.toString(); 
-      const isAssignerWithPermission = task.assignedBy.toString() === updaterId.toString() && req.user.canUpdateTask; 
+      const isAssignee = task.assignedTo._id.toString() === updaterId.toString();
+      const isAssigner = task.assignedBy.toString() === updaterId.toString();
       const isAdmin = req.user.role === 'Admin';
 
       // An assignee can only update the status field.
-      if (isAssignee && (Object.keys(req.body).length > 1 || !req.body.status)) {
+      const canUpdate = isAdmin || (isAssigner && req.user.canUpdateTask);
+
+      if (isAssignee && (title || description || dueDate || priority)) {
         return res.status(403).json({ message: 'You are only authorized to update the status of this task.' });
-      } else if (!isAssignee && !isAssignerWithPermission && !isAdmin) { 
-        // An assigner can only edit if they have permission. An admin can always edit. 
+      } else if (!isAssignee && !canUpdate) {
         return res.status(403).json({ message: 'You are not authorized to update this task.' });
       }
 
@@ -193,6 +194,11 @@ class TaskController {
       task.status = 'In Progress'; // Revert status
       task.rejectionReason = reason;
       task.progress = parseInt(finalPercentage, 10);
+      // Add a comment to record the rejection event
+      task.comments.push({
+        text: `Task rejected with progress set to ${task.progress}%. Reason: ${reason}`,
+        author: rejectorId,
+      });
       await task.save();
 
       await Notification.create({

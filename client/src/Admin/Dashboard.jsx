@@ -16,8 +16,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-
-const Dashboard = () => {
+const Dashboard = ({ onNavigate }) => {
   const { data: stats, isLoading: isLoadingStats } = useGetDashboardStatsQuery();
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
   const { data: eomCandidates = [], isLoading: isLoadingEOM } = useGetEmployeeOfTheMonthCandidatesQuery({
@@ -80,7 +79,10 @@ const Dashboard = () => {
 
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-20 z-20 relative">
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate('employees')}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700">{dashboardData.totalEmployees}</p>
           <p className="text-sm font-semibold text-gray-500">Total Employees</p>
@@ -90,12 +92,18 @@ const Dashboard = () => {
           <p className="text-2xl font-bold text-green-700">{dashboardData.activeDepartments}</p>
           <p className="text-sm font-semibold text-gray-500">Active Departments</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-indigo-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate('view-tasks')}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-indigo-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <BriefcaseIcon className="h-10 w-10 text-indigo-500 mb-2" />
           <p className="text-2xl font-bold text-indigo-700">{dashboardData.totalTasks}</p>
           <p className="text-sm font-semibold text-gray-500">Total Tasks</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <ClockIcon className="h-10 w-10 text-amber-500 mb-2" />
           <p className="text-2xl font-bold text-amber-700">{dashboardData.tasksPendingVerification}</p>
           <p className="text-sm font-semibold text-gray-500">Pending Verification</p>

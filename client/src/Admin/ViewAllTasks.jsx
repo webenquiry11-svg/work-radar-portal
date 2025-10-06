@@ -219,16 +219,20 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   );
 };
 
-const ViewAllTasks = () => {
+const ViewAllTasks = ({ initialFilters = {} }) => {
   const { data: tasks = [], isLoading, refetch } = useGetAllTasksQuery();
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ status: '', priority: '' });
+  const [filters, setFilters] = useState({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
+
+  useEffect(() => {
+    setFilters({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
+  }, [initialFilters]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -267,6 +271,7 @@ const ViewAllTasks = () => {
   const statusStyles = {
     Pending: 'bg-slate-100 text-slate-800',
     'In Progress': 'bg-blue-100 text-blue-800',
+    'Pending Verification': 'bg-purple-100 text-purple-800',
     Completed: 'bg-emerald-100 text-emerald-800',
   };
 
@@ -306,6 +311,7 @@ const ViewAllTasks = () => {
             <select onChange={(e) => handleFilterChange('status', e.target.value)} value={filters.status} className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
               <option value="">All Statuses</option>
               <option>Pending</option>
+              <option>Pending Verification</option>
               <option>In Progress</option>
               <option>Completed</option>
             </select>

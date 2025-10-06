@@ -96,15 +96,19 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, task, isDeleting 
   );
 };
 
-const ViewTeamTasks = ({ teamLeadId }) => {
+const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
   const { data: allTasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery();
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ status: '', priority: '' });
+  const [filters, setFilters] = useState({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const currentUser = useSelector(selectCurrentUser);
+
+  useEffect(() => {
+    setFilters({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
+  }, [initialFilters]);
 
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !teamLeadId) return new Set();

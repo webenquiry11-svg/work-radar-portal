@@ -59,6 +59,15 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving }) => {
 
   if (!isOpen) return null;
 
+  const getGradeFromPercentage = (p) => {
+    if (p === 100) return { label: 'Completed', color: 'text-emerald-600' };
+    if (p >= 80) return { label: 'Moderate', color: 'text-blue-600' };
+    if (p >= 60) return { label: 'Low', color: 'text-amber-600' };
+    return { label: 'Pending', color: 'text-red-600' };
+  };
+
+  const currentGrade = getGradeFromPercentage(finalPercentage);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -75,7 +84,10 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving }) => {
                 onChange={(e) => setFinalPercentage(parseInt(e.target.value, 10))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <span className="font-semibold w-12 text-right text-blue-700">{finalPercentage}%</span>
+              <div className="text-right w-24">
+                <span className="font-semibold text-blue-700">{finalPercentage}%</span>
+                <span className={`block text-xs font-bold ${currentGrade.color}`}>{currentGrade.label}</span>
+              </div>
             </div>
           </div>
           <textarea

@@ -256,10 +256,12 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // Find next due date for user's own tasks
   const nextMyTaskDueDate = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to midnight for date-only comparison
     const upcoming = tasks
       .filter(task => task.dueDate && (task.status === 'Pending' || task.status === 'In Progress'))
       .map(task => new Date(task.dueDate))
-      .filter(date => date >= new Date())
+      .filter(date => date >= today)
       .sort((a, b) => a - b);
     return upcoming.length > 0 ? upcoming[0] : null;
   }, [tasks]);
@@ -580,11 +582,13 @@ const MyTasks = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const active = myTasks.filter(t => t.status !== 'Completed');
+    // Active tasks are those not completed AND their due date hasn't passed.
+    const active = myTasks.filter(t => t.status !== 'Completed' && (!t.dueDate || new Date(t.dueDate) >= today));
     const completed = myTasks.filter(t => t.status === 'Completed');
     const overdue = active.filter(t => t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
+      // Overdue is now a separate category and not part of active
       active: active.length,
       overdue: overdue.length,
       completed: completed.length,
@@ -1007,6 +1011,11 @@ const MyDailyReport = ({ employeeId }) => {
     return isPastCutoff || isSubmitted;
   }, [todaysReport]);
 
+  const isTaskReadOnly = (task) => {
+    // A task is read-only if the main report is read-only, or if the task itself was rejected.
+    return isReadOnly || (task.rejectionReason && task.status === 'In Progress');
+  };
+
   useEffect(() => {
     // Initialize or update progress state when tasks or the report status changes
     const initialProgress = {};
@@ -1082,10 +1091,20 @@ const MyDailyReport = ({ employeeId }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {assignedTasks
           .filter(t => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+            // A task should be visible if:
+            // 1. Its status is 'Pending' or 'In Progress' (and not rejected).
+            // 2. It has no start date OR its start date is today or in the past.
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+            const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+
+            // A task should be visible if its status is 'Pending' or 'In Progress'.
+            // It should be hidden if it's completed or pending verification.
+            const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+            const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+
+            return isNotCompleted && hasStarted;
           })
           .map((task, index) => (
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
@@ -1113,7 +1132,7 @@ const MyDailyReport = ({ employeeId }) => {
                     step="5"
                     value={progress[task._id] || 0}
                     onChange={(e) => handleProgressChange(task._id, e.target.value)}
-                        disabled={isTaskReadOnly}
+                        disabled={isTaskReadOnly(task)}
                     className="w-full h-4 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
                   />
                 </div>
@@ -1122,10 +1141,15 @@ const MyDailyReport = ({ employeeId }) => {
           </div>
         ))}
         {assignedTasks.filter(t => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+            // Use UTC dates for reliable, timezone-agnostic comparison
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+            const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+
+            const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+            const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+            return isNotCompleted && hasStarted;
           }).length === 0 && (
           <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />

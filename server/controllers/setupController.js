@@ -28,12 +28,33 @@ class SetupController {
         return res.status(403).json({ message: 'Admin account already exists.' });
       }
 
-      const { name, email, password } = req.body;
-      if (!name || !email || !password) {
-        return res.status(400).json({ message: 'All fields are required.' });
+      const {
+        name, email, password, employeeId, address, gender, country, city,
+        qualification, experience, workType, company, workLocation, shift, department
+      } = req.body;
+
+      if (!name || !email || !password || !employeeId || !company || !department) {
+        return res.status(400).json({ message: 'Please fill all required fields.' });
       }
 
-      const admin = new Employee({ name, email, password, role: 'Admin', employeeId: 'ADMIN-001', dashboardAccess: 'Admin Dashboard' });
+      const profilePicture = req.file ? req.file.path : '';
+
+      const admin = new Employee({
+        name, email, password, employeeId, company, department,
+        profilePicture, address, gender, country, city,
+        qualification, experience, workType, workLocation, shift,
+        role: 'Admin',
+        dashboardAccess: 'Admin Dashboard',
+        // Grant all permissions to the first admin by default
+        canEditProfile: true,
+        canViewTeam: true,
+        canUpdateTask: true,
+        canApproveTask: true,
+        canAssignTask: true,
+        canDeleteTask: true,
+        canViewAnalytics: true,
+      });
+
       await admin.save();
 
       res.status(201).json({ message: 'Admin account created successfully.' });

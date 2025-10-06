@@ -10,6 +10,7 @@ import ManagerDashboard from "./Senior/ManagerDashboard";
 import CurrentUserProvider from "./app/CurrentUserProvider";
 import { useCheckAdminSetupQuery } from "./services/EmployeApi";
 import AdminSetup from "./Form/AdminSetup";
+import InactivityDetector from "./app/InactivityDetector";
 
 function App() {
   const user = useSelector(selectCurrentUser);
@@ -24,35 +25,37 @@ function App() {
   }
 
   return (
-    <Router>
-      <Toaster position="top-right" />
-      <Routes>
-        <Route path="/login" element={!user ? <Login /> : <Navigate to={
-          user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
-          user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
-          '/employee-dashboard'
-        } />} />
-        <Route
-          path="/employee-dashboard"
-          element={user && user.dashboardAccess === 'Employee Dashboard' ? (
-            <CurrentUserProvider><EmployeeDashboard employeeId={user._id} /></CurrentUserProvider>
-          ) : <Navigate to="/login" />}
-        />
-        <Route
-          path="/manager-dashboard"
-          element={user && user.dashboardAccess === 'Manager Dashboard' ? <ManagerDashboard /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/admin-dashboard"
-          element={user && user.dashboardAccess === 'Admin Dashboard' ? <AdminDashboard /> : <Navigate to="/login" />}
-        />
-        <Route 
-          path="/*" 
-          element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} 
-        />
-      </Routes>
-    </Router>
-    );
+    <InactivityDetector>
+      <CurrentUserProvider>
+        <Router>
+          <Toaster position="top-right" />
+          <Routes>
+            <Route path="/login" element={!user ? <Login /> : <Navigate to={
+              user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
+              user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
+              '/employee-dashboard'
+            } />} />
+            <Route
+              path="/employee-dashboard"
+              element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard employeeId={user._id} /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/manager-dashboard"
+              element={user && user.dashboardAccess === 'Manager Dashboard' ? <ManagerDashboard /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/admin-dashboard"
+              element={user && user.dashboardAccess === 'Admin Dashboard' ? <AdminDashboard /> : <Navigate to="/login" />}
+            />
+            <Route 
+              path="/*" 
+              element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} 
+            />
+          </Routes>
+        </Router>
+      </CurrentUserProvider>
+    </InactivityDetector>
+  );
 }
 
 export default App;

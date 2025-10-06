@@ -1,6 +1,7 @@
 const Report = require('../models/report.js');
 const Holiday = require('../models/holiday.js');
 const Leave = require('../models/leave.js');
+const Task = require('../models/task.js');
 
 class AttendanceController {
   static getAttendanceForMonth = async (req, res) => {
@@ -25,6 +26,9 @@ class AttendanceController {
       const reports = await Report.find({ employee: employeeId, reportDate: { $gte: startDate, $lte: endDate }, status: 'Submitted' });
       const holidays = await Holiday.find({ date: { $gte: startDate, $lte: endDate } });
       const leaves = await Leave.find({ employee: employeeId, date: { $gte: startDate, $lte: endDate } });
+
+      // Check if the employee has any tasks assigned to them at all.
+      const taskCount = await Task.countDocuments({ assignedTo: employeeId });
 
       const reportDates = new Set(reports.map(r => r.reportDate.toISOString().split('T')[0]));
       const holidayDates = new Set(holidays.map(h => h.date.toISOString().split('T')[0]));
@@ -55,8 +59,9 @@ class AttendanceController {
           } else if (reportDates.has(dateStr)) { // Report was submitted
             status = 'Present';
           } else if (d.getTime() < today.getTime()) {
-            // It's a past working day with no report, so it's an absence.
-            status = 'Absent';
+            // It's a past working day with no report.
+            // If the user has no tasks assigned ever, mark as present. Otherwise, absent.
+            status = (taskCount === 0) ? 'Present' : 'Absent';
           } else {
             // It's the current working day with no report yet.
             status = 'Pending';

@@ -52,6 +52,11 @@ class ReportController {
             for (const update of reportContent.taskUpdates) {
               const task = await Task.findById(update.taskId);
               if (task) {
+                // If the task was previously rejected, the progress set by the manager is final.
+                if (task.rejectionReason && task.status === 'In Progress') {
+                  continue; // Skip progress update from employee
+                }
+
                 const completion = parseInt(update.completion, 10);
                 task.progress = completion;
 

@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // Import bcrypt
+const Task = require('./task.js');
+const Report = require('./report.js');
+const Notification = require('./notification.js');
+const Leave = require('./leave.js');
 
 const employeeSchema = new mongoose.Schema({
   name: {

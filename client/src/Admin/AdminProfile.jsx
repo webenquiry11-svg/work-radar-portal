@@ -5,6 +5,27 @@ import { useUpdateEmployeeMutation } from '../services/EmployeApi';
 import { setCredentials } from '../app/authSlice';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 
+const InfoField = ({ label, value }) => (
+  <div>
+    <p className="text-sm text-gray-500">{label}</p>
+    <p className="text-md font-semibold text-gray-800">{value || 'N/A'}</p>
+  </div>
+);
+  
+const EditField = ({ label, name, value, onChange, type = 'text' }) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
+    <input
+      type={type}
+      name={name}
+      id={name}
+      value={value}
+      onChange={onChange}
+      className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+);
+
 const AdminProfile = ({ user }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
@@ -57,27 +78,6 @@ const AdminProfile = ({ user }) => {
       console.error('Failed to update profile:', err);
     }
   };
-
-  const InfoField = ({ label, value }) => (
-    <div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-md font-semibold text-gray-800">{value || 'N/A'}</p>
-    </div>
-  );
-  
-  const EditField = ({ label, name, value, onChange, type = 'text' }) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
-      <input
-        type={type}
-        name={name}
-        id={name}
-        value={value}
-        onChange={onChange}
-        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
-      />
-    </div>
-  );
 
   return (
     <div className="p-8">

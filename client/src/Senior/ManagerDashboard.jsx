@@ -152,6 +152,54 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   );
 };
 
+const MyAttendance = ({ employeeId }) => {
+  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery();
+
+  const legendItems = [
+    { label: 'Present', color: 'bg-green-100 text-green-800' },
+    { label: 'Absent', color: 'bg-red-100 text-red-800' },
+    { label: 'Holiday', color: 'holiday-gradient text-white' },
+    { label: 'On Leave', color: 'bg-yellow-100 text-yellow-800' },
+    { label: 'Future', color: 'bg-white' },
+  ];
+
+  const upcomingHolidays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return holidays
+      .filter(h => new Date(h.date) >= today)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [holidays]);
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Attendance</h1>
+        <p className="text-slate-500 mt-2">Review your monthly attendance record.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+          <AttendanceCalendar employeeId={employeeId} />
+        </div>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Upcoming Holidays</h3>
+            <div className="space-y-3">
+              {isLoadingHolidays ? <p className="text-sm text-slate-400">Loading...</p> : upcomingHolidays.length > 0 ? upcomingHolidays.slice(0, 5).map(holiday => (
+                <div key={holiday._id} className="p-3 rounded-lg bg-amber-50">
+                  <p className="font-semibold text-sm text-amber-800">{holiday.name}</p>
+                  <p className="text-xs text-amber-600">{new Date(holiday.date).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })}</p>
+                </div>
+              )) : (<p className="text-sm text-slate-400">No upcoming holidays found.</p>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TeamReports = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -401,7 +449,7 @@ const TeamInformation = ({ seniorId }) => {
   );
 };
 
-const Dashboard = ({ user }) => {
+const Dashboard = ({ user, onNavigate }) => {
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
@@ -520,17 +568,26 @@ const Dashboard = ({ user }) => {
 
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 -mt-20 z-20 relative">
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate('team-info')}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700">{stats?.teamMemberCount ?? 0}</p>
           <p className="text-sm font-semibold text-gray-500">Team Members</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate('view-team-tasks')}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
           <p className="text-2xl font-bold text-purple-700">{stats?.totalTeamTasks ?? 0}</p>
           <p className="text-sm font-semibold text-gray-500">Team Tasks</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200">
+        <div
+          onClick={() => onNavigate && onNavigate({ component: 'view-team-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
+          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        >
           <CheckBadgeIcon className="h-10 w-10 text-amber-500 mb-2" />
           <p className="text-2xl font-bold text-amber-700">{stats?.pendingApprovalsCount ?? 0}</p>
           <p className="text-sm font-semibold text-gray-500">Pending Approvals</p>
@@ -1079,8 +1136,13 @@ const MyDailyReport = ({ employeeId }) => {
     const now = new Date();
     const isPastCutoff = now.getHours() >= 19;
     const isSubmitted = todaysReport?.status === 'Submitted';
-    return isPastCutoff || isSubmitted;
+    return isPastCutoff || isSubmitted; // The main read-only check
   }, [todaysReport]);
+
+  const isTaskReadOnly = (task) => {
+    // A task is read-only if the main report is read-only, or if the task itself was rejected.
+    return isReadOnly || (task.rejectionReason && task.status === 'In Progress');
+  };
 
   useEffect(() => {
     // Initialize or update progress state when tasks or the report status changes
@@ -1159,10 +1221,20 @@ const MyDailyReport = ({ employeeId }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {assignedTasks
           .filter(t => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+            // A task should be visible if:
+            // 1. Its status is 'Pending' or 'In Progress' (and not rejected).
+            // 2. It has no start date OR its start date is today or in the past.
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+            const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+
+            // A task should be visible if its status is 'Pending' or 'In Progress'.
+            // It should be hidden if it's completed or pending verification.
+            const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+            const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+
+            return isNotCompleted && hasStarted;
           })
           .map((task, index) => (
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col relative">
@@ -1173,13 +1245,14 @@ const MyDailyReport = ({ employeeId }) => {
               <p className="text-sm text-slate-500 mt-1">{task.description}</p>
             </div>
             {(() => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const startDate = task.startDate ? new Date(task.startDate) : null;
-              if (startDate && startDate > today) {
+              const now = new Date();
+              const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+              const startDateUTC = task.startDate ? new Date(Date.UTC(new Date(task.startDate).getUTCFullYear(), new Date(task.startDate).getUTCMonth(), new Date(task.startDate).getUTCDate())) : null;
+
+              if (startDateUTC && startDateUTC > todayUTC) {
                 return (
                   <div className="absolute inset-0 bg-slate-100/50 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
-                    <p className="font-bold text-slate-500 bg-white/70 px-4 py-2 rounded-lg shadow-sm">Starts on {startDate.toLocaleDateString()}</p>
+                    <p className="font-bold text-slate-500 bg-white/70 px-4 py-2 rounded-lg shadow-sm">Starts on {new Date(task.startDate).toLocaleDateString()}</p>
                   </div>
                 );
               }
@@ -1203,7 +1276,7 @@ const MyDailyReport = ({ employeeId }) => {
                     step="5"
                     value={progress[task._id] || 0}
                     onChange={(e) => handleProgressChange(task._id, e.target.value)}
-                    disabled={isReadOnly || (task.startDate && new Date(task.startDate) > new Date())}
+                    disabled={isTaskReadOnly(task) || (task.startDate && new Date(task.startDate) > new Date())}
                     className="w-full h-4 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
                   />
                 </div>
@@ -1212,10 +1285,14 @@ const MyDailyReport = ({ employeeId }) => {
           </div>
         ))}
         {assignedTasks.filter(t => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-            return t.status !== 'Completed' && (!dueDate || dueDate >= today);
+          const now = new Date();
+          const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+          const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+
+          const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+          const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+          return isNotCompleted && hasStarted;
           }).length === 0 && (
           <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
@@ -1230,7 +1307,7 @@ const MyDailyReport = ({ employeeId }) => {
  
 const ManagerDashboard = () => {
 
-  const [activeComponent, setActiveComponent] = useState('dashboard');
+  const [activeView, setActiveView] = useState({ component: 'dashboard', props: {} });
 
   // Inject slider thumb styles
   useEffect(() => {
@@ -1367,147 +1444,155 @@ const ManagerDashboard = () => {
     }
   };
 
-  const renderActiveComponent = () => {
-    switch (activeComponent) {
-      case 'dashboard': return <Dashboard user={user} />;
-      case 'team-reports': return user?.canViewTeam ? <TeamReports seniorId={user?._id} /> : <Dashboard user={user} />;
-      case 'team-info': return user?.canViewTeam ? <TeamInformation seniorId={user?._id} /> : <Dashboard user={user} />;
-      case 'my-report': return <MyDailyReport employeeId={user?._id} />;
-      case 'my-history': return <MyReportHistory employeeId={user?._id} />;
-      case 'profile': return <ManagerProfile user={user} />;
-      case 'attendance': return <MyAttendance employeeId={user._id} />;
-      case 'my-tasks': return <MyTasks />;
-      case 'analytics': return <Analytics user={user} />;
-      case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} />;
-      case 'assign-task': return user?.canViewTeam ? <AssignTask teamLeadId={user._id} /> : <Dashboard user={user} />;
-      case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} /> : <Dashboard user={user} />;
-      default: return <div className="p-8">Select an option.</div>;
+  const handleNavigation = (view) => {
+    if (typeof view === 'string') {
+      setActiveView({ component: view, props: {} });
+    } else {
+      setActiveView(view);
     }
   };
 
-  return (
-    <CurrentUserProvider>
-      <div className="flex h-screen bg-slate-100 font-manrope">
-        <style>
-          {`
-            @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-            .font-manrope {
-              font-family: 'Manrope', sans-serif;
-            }
-          `}
-        </style>
-        {/* Mobile Topbar */}
-        <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-50">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-          <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
-          <BellIcon className="h-6 w-6 text-gray-500" />
-        </header>
-        {/* Sidebar */}
-        <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-          <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
-            <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
-            <span className="text-lg font-bold text-gray-800 tracking-tight">
-              {user?.company || 'Company Portal'}
-            </span>
-          </div>
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navItems.map(item => (
-              <button
-                key={item.id}
-                onClick={() => { setActiveComponent(item.id); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${
-                  activeComponent === item.id
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-                }`}
-              >
-                <item.icon className="h-6 w-6" />
-                <span className="font-semibold text-sm">{item.label}</span>
-                {activeComponent === item.id && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </aside>
-        {/* Overlay for mobile sidebar */}
-        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-          <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-50 relative">
-            <h1 className="text-xl font-semibold text-gray-800">{navItems.find(i => i.id === activeComponent)?.label}</h1>
-            <div className="flex items-center gap-4">
-              <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
-                <ArrowPathIcon className="h-6 w-6" />
-              </button>
-              <div className="relative" ref={notificationRef}>
-                <button onClick={handleBellClick} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 relative">
-                  <BellIcon className="h-6 w-6" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+    const renderActiveComponent = () => {
+      switch (activeView.component) {
+        case 'dashboard': return <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'team-reports': return user?.canViewTeam ? <TeamReports seniorId={user?._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'team-info': return user?.canViewTeam ? <TeamInformation seniorId={user?._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'my-report': return <MyDailyReport employeeId={user?._id} />;
+        case 'my-history': return <MyReportHistory employeeId={user?._id} />;
+        case 'profile': return <ManagerProfile user={user} />;
+        case 'attendance': return <MyAttendance employeeId={user._id} />;
+        case 'my-tasks': return <MyTasks />;
+        case 'analytics': return <Analytics user={user} />;
+        case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'assign-task': return user?.canViewTeam ? <AssignTask teamLeadId={user._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} {...activeView.props} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
+        default: return <div className="p-8">Select an option.</div>;
+      }
+    };
+
+    return (
+      <CurrentUserProvider>
+        <div className="flex h-screen bg-slate-100 font-manrope">
+          <style>
+            {`
+              @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+              .font-manrope {
+                font-family: 'Manrope', sans-serif;
+              }
+            `}
+          </style>
+          {/* Mobile Topbar */}
+          <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-50">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+            <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
+            <BellIcon className="h-6 w-6 text-gray-500" />
+          </header>
+          {/* Sidebar */}
+          <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+            <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
+              <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
+              <span className="text-lg font-bold text-gray-800 tracking-tight">
+                {user?.company || 'Company Portal'}
+              </span>
+            </div>
+            <nav className="flex-1 px-4 py-6 space-y-2">
+              {navItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${
+                    activeView.component === item.id
+                      ? 'bg-blue-600 text-white shadow'
+                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
+                >
+                  <item.icon className="h-6 w-6" />
+                  <span className="font-semibold text-sm">{item.label}</span>
+                  {activeView.component === item.id && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
                   )}
                 </button>
-                {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
-                    <div className="p-3 font-semibold text-sm border-b">Notifications</div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.map(n => (
-                          <div 
-                            key={n._id} 
-                            onClick={() => handleNotificationClick(n)}
-                            className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
-                          >
-                            <p className="text-slate-700">{n.message}</p>
-                            <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
-                      )}
-                    </div>
-                    <div className="p-2 border-t bg-slate-50 text-center">
-                      <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="w-px h-6 bg-gray-200"></div>
-              <div className="relative" ref={profileRef}>
-                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-              <img
-                src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
-                alt="User"
-                className="h-9 w-9 rounded-full object-cover"
-              />
-              <div className="text-right hidden sm:block">
-                <div className="text-sm font-semibold text-gray-900">{user?.name || 'Manager'}</div>
-                <div className="text-xs text-gray-500">{user?.role || 'Manager'}</div>
-              </div>
-              <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              ))}
+            </nav>
+          </aside>
+          {/* Overlay for mobile sidebar */}
+          {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+            <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-50 relative">
+              <h1 className="text-xl font-semibold text-gray-800">{navItems.find(i => i.id === activeView.component)?.label}</h1>
+              <div className="flex items-center gap-4">
+                <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
+                  <ArrowPathIcon className="h-6 w-6" />
                 </button>
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
-                    <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <UserCircleIcon className="h-5 w-5" />
-                      My Profile
-                    </button>
-                    <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                      Logout
-                    </button>
-                  </div>
-                )}
+                <div className="relative" ref={notificationRef}>
+                  <button onClick={handleBellClick} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 relative">
+                    <BellIcon className="h-6 w-6" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    )}
+                  </button>
+                  {isNotificationOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
+                      <div className="p-3 font-semibold text-sm border-b">Notifications</div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length > 0 ? (
+                          notifications.map(n => (
+                            <div 
+                              key={n._id} 
+                              onClick={() => handleNotificationClick(n)}
+                              className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
+                            >
+                              <p className="text-slate-700">{n.message}</p>
+                              <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
+                        )}
+                      </div>
+                      <div className="p-2 border-t bg-slate-50 text-center">
+                        <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="w-px h-6 bg-gray-200"></div>
+                <div className="relative" ref={profileRef}>
+                  <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <img
+                  src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
+                  alt="User"
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-semibold text-gray-900">{user?.name || 'Manager'}</div>
+                  <div className="text-xs text-gray-500">{user?.role || 'Manager'}</div>
+                </div>
+                <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
+                      <button onClick={() => { handleNavigation('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <UserCircleIcon className="h-5 w-5" />
+                        My Profile
+                      </button>
+                      <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </header>
-          <main className="flex-1 overflow-y-auto bg-slate-100">{renderActiveComponent()}</main>
+            </header>
+            <main className="flex-1 overflow-y-auto bg-slate-100">{renderActiveComponent()}</main>
+          </div>
         </div>
-      </div>
-    </CurrentUserProvider>
-  );
-}
+      </CurrentUserProvider>
+    );
+  }
 
 export default ManagerDashboard;

@@ -9,21 +9,8 @@ class AuthController {
 
       if (user && (await user.matchPassword(password))) {
         res.json({
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            dashboardAccess: user.dashboardAccess,
-            canEditProfile: user.canEditProfile,
-            canViewTeam: user.canViewTeam,
-            canApproveTask: user.canApproveTask,
-            canAssignTask: user.canAssignTask,
-            canDeleteTask: user.canDeleteTask,
-            canViewAnalytics: user.canViewAnalytics,
-            profilePicture: user.profilePicture,
-            company: user.company,
-          },
+          // Return the user object, but exclude the password
+          user: await Employee.findById(user._id).select('-password'),
           token: generateToken(user._id),
         });
       } else {

@@ -9,15 +9,15 @@ const AttendanceController = require('../controllers/attendanceController.js');
 const TaskController = require('../controllers/taskController.js');
 const AuthController = require('../controllers/authController.js'); // Keep this if you have other auth routes
 const SetupController = require('../controllers/setupController.js');
+const SettingsController = require('../controllers/settingsController.js');
 const { protect } = require('../middleware/authMiddleware.js');
 const multer = require('multer');
 const { storage } = require('../config/cloudinary.js');
 const upload = multer({ storage });
 
 const router = express.Router();
-
 router.get('/setup/check', SetupController.checkSetup);
-router.post('/setup/create-admin', SetupController.createAdmin);
+router.post('/setup/create-admin', upload.single('profilePicture'), SetupController.createAdmin);
 
 // Public route
 router.post('/login', AuthController.login);
@@ -70,5 +70,9 @@ router.put('/tasks/:id/reject', protect, TaskController.rejectTaskCompletion);
 router.post('/tasks/:id/comments', protect, TaskController.addTaskComment);
 router.delete('/tasks/:id', protect, TaskController.deleteTask);
 router.post('/tasks/process-due-tasks', protect, TaskController.processPastDueTasks);
+
+// Settings Routes
+router.get('/settings/scoring', protect, SettingsController.getScoringSettings);
+router.put('/settings/scoring', protect, SettingsController.updateScoringSettings);
 
 module.exports = router;

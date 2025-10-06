@@ -332,6 +332,21 @@ export const employeApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Scoring Settings Endpoints
+    getScoringSettings: builder.query({
+      query: () => '/settings/scoring',
+      providesTags: ['Settings'],
+    }),
+
+    updateScoringSettings: builder.mutation({
+      query: (settings) => ({
+        url: '/settings/scoring',
+        method: 'PUT',
+        body: settings,
+      }),
+      invalidatesTags: ['Settings', { type: 'Employee', id: 'EOM' }], // Invalidate EOM to reflect new scores
+    }),
+
   }),
 });
 
@@ -374,5 +389,7 @@ export const {
   useAddTaskCommentMutation,
   useDeleteTaskMutation,
   useGetEmployeeOfTheMonthCandidatesQuery,
+  useGetScoringSettingsQuery,
+  useUpdateScoringSettingsMutation,
 } = employeApi;
 export const { useProcessPastDueTasksMutation } = employeApi;

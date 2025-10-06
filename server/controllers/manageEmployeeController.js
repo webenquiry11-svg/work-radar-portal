@@ -3,6 +3,7 @@ const Assignment = require('../models/assignment.js');
 const Report = require('../models/report.js');
 const { cloudinary } = require('../config/cloudinary.js');
 const Task = require('../models/task.js');
+const ScoringSettings = require('../models/scoringSettings.js');
 
 class ManageEmployeeController {
   /**
@@ -52,31 +53,21 @@ class ManageEmployeeController {
    * @access Admin
    */
   static updateEmployee = async (req, res) => {
-    const { 
-      name, email, role, employeeId,
-      address, gender, country, city, qualification,
-      experience, workType, company, joiningDate, dashboardAccess,
-      department, workLocation, shift, canEditProfile, canViewTeam
-    } = req.body;
     const { id } = req.params;
     
     const updateData = {};
 
     // Create a list of fields that can be updated
     const fieldsToUpdate = [
-      'name', 'email', 'role', 'employeeId', 'address', 'gender', 'country', 'city', 
-      'qualification', 'experience', 'workType', 'company', 'joiningDate', 
-      'dashboardAccess', 'department', 'workLocation', 'shift', 'canEditProfile', 'canViewTeam', 
+      'name', 'email', 'role', 'employeeId', 'address', 'gender', 'country', 'city',
+      'qualification', 'experience', 'workType', 'company', 'joiningDate',
+      'dashboardAccess', 'department', 'workLocation', 'shift', 'canEditProfile', 'canViewTeam',
       'canUpdateTask', 'canApproveTask', 'canAssignTask', 'canDeleteTask', 'canViewAnalytics'
     ];
 
     // Iterate over the fields and add them to updateData if they exist in the request body
     fieldsToUpdate.forEach(field => {
-      // Special handling for booleans to allow setting them to `false`
-      if (typeof req.body[field] === 'boolean') {
-        updateData[field] = req.body[field];
-      } else if (req.body[field] != null && req.body[field] !== '') {
-        // For other fields, only add them if they are not null/undefined/empty string
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         updateData[field] = req.body[field];
       }
     });
@@ -128,7 +119,12 @@ class ManageEmployeeController {
   static deleteEmployee = async (req, res) => {
     try {
       const { id } = req.params;
-      await Employee.findByIdAndDelete(id);
+      const employee = await Employee.findById(id);
+      if (!employee) {
+        return res.status(404).json({ message: 'Employee not found.' });
+      }
+      // Using deleteOne() will trigger the 'pre' middleware in the schema
+      await employee.deleteOne();
       res.status(200).json({ message: 'Employee deleted successfully.' });
     } catch (error) {
       console.error('Error deleting employee:', error);
@@ -312,6 +308,13 @@ class ManageEmployeeController {
     const endOfMonth = new Date(Date.UTC(parseInt(year), parseInt(month), 0, 23, 59, 59, 999));
 
     try {
+      // Fetch scoring settings first, or use defaults if not found
+      const scoring = await ScoringSettings.findOne({ key: 'main' }) || {
+        completedPoints: 5,
+        moderatePoints: 3,
+        lowPoints: 1,
+        pendingPoints: 0,
+      };
       const tasks = await Task.find({
         status: 'Completed',
         updatedAt: { $gte: startOfMonth, $lte: endOfMonth }
@@ -343,23 +346,23 @@ class ManageEmployeeController {
         // Scoring logic
         switch (task.completionCategory) {
           case 'Completed':
-            employeePerformance[employeeId].totalScore += 5;
+            employeePerformance[employeeId].totalScore += scoring.completedPoints;
             break;
           case 'Moderate':
-            employeePerformance[employeeId].totalScore += 3;
+            employeePerformance[employeeId].totalScore += scoring.moderatePoints;
             break;
           case 'Low':
-            employeePerformance[employeeId].totalScore += 1;
+            employeePerformance[employeeId].totalScore += scoring.lowPoints;
             break;
           case 'Pending':
-            // No points for pending completion category
+            employeePerformance[employeeId].totalScore += scoring.pendingPoints;
             break;
         }
       });
 
       const sortedEmployees = Object.values(employeePerformance).sort((a, b) => b.totalScore - a.totalScore);
 
-      const topCandidates = sortedEmployees.slice(0, 2).map(candidate => {
+      const topCandidates = sortedEmployees.slice(0, 7).map(candidate => {
         const { employee, stats, totalScore, totalTasks } = candidate;
         let reason = '';
         if (totalTasks > 0) {
