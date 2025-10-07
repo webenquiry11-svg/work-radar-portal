@@ -366,7 +366,7 @@ const TeamReports = () => {
           </ul>
         </div>
       </div>
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {!selectedEmployee ? (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-slate-400">Select an employee to view their reports.</div>
         ) : (
@@ -525,7 +525,7 @@ const Analytics = () => {
             <button onClick={() => setView('manager_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'manager_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Manager Stats</button>
             <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
             {Object.entries(gradeStats).map(([grade, count]) => (
               <StatCard key={grade} grade={grade} count={count} />
             ))}
@@ -595,12 +595,13 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
   }, [user?.company]);
 
   return (
-    <aside 
-      className={`fixed md:static z-50 top-0 left-0 h-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 dark:bg-slate-800/95 dark:border-slate-700 ${showLabels ? 'w-64' : 'w-20'}`}
+    <div 
+      className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${showLabels ? 'w-64' : 'w-20'}`}
       onMouseEnter={() => isCollapsed && setIsHovering(true)}
       onMouseLeave={() => isCollapsed && setIsHovering(false)}
     >
-      <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${showLabels ? 'px-4 gap-3' : 'justify-center'}`}>
+      <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-slate-800/95 dark:border-slate-700">
+        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${showLabels ? 'px-4 gap-3' : 'justify-center'}`}>
         <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
         {showLabels && (
           <span className="text-lg font-bold text-blue-800 truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
@@ -632,9 +633,9 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
           title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
-    </aside>
+        </button>      </div>
+      </aside>
+    </div>
   );
 };
 
@@ -831,7 +832,7 @@ export default function AdminPageLayout() {
 
   return (
     <CurrentUserProvider>
-      <div className="flex h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-manrope dark:bg-slate-900">
+      <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-manrope dark:bg-slate-900">
         <style>
           {`
             @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');

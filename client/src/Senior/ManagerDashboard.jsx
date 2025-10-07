@@ -312,7 +312,7 @@ const TeamReports = ({ seniorId }) => {
           {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500 dark:text-slate-400">No team members assigned.</p>}
         </ul>
       </div>
-      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {selectedEmployee ? (
           <div>
             <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
@@ -403,7 +403,7 @@ const TeamInformation = ({ seniorId }) => {
         <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">Team Information</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2">View details and attendance for your team members.</p>
       </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+      <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-6 md:gap-8">
         <div className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg flex flex-col">
           <div className="p-4 border-b dark:border-slate-700">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Team Members ({teamMembers.length})</h2>
@@ -421,7 +421,7 @@ const TeamInformation = ({ seniorId }) => {
             ))}
           </div>
         </div>
-        <div className="md:col-span-2 lg:col-span-3">
+        <div className="xl:col-span-3">
           {selectedEmployee ? (
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
               <div className="flex items-center gap-4 mb-6 pb-6 border-b dark:border-slate-700">
@@ -746,7 +746,7 @@ const Analytics = ({ user }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         {Object.entries(gradeStats).map(([grade, count]) => (
           <StatCard key={grade} grade={grade} count={count} />
         ))}
@@ -1485,8 +1485,8 @@ const ManagerDashboard = () => {
     };
 
     return (
-      <CurrentUserProvider> 
-        <div className="flex h-screen bg-slate-100 font-manrope">
+      <CurrentUserProvider>
+        <div className="flex min-h-screen bg-slate-100 font-manrope">
           <style>
             {`
               @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -1503,13 +1503,14 @@ const ManagerDashboard = () => {
             <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
             <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
-          {/* Sidebar */}
-          <aside 
-            className={`fixed md:static z-50 top-0 left-0 h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-64' : 'w-20'}`}
+          <div 
+            className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-64' : 'w-20'}`}
             onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
             onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
           >
-            <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${!isSidebarCollapsed || isSidebarHovering ? 'px-4 gap-3' : 'justify-center'}`}>
+            {/* Sidebar */}
+            <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
+              <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${!isSidebarCollapsed || isSidebarHovering ? 'px-4 gap-3' : 'justify-center'}`}>
               <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
               {(!isSidebarCollapsed || isSidebarHovering) && (
                 <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
@@ -1540,8 +1541,8 @@ const ManagerDashboard = () => {
               >
                 <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
               </button>
-            </div>
-          </aside>
+            </div>            </aside>
+          </div>
           {/* Overlay for mobile sidebar */}
           {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
           {/* Main Content */}

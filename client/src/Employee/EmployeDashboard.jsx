@@ -366,7 +366,7 @@ const Dashboard = ({ user, onNavigate }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.pending + stats.taskStats.inProgress}</p>
@@ -666,7 +666,7 @@ const MyTasks = () => {
                 const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
                 const isOverdue = task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) < new Date();
                 return (
-                  <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-4">
+                  <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-y-2 gap-x-4">
                     <span className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${priorityStyles[task.priority]}`} title={`${task.priority} Priority`}></span>
                     <div className="flex-1">
                       <h3 className="font-bold text-slate-800">{task.title}</h3>
@@ -675,7 +675,7 @@ const MyTasks = () => {
                         Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
-                    <div className="w-full sm:w-1/4 flex items-center gap-2">
+                    <div className="w-full sm:w-auto md:w-1/4 flex items-center gap-2">
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
                         <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${task.progress}%` }}></div>
                       </div>
@@ -750,7 +750,7 @@ const MyReportHistory = ({ employeeId }) => {
     return <div className="p-8 text-center">Loading report history...</div>;
   }
 
-  return (
+  return ( 
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 font-manrope">
       <div className="mb-6 sm:mb-8 text-center">
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Report History</h1>
@@ -840,7 +840,7 @@ const TeamInformation = ({ seniorId }) => {
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Information</h1>
         <p className="text-slate-500 mt-2">View details and attendance for your team members.</p>
       </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+      <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-6 md:gap-8">
         <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-lg flex flex-col">
           <div className="p-4 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-800">Team Members ({teamMembers.length})</h2>
@@ -858,7 +858,7 @@ const TeamInformation = ({ seniorId }) => {
             ))}
           </div>
         </div>
-        <div className="md:col-span-2 lg:col-span-3">
+        <div className="xl:col-span-3">
           {selectedEmployee ? (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
               <div className="flex items-center gap-4 mb-6 pb-6 border-b">
@@ -1173,7 +1173,7 @@ const MyDailyReport = ({ employeeId }) => {
 };
 
 const MyAttendance = ({ employeeId }) => {
-  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery();
+  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery(); 
 
   const legendItems = [
     { label: 'Present', color: 'bg-emerald-500' },
@@ -1192,7 +1192,7 @@ const MyAttendance = ({ employeeId }) => {
   }, [holidays]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50"> 
       <div className="mb-6 sm:mb-8 text-center">
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Attendance</h1>
         <p className="text-slate-500 mt-2">Review your monthly attendance record.</p>
@@ -1391,7 +1391,7 @@ const EmployeeDashboard = ({ employeeId }) => {
   };
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-gray-800 font-manrope dark:bg-slate-900 dark:text-slate-200">
+    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-gray-800 font-manrope dark:bg-slate-900 dark:text-slate-200">
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -1402,7 +1402,12 @@ const EmployeeDashboard = ({ employeeId }) => {
           .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
         `}
       </style>
-      <aside className={`fixed md:static z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
+      <div
+        className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-72' : 'w-20'}`}
+        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
+        onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
+      >
+        <aside className="w-full h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col">
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
           <img
             src={companyLogo}
@@ -1415,75 +1420,76 @@ const EmployeeDashboard = ({ employeeId }) => {
             </span>
           )}
         </div>
-        <nav className="p-4 space-y-2">
-          <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <HomeIcon className="h-6 w-6" /> 
-            {!isSidebarCollapsed && <span className="font-semibold">Dashboard</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Dashboard</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <DocumentTextIcon className="h-6 w-6" />
-            {!isSidebarCollapsed && <span className="font-semibold">Today's Report</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Today's Report</span>}
           </button>
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <UserGroupIcon className="h-6 w-6" />
-              {!isSidebarCollapsed && <span className="font-semibold">Team Reports</span>}
+              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Team Reports</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <InformationCircleIcon className="h-6 w-6" />
-              {!isSidebarCollapsed && <span className="font-semibold">Team Information</span>}
+              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Team Information</span>}
             </button>
           )}
           {(user?.role === 'Admin' || user?.canViewAnalytics) && (
-            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ChartBarIcon className="h-6 w-6" />
-              {!isSidebarCollapsed && <span className="font-semibold">Analytics</span>}
+              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Analytics</span>}
             </button>
           )}
           <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CalendarDaysIcon className="h-6 w-6" />
-            {!isSidebarCollapsed && <span className="font-semibold">My Attendance</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Attendance</span>}
           </button>
           <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ClipboardDocumentListIcon className="h-6 w-6" />
-            {!isSidebarCollapsed && <span className="font-semibold">My Tasks</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Tasks</span>}
           </button>
           <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ArchiveBoxIcon className="h-6 w-6" />
-            {!isSidebarCollapsed && <span className="font-semibold">My Report History</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Report History</span>}
           </button>
           
           {hasTeam && (user?.role === 'Admin' || user?.canApproveTask) && (
           <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CheckBadgeIcon className="h-6 w-6" />
-            {!isSidebarCollapsed && <span className="font-semibold">Task Approvals</span>}
+            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Task Approvals</span>}
           </button>
           )}
           {hasTeam && (user?.role === 'Admin' || user?.canAssignTask) && (
             <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ClipboardDocumentListIcon className="h-6 w-6" />
-              {!isSidebarCollapsed && <span className="font-semibold">Assign Task</span>}
+              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Assign Task</span>}
             </button>
           )}
           {hasTeam && (
             <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <EyeIcon className="h-6 w-6" />
-              {!isSidebarCollapsed && <span className="font-semibold">View Team Tasks</span>}
+              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">View Team Tasks</span>}
             </button>
           )}
         </nav>
-        <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
-            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-      </aside>
+          <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        </aside>
+      </div>
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
       <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
           <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-30 fixed top-0 left-0 right-0 md:relative md:left-auto">
@@ -1563,8 +1569,8 @@ const EmployeeDashboard = ({ employeeId }) => {
           <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900">
             {renderContent()}
           </main>
-        </div>
       </div>
+    </div>
    );
 };
 
