@@ -1245,6 +1245,7 @@ const EmployeeDashboard = ({ employeeId }) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
+  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
@@ -1403,79 +1404,79 @@ const EmployeeDashboard = ({ employeeId }) => {
         `}
       </style>
       <div
-        className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-72' : 'w-20'}`}
+        className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-72' : 'w-20'}`}
         onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
         onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
       >
         <aside className="w-full h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col">
-        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
+        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
           <img
             src={companyLogo}
             alt="Company Logo"
             className="h-9 w-9"
           />
-          {!isSidebarCollapsed && (
+          {isSidebarExpanded && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}
             </span>
           )}
         </div>
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto"> 
+            <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <HomeIcon className="h-6 w-6" /> 
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Dashboard</span>}
+            {isSidebarExpanded && <span className="font-semibold">Dashboard</span>}
           </button>
-            <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <DocumentTextIcon className="h-6 w-6" />
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Today's Report</span>}
+            {isSidebarExpanded && <span className="font-semibold">Today's Report</span>}
           </button>
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <UserGroupIcon className="h-6 w-6" />
-              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Team Reports</span>}
+              {isSidebarExpanded && <span className="font-semibold">Team Reports</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <InformationCircleIcon className="h-6 w-6" />
-              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Team Information</span>}
+              {isSidebarExpanded && <span className="font-semibold">Team Information</span>}
             </button>
           )}
           {(user?.role === 'Admin' || user?.canViewAnalytics) && (
-            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ChartBarIcon className="h-6 w-6" />
-              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Analytics</span>}
+              {isSidebarExpanded && <span className="font-semibold">Analytics</span>}
             </button>
           )}
-          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CalendarDaysIcon className="h-6 w-6" />
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Attendance</span>}
+            {isSidebarExpanded && <span className="font-semibold">My Attendance</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ClipboardDocumentListIcon className="h-6 w-6" />
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Tasks</span>}
+            {isSidebarExpanded && <span className="font-semibold">My Tasks</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ArchiveBoxIcon className="h-6 w-6" />
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">My Report History</span>}
+            {isSidebarExpanded && <span className="font-semibold">My Report History</span>}
           </button>
           
           {hasTeam && (user?.role === 'Admin' || user?.canApproveTask) && (
-          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CheckBadgeIcon className="h-6 w-6" />
-            {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Task Approvals</span>}
+            {isSidebarExpanded && <span className="font-semibold">Task Approvals</span>}
           </button>
           )}
           {hasTeam && (user?.role === 'Admin' || user?.canAssignTask) && (
-            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ClipboardDocumentListIcon className="h-6 w-6" />
-              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">Assign Task</span>}
+              {isSidebarExpanded && <span className="font-semibold">Assign Task</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <EyeIcon className="h-6 w-6" />
-              {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold">View Team Tasks</span>}
+              {isSidebarExpanded && <span className="font-semibold">View Team Tasks</span>}
             </button>
           )}
         </nav>

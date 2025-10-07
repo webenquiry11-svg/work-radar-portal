@@ -1316,24 +1316,20 @@ const ManagerDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
 
-  // Inject slider thumb styles
+  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
+
   useEffect(() => {
     const styleId = 'slider-thumb-styles';
     if (document.getElementById(styleId)) return;
 
     const style = document.createElement('style');
     style.id = styleId;
-    style.innerHTML = `
-      .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-      .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    `;
+    style.innerHTML = ` .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } `;
     document.head.appendChild(style);
 
     return () => {
       const styleElement = document.getElementById(styleId);
-      if (styleElement) {
-        document.head.removeChild(styleElement);
-      }
+      if (styleElement) document.head.removeChild(styleElement);
     };
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1352,17 +1348,12 @@ const ManagerDashboard = () => {
 
     const style = document.createElement('style');
     style.id = styleId;
-    style.innerHTML = `
-      .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-      .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    `;
+    style.innerHTML = ` .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } `;
     document.head.appendChild(style);
 
     return () => {
       const styleElement = document.getElementById(styleId);
-      if (styleElement) {
-        document.head.removeChild(styleElement);
-      }
+      if (styleElement) document.head.removeChild(styleElement);
     };
   }, []);
 
@@ -1504,29 +1495,28 @@ const ManagerDashboard = () => {
             <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
           <div 
-            className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-64' : 'w-20'}`}
+            className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-20'}`}
             onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
             onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
           >
             {/* Sidebar */}
             <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
-              <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${!isSidebarCollapsed || isSidebarHovering ? 'px-4 gap-3' : 'justify-center'}`}>
+              <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
               <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
-              {(!isSidebarCollapsed || isSidebarHovering) && (
+              {isSidebarExpanded && (
                 <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
               )}
-            </div>
-            <nav className="flex-1 px-4 py-6 space-y-2">
+            </div><nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
               {navItems.map(item => (
                 <button
                   key={item.id}
                   onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${!isSidebarExpanded && 'justify-center'} ${
                     activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-700'
                   }`}
                 >
                   <item.icon className="h-6 w-6" />
-                  {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold text-sm">{item.label}</span>}
+                  {isSidebarExpanded && <span className="font-semibold text-sm">{item.label}</span>}
                   {activeView.component === item.id && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
                   )}

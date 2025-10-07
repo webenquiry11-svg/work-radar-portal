@@ -568,7 +568,7 @@ const Analytics = () => {
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen, isCollapsed, setIsCollapsed }) => {
   const user = useSelector(selectCurrentUser);
   const [isHovering, setIsHovering] = useState(false);
-  const showLabels = !isCollapsed || isHovering;
+  const isExpanded = !isCollapsed || isHovering;
   const navItems = [ 
     { id: 'dashboard', icon: HomeIcon, label: 'Dashboard' },
     { id: 'employees', icon: UsersIcon, label: 'Manage Employees' },
@@ -596,30 +596,30 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
 
   return (
     <div 
-      className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${showLabels ? 'w-64' : 'w-20'}`}
+      className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
       onMouseEnter={() => isCollapsed && setIsHovering(true)}
       onMouseLeave={() => isCollapsed && setIsHovering(false)}
     >
       <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-slate-800/95 dark:border-slate-700">
-        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${showLabels ? 'px-4 gap-3' : 'justify-center'}`}>
+        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
         <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
-        {showLabels && (
+        {isExpanded && (
           <span className="text-lg font-bold text-blue-800 truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
         )}
       </div>
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map(item => (
           <button
             key={item.id}
             onClick={() => { setActiveComponent(item.id); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-left relative ${showLabels ? '' : 'justify-center'} ${
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-left relative ${!isExpanded && 'justify-center'} ${
               activeComponent === item.id
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
-            <item.icon className="h-6 w-6" />
-            {showLabels && <span>{item.label}</span>}
+            <item.icon className="h-6 w-6 flex-shrink-0" />
+            {isExpanded && <span>{item.label}</span>}
             {activeComponent === item.id && (
               <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-indigo-500 rounded-r-xl"></span>
             )}
