@@ -329,8 +329,7 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
           </div>
         </div>
 
-        {/* Table */}
-        {/* <div className="flex-1 overflow-y-auto rounded-b-xl">
+        <div className="flex-1 overflow-y-auto rounded-b-xl">
           <table className="w-full text-sm text-left text-slate-600">
             <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 z-10">
               <tr>
@@ -341,7 +340,7 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                 <th scope="col" className="px-6 py-3">Completed On</th>
                 <th scope="col" className="px-6 py-3">Status</th>
                 <th scope="col" className="px-6 py-3">Priority</th>
-                <th scope="col" className="px-6 py-3">Final Grade</th>
+                <th scope="col" className="px-6 py-3">Grade</th>
                 <th scope="col" className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -350,9 +349,7 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                 filteredTasks.map((task, index) => (
                   <tr key={task._id} className="bg-white hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900">
-                        Task {index + 1}: {task.title}
-                      </div>
+                      <div className="font-semibold text-slate-900">{task.title}</div>
                       <div className="text-xs text-slate-500 truncate max-w-xs">{task.description}</div>
                     </td>
                     <td className="px-6 py-4">{task.assignedTo?.name || 'N/A'}</td>
@@ -377,142 +374,35 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                       ) : <span className="text-slate-400 text-xs">--</span>}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {currentUser?.role === 'Admin' && (
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => {
-                            setViewingTask(task);
-                            setViewingTaskNumber(index + 1);
-                          }} className="p-1.5 text-slate-500 hover:text-green-600 rounded-md hover:bg-green-100" title="View Details">
-                            <EyeIcon className="h-4 w-4" />
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => { setViewingTask(task); setViewingTaskNumber(index + 1); }} className="p-1.5 text-slate-500 hover:text-green-600 rounded-md hover:bg-green-100" title="View Details">
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                        {(currentUser?._id === task.assignedBy?._id || currentUser?.role === 'Admin') && (
+                          <button onClick={() => setEditingTask(task)} className="p-1.5 text-slate-500 hover:text-blue-600 rounded-md hover:bg-blue-100" title="Edit Task">
+                            <PencilIcon className="h-4 w-4" />
                           </button>
-                          {(currentUser?._id === task.assignedBy?._id || currentUser?.role === 'Admin') && (
-                            <button onClick={() => setEditingTask(task)} className="p-1.5 text-slate-500 hover:text-blue-600 rounded-md hover:bg-blue-100" title="Edit Task">
-                              <PencilIcon className="h-4 w-4" />
-                            </button>
-                          )}
-                          <button onClick={() => setDeletingTask(task)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-100" title="Delete Task">
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                      {currentUser?.role !== 'Admin' && currentUser?._id === task.assignedBy?._id && !currentUser.canUpdateTask && (
-                        <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                          No Access
-                        </span>
-                      )}
+                        )}
+                        <button onClick={() => setDeletingTask(task)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-100" title="Delete Task">
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center p-10 text-slate-500">
+                  <td colSpan="9" className="text-center p-16 text-slate-500">
                     <div className="flex flex-col items-center">
-                      <MagnifyingGlassIcon className="h-10 w-10 text-slate-400 mb-2" />
-                      <span className="font-semibold">No tasks found.</span>
-                      <span className="text-xs">Try adjusting your search or filters.</span>
+                      <MagnifyingGlassIcon className="h-12 w-12 text-slate-400 mb-4" />
+                      <h3 className="text-lg font-semibold">No Tasks Found</h3>
+                      <p className="text-sm">Try adjusting your search or filter criteria.</p>
                     </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div> */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
-          <div className="space-y-4">
-            {filteredTasks.length > 0 ? (
-              filteredTasks.map((task, index) => (
-                <div key={task._id} className="bg-white rounded-xl shadow-md border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 p-4">
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    {/* Status Color Bar */}
-                    <div className={`col-span-12 sm:col-span-1 flex justify-center items-center`}>
-                      <span className={`h-10 w-1.5 rounded-full ${
-                        task.status === 'Completed' ? 'bg-emerald-500' :
-                        task.status === 'In Progress' ? 'bg-blue-500' :
-                        task.status === 'Pending Verification' ? 'bg-purple-500' :
-                        'bg-slate-400'
-                      }`}></span>
-                    </div>
-                    {/* Task Info */}
-                    <div className="col-span-12 sm:col-span-4">
-                      <p className="font-bold text-slate-800">{task.title}</p>
-                      <p className="text-xs text-slate-500 truncate">{task.description}</p>
-                    </div>
-                    {/* Assigned To/By */}
-                    <div className="col-span-6 sm:col-span-2 flex items-center gap-2">
-                      <img src={task.assignedTo?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo?.name || '?'}`} alt={task.assignedTo?.name} className="h-8 w-8 rounded-full object-cover" />
-                      <div>
-                        <p className="text-xs text-slate-500">To</p>
-                        <p className="text-sm font-semibold text-slate-700">{task.assignedTo?.name || 'N/A'}</p>
-                      </div>
-                    </div>
-                    <div className="col-span-6 sm:col-span-2 flex items-center gap-2">
-                      <img src={task.assignedBy?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedBy?.name || '?'}`} alt={task.assignedBy?.name} className="h-8 w-8 rounded-full object-cover" />
-                      <div>
-                        <p className="text-xs text-slate-500">From</p>
-                        <p className="text-sm font-semibold text-slate-700">{task.assignedBy?.name || 'N/A'}</p>
-                      </div>
-                    </div>
-                    {/* Status & Priority */}
-                    <div className="col-span-6 sm:col-span-2 flex flex-col gap-1.5 text-center">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusStyles[task.status]}`}>
-                        {task.status}
-                      </span>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${priorityStyles[task.priority]}`}>
-                        {task.priority} Priority
-                      </span>
-                    </div>
-                    {/* Actions */}
-                    <div className="col-span-6 sm:col-span-1 flex justify-end">
-                      {currentUser?.role === 'Admin' && (
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => {
-                            setViewingTask(task);
-                            setViewingTaskNumber(index + 1);
-                          }} className="p-2 text-slate-500 hover:text-green-600 rounded-full hover:bg-green-100" title="View Details">
-                            <EyeIcon className="h-5 w-5" />
-                          </button>
-                          {(currentUser?._id === task.assignedBy?._id || currentUser?.role === 'Admin') && (
-                            <button onClick={() => setEditingTask(task)} className="p-2 text-slate-500 hover:text-blue-600 rounded-full hover:bg-blue-100" title="Edit Task">
-                              <PencilIcon className="h-5 w-5" />
-                            </button>
-                          )}
-                          <button onClick={() => setDeletingTask(task)} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-100" title="Delete Task">
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      )}
-                      {currentUser?.role !== 'Admin' && currentUser?._id === task.assignedBy?._id && !currentUser.canUpdateTask && (
-                        <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                          No Access
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                      <div>
-                        Due: <span className="font-semibold text-slate-600">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}</span>
-                      </div>
-                      <div>
-                        Completed: <span className="font-semibold text-slate-600">{task.completionDate ? new Date(task.completionDate).toLocaleDateString() : '--'}</span>
-                      </div>
-                      <div>
-                        Final Grade: {task.status === 'Completed' && task.completionCategory !== 'N/A' ? (
-                          <span className={`font-semibold px-2 py-0.5 rounded-full ${completionCategoryStyles[task.completionCategory]}`}>
-                            {task.completionCategory}
-                          </span>
-                        ) : <span className="font-semibold text-slate-400">--</span>}
-                      </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center p-16 text-slate-500">
-                <MagnifyingGlassIcon className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                <h3 className="text-lg font-semibold">No Tasks Found</h3>
-                <p className="text-sm">Try adjusting your search or filter criteria.</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
       <EditTaskModal

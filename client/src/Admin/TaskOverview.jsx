@@ -5,8 +5,56 @@ import {
   PlayIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-} from '@heroicons/react/24/solid';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+} from '@heroicons/react/24/solid'; 
+import { useEffect, useRef } from 'react';
+
+const GooglePieChart = ({ data, title, colors }) => {
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    const drawChart = () => {
+      if (!window.google || !window.google.visualization) {
+        console.error("Google Charts library not loaded.");
+        return;
+      }
+      const chartData = google.visualization.arrayToDataTable([
+        ['Task Status', 'Count'],
+        ...data.map(item => [item.name, item.value])
+      ]);
+
+      const options = {
+        title: title,
+        is3D: true,
+        backgroundColor: 'transparent',
+        legend: { textStyle: { color: '#333' } },
+        titleTextStyle: { color: '#333' },
+        colors: colors ? data.map(item => colors[item.name]) : undefined,
+      };
+
+      if (chartRef.current) {
+        const chart = new google.visualization.PieChart(chartRef.current);
+        chart.draw(chartData, options);
+      }
+    };
+
+    if (window.google && window.google.charts) {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawChart);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+      };
+      document.head.appendChild(script);
+    }
+  }, [data, title, colors]);
+
+  return (
+    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
+  );
+};
 
 const TaskOverview = () => {
   const { data: allTasks = [], isLoading } = useGetAllTasksQuery();
@@ -90,35 +138,16 @@ const TaskOverview = () => {
         <p className="text-slate-500 mt-2">Monitor the status of all tasks across the organization.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8 mb-8">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 sm:p-8 mb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="relative h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={overviewData.chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {overviewData.chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={TASK_COLORS[entry.name]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="relative h-80"> 
+            <GooglePieChart data={overviewData.chartData} title="Task Status Distribution" colors={TASK_COLORS} />
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <p className="text-5xl font-bold text-slate-800">{overviewData.totalTasks}</p>
               <p className="text-sm font-semibold text-slate-500">Total Tasks</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-lg">
               <ClockIcon className="h-7 w-7 text-yellow-500 mb-2" />
               <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Pending')?.value || 0}</p>

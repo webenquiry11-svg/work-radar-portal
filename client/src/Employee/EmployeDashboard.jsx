@@ -3,7 +3,7 @@ import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployees
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
@@ -14,7 +14,6 @@ import TaskApprovals from '../Admin/TaskApprovals.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
 import AssignTask from './AssignTask.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   const [comment, setComment] = useState('');
@@ -459,10 +458,62 @@ const Dashboard = ({ user, onNavigate }) => {
   );
 };
 
+const GooglePieChart = ({ data, title, colors }) => {
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    const drawChart = () => {
+      if (!window.google || !window.google.visualization) {
+        console.error("Google Charts library not loaded.");
+        return;
+      }
+      const chartData = google.visualization.arrayToDataTable([
+        ['Task Status', 'Count'],
+        ...data.map(item => [item.name, item.value])
+      ]);
+
+      const options = {
+        title: title,
+        is3D: true,
+        backgroundColor: 'transparent',
+        legend: { textStyle: { color: '#333' } },
+        titleTextStyle: { color: '#333' },
+        colors: colors ? data.map(item => colors[item.name]) : undefined,
+      };
+
+      if (chartRef.current) {
+        const chart = new google.visualization.PieChart(chartRef.current);
+        chart.draw(chartData, options);
+      }
+    };
+
+    if (window.google && window.google.charts) {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawChart);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+      };
+      document.head.appendChild(script);
+    }
+  }, [data, title, colors]);
+
+  return (
+    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
+  );
+};
+
 const Analytics = ({ user }) => {
   const [view, setView] = useState('my_stats'); // 'my_stats' or 'team_stats'
   const { data: allTasks = [], isLoading: isLoadingAllTasks } = useGetAllTasksQuery();
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
 
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !user?._id) return new Set();
@@ -483,35 +534,67 @@ const Analytics = ({ user }) => {
     return new Set(subordinates.map(emp => emp._id));
   }, [allEmployees, user]);
 
-  const { gradeStats, title } = useMemo(() => {
-    const stats = { Completed: 0, Moderate: 0, Low: 0, Pending: 0 };
+  const { performanceStats, title } = useMemo(() => {
+    const stats = {
+      totalTasks: 0,
+      totalProgress: 0,
+      averageCompletion: 0,
+      tasksInVerification: 0,
+      tasksInProgress: 0,
+    };
     let relevantTasks = [];
     let viewTitle = '';
 
     if (view === 'my_stats') {
+      // Only consider tasks that have been graded (approved or rejected)
       relevantTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
       viewTitle = "My Performance Analytics";
     } else if (view === 'team_stats') {
+      // Only consider tasks that have been graded (approved or rejected)
       relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
       viewTitle = "Team Performance Analytics";
     }
 
-    relevantTasks.forEach(task => {
-      if (task.status === 'Completed' && stats.hasOwnProperty(task.completionCategory)) {
-        stats[task.completionCategory]++;
-      }
+    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || (task.status === 'In Progress' && task.rejectionReason));
+
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999);
+      gradedTasks = gradedTasks.filter(task => {
+        const gradedDate = new Date(task.completionDate || task.updatedAt);
+        return gradedDate >= start && gradedDate <= end;
+      });
+    }
+
+    stats.totalTasks = gradedTasks.length;
+    gradedTasks.forEach(task => {
+      stats.totalProgress += task.progress || 0;
+      // These stats are now based on all tasks, not just graded ones. Let's adjust.
+      if (task.status === 'In Progress') stats.tasksInProgress++;
+      if (task.status === 'Pending Verification') stats.tasksInVerification++;
     });
+    stats.averageCompletion = stats.totalTasks > 0 ? (stats.totalProgress / stats.totalTasks) : 0;
+    return { performanceStats: stats, title: viewTitle };
+  }, [allTasks, user, view, teamMemberIds, dateRange]);
 
-    return { gradeStats: stats, title: viewTitle };
-  }, [allTasks, user, view, teamMemberIds]);
+  const chartData = useMemo(() => {
+    if (!performanceStats) return [];
+    const { tasksInProgress, tasksInVerification } = performanceStats;
+    return [{ name: 'In Progress', value: tasksInProgress }, { name: 'In Verification', value: tasksInVerification }];
+  }, [performanceStats]);
 
-  const chartData = Object.entries(gradeStats).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
-
-  const GRADE_COLORS = { Completed: '#10B981', Moderate: '#3B82F6', Low: '#F59E0B', Pending: '#EF4444' };
+  const GRADE_COLORS = {
+    'Avg. Completion': '#10B981', // Green
+    'Total Tasks': '#3B82F6', // Blue
+    'In Progress': '#F59E0B', // Amber
+    'In Verification': '#8B5CF6', // Purple
+    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
+  };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
 
   const StatCard = ({ grade, count }) => {
-    const Icon = GRADE_ICONS[grade];
+    const Icon = GRADE_ICONS[grade] || InformationCircleIcon;
     return (
       <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
         <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
@@ -536,35 +619,42 @@ const Analytics = ({ user }) => {
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
           <p className="text-slate-500 mt-2">A breakdown of completed tasks by final grade.</p>
         </div>
-        {user?.canViewTeam && teamMemberIds.size > 0 && (
-          <div className="flex items-center bg-slate-200 rounded-lg p-1">
-            <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
-            <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          {user?.canViewTeam && teamMemberIds.size > 0 && (
+            <div className="flex items-center bg-slate-200 rounded-lg p-1">
+              <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
+              <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input 
+              type="date" 
+              value={dateRange.startDate}
+              onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+            <input 
+              type="date" 
+              value={dateRange.endDate}
+              onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {Object.entries(gradeStats).map(([grade, count]) => (
-          <StatCard key={grade} grade={grade} count={count} />
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+        <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
+        <StatCard grade="Total Tasks" count={performanceStats.totalTasks} />
+        <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
+        <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Grade Distribution</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Task Progress Overview</h3>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <GooglePieChart data={chartData} title="" colors={GRADE_COLORS} />
           ) : (
             <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this view.</div>
           )}
@@ -889,19 +979,18 @@ const TeamReports = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const teamMembers = useMemo(() => {
     if (!allEmployees || !seniorId) return [];
-
     const getAllSubordinates = (managerId, employees) => {
       const subordinates = [];
       const queue = employees.filter(emp => emp.teamLead?._id === managerId);
       const visited = new Set(queue.map(e => e._id));
-
       while (queue.length > 0) {
         const currentEmployee = queue.shift();
         subordinates.push(currentEmployee);
-
         const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
         for (const report of directReports) {
           if (!visited.has(report._id)) {
@@ -912,15 +1001,15 @@ const TeamReports = ({ seniorId }) => {
       }
       return subordinates;
     };
-
     return getAllSubordinates(seniorId, allEmployees);
   }, [allEmployees, seniorId]);
 
-  useEffect(() => {
-    if (teamMembers.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(teamMembers[0]);
-    }
-  }, [teamMembers, selectedEmployee]);
+  const filteredEmployees = useMemo(() => {
+    if (!teamMembers) return [];
+    return teamMembers.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [teamMembers, searchTerm]);
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
     skip: !selectedEmployee,
@@ -929,81 +1018,72 @@ const TeamReports = ({ seniorId }) => {
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
-      // Handle new progress-based reports
       if (data.taskUpdates) {
         return (
           <div className="space-y-3">
             {data.taskUpdates.map((update, i) => (
               <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold text-slate-800">{update.taskId?.title || 'Unknown Task'}</p>
+                  <p className="font-semibold text-slate-800">Task {i + 1}: {update.taskId?.title || 'Unknown Task'}</p>
                   <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
                 </div>
                 {update.taskId && (
-                  <button onClick={() => setViewingTask(update.taskId)} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
+                  <button onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }} className="text-xs font-semibold text-blue-600 hover:underline">Details</button>
                 )}
               </div>
             ))}
           </div>
         );
       }
-      // Fallback for any old report format
-      return (
-        <div className="space-y-6 text-sm">
-          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
-        </div>
-      );
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{JSON.stringify(data, null, 2)}</p>;
     } catch (e) {
-      return <p className="whitespace-pre-line break-words">{content}</p>;
+      return <p className="whitespace-pre-wrap text-sm text-slate-600">{content}</p>;
     }
   };
 
   return (
-    <div className="flex h-full bg-slate-100">
-      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-gray-200 overflow-y-auto">
-        <h2 className="text-lg font-semibold p-4 border-b text-gray-800">Your Team</h2>
-        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading...</p>}
-        {isErrorEmployees && <p className="p-4 text-red-500">Failed to load team.</p>}
-        <ul className="p-2">
-          {teamMembers.map(employee => (
-            <li key={employee._id}>
-              <button onClick={() => setSelectedEmployee(employee)} className={`w-full text-left p-3 my-1 rounded-lg transition-colors duration-200 flex flex-col ${selectedEmployee?._id === employee._id ? 'bg-blue-100' : 'hover:bg-gray-50'}`} >
-                <div className="flex justify-between items-center">
-                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800'}`}>{employee.name}</p>
-                  <p className="text-xs text-gray-500">{employee.employeeId}</p>
-                </div>
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
-                  <span>Reports to: <span className="font-medium text-gray-600">{employee.teamLead?.name || 'N/A'}</span></span>
-                  <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{employee.department || 'N/A'}</span>
-                </div>
-              </button>
-            </li>
-          ))}
-          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500">No team members assigned to you.</p>}
-        </ul>
-      </div>
-      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
-        {selectedEmployee ? (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Reports for {selectedEmployee.name}</h2>
-            {isLoadingReports && <p>Loading reports...</p>}
-            <div className="space-y-6">
-              {reports?.map(report => (
-                <div key={report._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-800 mb-2 flex justify-between">{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}<span className={`font-normal text-sm px-2.5 py-0.5 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{report.status}</span></h3>
-                  {renderReportContent(report.content)}
+    <div className="p-4 sm:p-6 lg:p-8 h-full">
+      {!selectedEmployee ? ( 
+        <>
+          <div className="mb-8"><h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1><p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p></div>
+          <div className="mb-6"><input type="text" placeholder="Search employees..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white" /></div>
+          {isLoadingEmployees ? <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p> : isErrorEmployees ? <p className="p-4 text-red-500">Failed to load employees.</p> : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredEmployees.map(employee => (
+                <div
+                  key={employee._id}
+                  onClick={() => setSelectedEmployee(employee)}
+                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                >
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
+                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
                 </div>
               ))}
-              {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors"><ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" /></button>
+              <div><h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2><p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p></div>
             </div>
           </div>
-        ) : <div className="flex items-center justify-center h-full text-gray-500">Select a team member to view their reports.</div>}
-      </div>
-      <TaskDetailsModal
-        isOpen={!!viewingTask}
-        onClose={() => setViewingTask(null)}
-        task={viewingTask}
-      />
+          {isLoadingReports && <p>Loading reports...</p>}
+          <div className="space-y-6">
+            {reports?.length > 0 ? reports.map(report => (
+              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2"><span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{report.status}</span></h3>
+                <div className="mb-4">{renderReportContent(report.content)}</div>
+              </div>
+            )) : <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>}
+          </div>
+        </div>
+      )}
+      <TaskDetailsModal isOpen={!!viewingTask} onClose={() => setViewingTask(null)} task={viewingTask} taskNumber={viewingTaskNumber} />
     </div>
   );
 };
@@ -1245,8 +1325,8 @@ const EmployeeDashboard = ({ employeeId }) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
-  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
 
@@ -1365,9 +1445,9 @@ const EmployeeDashboard = ({ employeeId }) => {
       case 'dashboard':
         return <Dashboard user={user} onNavigate={setActiveComponent} />;
       case 'my-report':
-        return <MyDailyReport employeeId={user._id} />;
+        return <MyDailyReport employeeId={user._id} />; 
       case 'team-reports':
-        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={onNavigate} />;
+        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={setActiveComponent} />;
       case 'my-history':
         return <MyReportHistory employeeId={user._id} />;
       case 'team-info':
@@ -1497,7 +1577,7 @@ const EmployeeDashboard = ({ employeeId }) => {
             <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600 dark:text-slate-300">
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-800 dark:text-slate-200 md:text-xl">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">
               {pageTitles[activeComponent] || 'Dashboard'}
             </h1>
             <div className="flex items-center gap-4">

@@ -9,14 +9,55 @@ import {
   MegaphoneIcon,
 } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+import { useEffect, useRef } from 'react';
+
+const GooglePieChart = ({ data, title, colors }) => {
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    const drawChart = () => {
+      if (!window.google || !window.google.visualization) {
+        console.error("Google Charts library not loaded.");
+        return;
+      }
+      const chartData = google.visualization.arrayToDataTable([
+        ['Task Status', 'Count'],
+        ...data.map(item => [item.name, item.value])
+      ]);
+
+      const options = {
+        title: title,
+        is3D: true,
+        backgroundColor: 'transparent',
+        legend: { textStyle: { color: '#333' } },
+        titleTextStyle: { color: '#333' },
+        colors: colors ? data.map(item => colors[item.name]) : undefined,
+      };
+
+      if (chartRef.current) {
+        const chart = new google.visualization.PieChart(chartRef.current);
+        chart.draw(chartData, options);
+      }
+    };
+
+    if (window.google && window.google.charts) {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawChart);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+      };
+      document.head.appendChild(script);
+    }
+  }, [data, title, colors]);
+
+  return (
+    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
+  );
+};
 
 const formatDueDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -106,7 +147,7 @@ const Dashboard = ({ onNavigate }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-20 z-20 relative">
         <div
           onClick={() => onNavigate && onNavigate('employees')}
           className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
@@ -157,24 +198,7 @@ const Dashboard = ({ onNavigate }) => {
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-blue-200 opacity-20 rounded-full blur-2xl"></div>
           <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4 tracking-tight z-10">Overall Task Status</h3>
           {dashboardData.totalTasks > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
-              <PieChart>
-                <Pie
-                  data={dashboardData.taskChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {dashboardData.taskChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={TASK_COLORS[entry.name]} />)}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <GooglePieChart data={dashboardData.taskChartData} title="" colors={TASK_COLORS} />
           ) : (
             <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">No task data available.</div>
           )}
@@ -190,10 +214,9 @@ const Dashboard = ({ onNavigate }) => {
               className="h-20 w-20 rounded-full object-cover border-4 border-amber-200 my-4"
             />
             <p className="font-bold text-slate-800 dark:text-slate-200">{dashboardData.topCandidate.employee.name}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Score: {dashboardData.topCandidate.totalScore}</p>
-            <div className="mt-2 flex gap-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">C: {dashboardData.topCandidate.stats.Completed.count}</span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">M: {dashboardData.topCandidate.stats.Moderate.count}</span>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
+            <div className="mt-2">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">{dashboardData.topCandidate.totalTasks} tasks this month</span>
             </div>
           </div>
         ) : (

@@ -7,8 +7,8 @@ import { useUpdateEmployeeMutation, useDeleteEmployeeMutation} from '../services
 import toast from 'react-hot-toast';
 import LeaveManagementModal from './LeaveManagementModal';
 
-const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => ( 
-  <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
+const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => (
+  <div className="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
     <div className="relative">
       <img
         src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}

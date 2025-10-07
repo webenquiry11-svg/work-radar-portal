@@ -329,84 +329,49 @@ class ManageEmployeeController {
     const endOfMonth = new Date(Date.UTC(parseInt(year), parseInt(month), 0, 23, 59, 59, 999));
 
     try {
-      // Fetch scoring settings first, or use defaults if not found
-      const scoring = await ScoringSettings.findOne({ key: 'main' }) || {
-        completedPoints: 5,
-        moderatePoints: 3,
-        lowPoints: 1,
-        pendingPoints: 0,
-      };
       const tasks = await Task.find({
-        status: 'Completed',
-        updatedAt: { $gte: startOfMonth, $lte: endOfMonth }
+        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
       }).populate('assignedTo', 'name profilePicture employeeId');
 
       const employeePerformance = {};
 
       tasks.forEach(task => {
+        if (!task.assignedTo) return; // Skip tasks without an assignee
         const employeeId = task.assignedTo._id.toString();
         if (!employeePerformance[employeeId]) {
           employeePerformance[employeeId] = {
             employee: task.assignedTo,
-            stats: {
-              Completed: { count: 0, percentage: 0 },
-              Moderate: { count: 0, percentage: 0 },
-              Low: { count: 0, percentage: 0 },
-              Pending: { count: 0, percentage: 0 },
-            },
-            totalScore: 0,
+            totalProgress: 0,
             totalTasks: 0,
           };
         }
 
-        if (employeePerformance[employeeId].stats.hasOwnProperty(task.completionCategory)) {
-          employeePerformance[employeeId].stats[task.completionCategory].count++;
-        }
+        employeePerformance[employeeId].totalProgress += task.progress || 0;
         employeePerformance[employeeId].totalTasks++;
-
-        // Scoring logic
-        switch (task.completionCategory) {
-          case 'Completed':
-            employeePerformance[employeeId].totalScore += scoring.completedPoints;
-            break;
-          case 'Moderate':
-            employeePerformance[employeeId].totalScore += scoring.moderatePoints;
-            break;
-          case 'Low':
-            employeePerformance[employeeId].totalScore += scoring.lowPoints;
-            break;
-          case 'Pending':
-            employeePerformance[employeeId].totalScore += scoring.pendingPoints;
-            break;
-        }
       });
 
-      const sortedEmployees = Object.values(employeePerformance).sort((a, b) => b.totalScore - a.totalScore);
+      const candidates = Object.values(employeePerformance).map(perf => {
+        const averageProgress = perf.totalTasks > 0 ? perf.totalProgress / perf.totalTasks : 0;
+        return {
+          ...perf,
+          averageProgress,
+        };
+      });
 
-      const topCandidates = sortedEmployees.slice(0, 7).map(candidate => {
-        const { employee, stats, totalScore, totalTasks } = candidate;
+      const sortedCandidates = candidates.sort((a, b) => b.averageProgress - a.averageProgress);
+
+      const topCandidates = sortedCandidates.slice(0, 10).map(candidate => {
+        const { employee, totalTasks, averageProgress } = candidate;
         let reason = '';
         if (totalTasks > 0) {
-          stats.Completed.percentage = (stats.Completed.count / totalTasks) * 100;
-          stats.Moderate.percentage = (stats.Moderate.count / totalTasks) * 100;
-          stats.Low.percentage = (stats.Low.count / totalTasks) * 100;
-          stats.Pending.percentage = (stats.Pending.count / totalTasks) * 100;
-
-          reason = `${employee.name} demonstrated outstanding performance, completing ${stats.Completed.count} tasks (${stats.Completed.percentage.toFixed(0)}%). They also achieved a moderate grade on ${stats.Moderate.count} tasks (${stats.Moderate.percentage.toFixed(0)}%) and a low grade on ${stats.Low.count} tasks (${stats.Low.percentage.toFixed(0)}%). Their overall score of ${totalScore} points reflects their dedication and high-quality work.`;
-          
-          if (stats.Completed.count === totalTasks) {
-            reason = `${employee.name} achieved a perfect record, completing all ${totalTasks} tasks with a 'Completed' grade. Their exceptional performance earned them a total score of ${totalScore} points.`;
-          } else if (stats.Pending.count > 0) {
-            reason += ` Note: ${stats.Pending.count} tasks (${stats.Pending.percentage.toFixed(0)}%) were graded as 'Pending' completion.`;
-          }
+          reason = `${employee.name} achieved an average task completion of ${averageProgress.toFixed(2)}% across ${totalTasks} tasks assigned this month.`;
         } else {
           reason = 'No completed tasks found for this period.';
         }
 
         return {
           employee,
-          stats,
-          totalScore,
+          totalScore: averageProgress, // Use averageProgress as the score
           totalTasks,
           reason,
         };

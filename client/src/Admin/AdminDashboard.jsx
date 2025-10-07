@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon
+  HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -20,12 +20,10 @@ import TaskOverview from './TaskOverview';
 import TaskApprovals from './TaskApprovals';
 import AssignTask from './AssignTask';
 import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
-import AdminProfile from './AdminProfile';
-import ScoringSettings from './ScoringSettings'; // Import the new component
-import ThemeToggle from '../ThemeToggle'; // Import the new component
+import AdminProfile from './AdminProfile'; 
+import ThemeToggle from '../ThemeToggle';
 import ManageAnnouncements from './ManageAnnouncements';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   const [comment, setComment] = useState('');
   const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
@@ -329,6 +327,266 @@ const TeamReports = () => {
   };
 
   return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full">
+      {!selectedEmployee ? (
+        <>
+          <div className="mb-8">
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1>
+            <p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p>
+          </div>
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white"
+            />
+          </div>
+          {isLoadingEmployees ? (
+            <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p>
+          ) : isErrorEmployees ? (
+            <p className="p-4 text-red-500">Failed to load employees.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredEmployees.map(employee => (
+                <div
+                  key={employee._id}
+                  onClick={() => setSelectedEmployee(employee)}
+                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                >
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
+                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
+                <ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p>
+              </div>
+            </div>
+            <button
+              onClick={handleDownloadSheet}
+              disabled={!reports || reports.length === 0}
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl text-sm shadow transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              Download as Sheet
+            </button>
+          </div>
+
+          {isLoadingReports && <p>Loading reports...</p>}
+          <div className="space-y-6">
+            {reports?.length > 0 ? reports.map(report => (
+              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2">
+                  <span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>{report.status}</span>
+                </h3>
+                <div className="mb-4">{renderReportContent(report.content)}</div>
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 text-right">
+                  <button onClick={() => setDeletingReport(report)} className="inline-flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700"><TrashIcon className="h-4 w-4" /> Delete Report</button>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>
+            )}
+            {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
+          </div>
+        </div>
+      )}
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        taskNumber={viewingTaskNumber}
+      />
+      <DeleteReportModal
+        isOpen={!!deletingReport}
+        onClose={() => setDeletingReport(null)}
+        onConfirm={async () => {
+          await deleteReport(deletingReport._id).unwrap();
+          toast.success('Report deleted.');
+          setDeletingReport(null);
+        }}
+        report={deletingReport}
+        isDeleting={isDeleting}
+      />
+    </div>
+  );
+};
+
+const OldTeamReports = () => {
+  const { data: employees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deletingReport, setDeletingReport] = useState(null);
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
+
+  const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
+    skip: !selectedEmployee,
+  });
+
+  const filteredEmployees = useMemo(() => {
+    if (!employees) return [];
+    return employees.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [employees, searchTerm]);
+
+  const handleDownloadSheet = () => {
+    if (!selectedEmployee || !reports || reports.length === 0) {
+      toast.error('No reports available to download for this employee.');
+      return;
+    }
+
+    const dataForSheet = [];
+    const headers = [
+      'Employee Name', 'Employee ID', 'Report Date', 'Report Status',
+      'Task Description', 'Time Spent', 'Task Status', 'Task Remark',
+      'Summary', 'Key Achievements', 'Pending for Next Day'
+    ];
+
+    dataForSheet.push(headers);
+
+    reports.forEach((report, index) => {
+      let data = {};
+      if (typeof report.content === 'object' && report.content !== null) {
+        data = report.content;
+      } else if (typeof report.content === 'string') {
+        try { data = JSON.parse(report.content); } catch (e) { /* ignore */ }
+      }
+
+      const reportDate = new Date(report.reportDate).toLocaleDateString();
+      const baseRow = [
+        selectedEmployee.name, selectedEmployee.employeeId, reportDate, report.status,
+      ];
+
+      if (data.tasks && data.tasks.length > 0) {
+        data.tasks.forEach(task => {
+          const taskRow = [
+            task.description || '', task.timeSpent || '', task.status || '', task.remark || '',
+            data.summary || '', data.keyAchievements || '', data.pendingTasksNextDay || ''
+          ];
+          dataForSheet.push([...baseRow, ...taskRow]);
+        });
+      } else {
+        // If no tasks, add a row with just the report info
+        const emptyTaskRow = ['', '', '', '', data.summary || '', data.keyAchievements || '', data.pendingTasksNextDay || ''];
+        dataForSheet.push([...baseRow, ...emptyTaskRow]);
+      }
+    });
+
+    // Create a new workbook and a worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
+
+    // --- Professional Styling ---
+
+    // 1. Set column widths
+    const columnWidths = [
+      { wch: 22 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, // Employee, ID, Date, Status
+      { wch: 55 }, { wch: 15 }, { wch: 15 }, { wch: 55 }, // Task fields
+      { wch: 55 }, { wch: 55 }, { wch: 55 }  // Summary, Achievements, Pending
+    ];
+    ws['!cols'] = columnWidths;
+
+    // 2. Define styles
+    const border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFFFF" } },
+      fill: { fgColor: { rgb: "FF4F81BD" } }, // Dark Blue
+      alignment: { vertical: "center", horizontal: "center" },
+      border,
+    };
+    const cellStyle = (isAlt) => ({
+      fill: { fgColor: { rgb: isAlt ? "FFF2F2F2" : "FFFFFFFF" } }, // Zebra stripes
+      alignment: { vertical: "top", wrapText: true },
+      border,
+    });
+    const centeredCellStyle = (isAlt) => ({
+      ...cellStyle(isAlt),
+      alignment: { ...cellStyle(isAlt).alignment, horizontal: "center" },
+    });
+
+    // 3. Apply styles to all cells
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell_address = { c: C, r: R };
+        const address = XLSX.utils.encode_cell(cell_address);
+        if (!ws[address]) continue;
+
+        if (R === 0) { // Header row
+          ws[address].s = headerStyle;
+        } else { // Data rows
+          const isAltRow = R % 2 === 0;
+          // Center align specific columns
+          if ([2, 3, 5, 6].includes(C)) {
+            ws[address].s = centeredCellStyle(isAltRow);
+          } else {
+            ws[address].s = cellStyle(isAltRow);
+          }
+        }
+      }
+    }
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Reports');
+
+    // Generate and trigger the download of the .xlsx file
+    XLSX.writeFile(wb, `Reports_${selectedEmployee.name.replace(/\s/g, '_')}.xlsx`);
+  };
+
+  const renderReportContent = (content) => {
+    try {
+      const data = JSON.parse(content);
+      if (data.taskUpdates) { // Handle new progress-based reports
+        return (
+          <div className="space-y-3">
+            {data.taskUpdates.map((update, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-slate-800">
+                    Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
+                  </p>
+                  <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
+                </div>
+                {update.taskId && (
+                  <button onClick={() => {
+                    setViewingTask(update.taskId);
+                    setViewingTaskNumber(i + 1);
+                  }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+      return (
+        <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
+      );
+    } catch (e) {
+      return <p className="whitespace-pre-line break-words">{content}</p>;
+    }
+  };
+
+  return (
     <div className="flex flex-col md:flex-row h-full bg-slate-50 dark:bg-slate-900/50">
       <div className="w-full md:w-1/3 max-w-sm bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
@@ -416,17 +674,70 @@ const TeamReports = () => {
   );
 };
 
+const GooglePieChart = ({ data, title, colors }) => {
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    const drawChart = () => {
+      if (!window.google || !window.google.visualization) {
+        console.error("Google Charts library not loaded.");
+        return;
+      }
+      const chartData = google.visualization.arrayToDataTable([
+        ['Task Status', 'Count'],
+        ...data.map(item => [item.name, item.value])
+      ]);
+
+      const options = {
+        title: title,
+        is3D: true,
+        backgroundColor: 'transparent',
+        legend: { textStyle: { color: '#333' } },
+        titleTextStyle: { color: '#333' },
+        colors: colors ? data.map(item => colors[item.name]) : undefined,
+      };
+
+      if (chartRef.current) {
+        const chart = new google.visualization.PieChart(chartRef.current);
+        chart.draw(chartData, options);
+      }
+    };
+
+    if (window.google && window.google.charts) {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawChart);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+      };
+      document.head.appendChild(script);
+    }
+  }, [data, title, colors]);
+
+  return (
+    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
+  );
+};
+
 const Analytics = () => {
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
   const [selectedManager, setSelectedManager] = useState(null);
   const [view, setView] = useState('team_stats'); // 'team_stats' or 'manager_stats'
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
 
   const managers = useMemo(() => {
     return allEmployees.filter(emp => emp.dashboardAccess === 'Manager Dashboard');
   }, [allEmployees]);
 
-  const teamMemberIds = useMemo(() => {
+  const teamMemberIds = useMemo(() => { 
     if (!selectedManager || !allEmployees) return new Set();
     
     const queue = allEmployees.filter(emp => emp.teamLead?._id === selectedManager._id);
@@ -447,36 +758,74 @@ const Analytics = () => {
     return teamIds;
   }, [allEmployees, selectedManager]);
 
-  const { gradeStats, title } = useMemo(() => {
-    const stats = { Completed: 0, Moderate: 0, Low: 0, Pending: 0 };
-    if (!selectedManager) return { gradeStats: stats, title: "Manager & Team Analytics" };
+  const { performanceStats, title } = useMemo(() => {
+    const stats = {
+      totalGradedTasks: 0,
+      totalProgress: 0,
+      averageCompletion: 0,
+      tasksInProgress: 0,
+      tasksInVerification: 0,
+    };
+    if (!selectedManager) return { performanceStats: stats, title: "Manager & Team Analytics" };
 
     let relevantTasks = [];
     let viewTitle = '';
 
-    if (view === 'manager_stats') {
-      relevantTasks = allTasks.filter(task => task.assignedTo?._id === selectedManager._id);
-      viewTitle = `Analytics for ${selectedManager.name}`;
-    } else { // team_stats
-      relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
-      viewTitle = `Analytics for ${selectedManager.name}'s Team`;
+    if (selectedEmployee) {
+      relevantTasks = allTasks.filter(task => task.assignedTo?._id === selectedEmployee._id);
+      viewTitle = `Analytics for ${selectedEmployee.name}`;
+    } else {
+      if (view === 'manager_stats') {
+        relevantTasks = allTasks.filter(task => task.assignedTo?._id === selectedManager._id);
+        viewTitle = `Analytics for ${selectedManager.name}`;
+      } else { // team_stats
+        relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
+        viewTitle = `Analytics for ${selectedManager.name}'s Team`;
+      }
     }
     
-    relevantTasks.forEach(task => {
-      if (task.status === 'Completed' && stats.hasOwnProperty(task.completionCategory)) {
-        stats[task.completionCategory]++;
-      }
+    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || (task.status === 'In Progress' && task.rejectionReason));
+
+    // Apply date range filter if dates are selected
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999); // Include the whole end day
+
+      gradedTasks = gradedTasks.filter(task => {
+        const gradedDate = new Date(task.completionDate || task.updatedAt);
+        return gradedDate >= start && gradedDate <= end;
+      });
+    }
+
+    stats.totalGradedTasks = gradedTasks.length;
+    gradedTasks.forEach(task => {
+      stats.totalProgress += task.progress || 0;
     });
-    return { gradeStats: stats, title: viewTitle };
-  }, [allTasks, selectedManager, teamMemberIds, view]);
+    stats.averageCompletion = stats.totalGradedTasks > 0 ? (stats.totalProgress / stats.totalGradedTasks) : 0;
+    stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress' && !t.rejectionReason).length;
+    stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
 
-  const chartData = Object.entries(gradeStats).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
+    return { performanceStats: stats, title: viewTitle };
+  }, [allTasks, selectedManager, selectedEmployee, teamMemberIds, view, dateRange]);
 
-  const GRADE_COLORS = { Completed: '#10B981', Moderate: '#3B82F6', Low: '#F59E0B', Pending: '#EF4444' };
+  const chartData = useMemo(() => {
+    if (!performanceStats) return [];
+    const { tasksInProgress, tasksInVerification } = performanceStats;
+    return [{ name: 'In Progress', value: tasksInProgress }, { name: 'In Verification', value: tasksInVerification }];
+  }, [performanceStats]);
+
+  const GRADE_COLORS = {
+    'Avg. Completion': '#10B981', // Green
+    'Graded Tasks': '#3B82F6', // Blue
+    'In Progress': '#F59E0B', // Amber
+    'In Verification': '#8B5CF6', // Purple
+    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
+  };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
 
   const StatCard = ({ grade, count }) => {
-    const Icon = GRADE_ICONS[grade];
+    const Icon = GRADE_ICONS[grade] || InfoOutlineIcon;
     return (
       <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
         <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
@@ -501,21 +850,55 @@ const Analytics = () => {
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
           <p className="text-slate-500 mt-2">Select a manager to view their team's performance.</p>
         </div>
-        <div className="relative">
-          <select 
-            onChange={(e) => {
-              const manager = managers.find(m => m._id === e.target.value);
-              setSelectedManager(manager);
-              setView('team_stats'); // Default to team view when manager changes
-            }} 
-            className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
-          >
-            <option value="">-- Select a Manager --</option>
-            {managers.map(manager => (
-              <option key={manager._id} value={manager._id}>{manager.name}</option>
-            ))}
-          </select>
-          <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative">
+            <select 
+              onChange={(e) => {
+                const manager = managers.find(m => m._id === e.target.value);
+                setSelectedManager(manager); 
+                setSelectedEmployee(null); // Reset employee when manager changes
+                setView('team_stats'); // Default to team view when manager changes
+              }} 
+              className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
+              value={selectedManager?._id || ''}
+            >
+              <option value="">-- Select a Manager --</option>
+              {managers.map(manager => (
+                <option key={manager._id} value={manager._id}>{manager.name}</option>
+              ))}
+            </select>
+            <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+          </div>
+          {selectedManager && (
+            <div className="relative">
+              <select
+                onChange={(e) => {
+                  const employee = allEmployees.find(emp => emp._id === e.target.value);
+                  setSelectedEmployee(employee);
+                }}
+                className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
+                value={selectedEmployee?._id || ''}
+              >
+                <option value="">-- Select an Employee (Optional) --</option>
+                {allEmployees.filter(e => teamMemberIds.has(e._id) || e._id === selectedManager._id).map(emp => <option key={emp._id} value={emp._id}>{emp.name}</option>)}
+              </select>
+              <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input 
+              type="date" 
+              value={dateRange.startDate}
+              onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+            <input 
+              type="date" 
+              value={dateRange.endDate}
+              onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
         </div>
       </div>
 
@@ -526,32 +909,24 @@ const Analytics = () => {
             <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-            {Object.entries(gradeStats).map(([grade, count]) => (
-              <StatCard key={grade} grade={grade} count={count} />
-            ))}
+            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
+            <StatCard grade="Graded Tasks" count={performanceStats.totalGradedTasks} />
+            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
+            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Grade Distribution</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Task Status Overview</h3>
               {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={120} fill="#8884d8" dataKey="value">
-                      {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />)}
-                    </Pie>
-                    <Tooltip />
-                    <Legend iconType="circle" />
-                  </PieChart>
-                </ResponsiveContainer>
+                <GooglePieChart data={chartData} title="Grade Distribution" colors={GRADE_COLORS} />
               ) : <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this team.</div>}
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
               <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
               <ul className="space-y-3 text-sm text-slate-600">
-                <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Completed:</strong><span>Task progress was 100% upon approval.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Moderate:</strong><span>Task progress was 80% - 99% upon approval.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">Low:</strong><span>Task progress was 60% - 79% upon approval.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-red-600 w-20">Pending:</strong><span>Task progress was below 60% upon approval.</span></li>
+                <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Average:</strong><span>Calculated from the final progress percentage of all approved or rejected tasks.</span></li>
+                <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Graded:</strong><span>Includes all tasks that have a final grade, either from approval or rejection.</span></li>
+                <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">In Progress:</strong><span>Tasks currently being worked on by employees.</span></li>
               </ul>
             </div>
           </div>
@@ -580,7 +955,6 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'task-approvals', icon: CheckBadgeIcon, label: 'Task Approvals' },
     { id: 'employee-of-the-month', icon: TrophyIcon, label: 'Employee of the Month' },
     { id: 'analytics', icon: ChartBarIcon, label: 'Analytics' },
-    { id: 'scoring-settings', icon: Cog6ToothIcon, label: 'Scoring Settings' },
     { id: 'announcements', icon: MegaphoneIcon, label: 'Announcements' },
   ];
 
@@ -705,7 +1079,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
         <button onClick={onMenuClick} className="md:hidden text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700">
           <Bars3Icon className="h-6 w-6" />
         </button>
-        <h1 className="text-xl font-semibold text-indigo-900 drop-shadow dark:text-slate-200">{pageTitle}</h1>
+        <h1 className="text-lg sm:text-xl font-semibold text-indigo-900 drop-shadow dark:text-slate-200 truncate">{pageTitle}</h1>
       </div>
       <div className="flex items-center gap-4">
         <ThemeToggle />
@@ -798,7 +1172,6 @@ export default function AdminPageLayout() {
     'task-approvals': 'Task Completion Approvals',
     'employee-of-the-month': 'Employee of the Month', // New item
     'analytics': 'Team Analytics',
-    'scoring-settings': 'Scoring Settings',
     'announcements': 'Manage Announcements',
   };
 
@@ -823,7 +1196,6 @@ export default function AdminPageLayout() {
       case 'task-approvals': return <TaskApprovals />;
       case 'employee-of-the-month': return <EmployeeOfTheMonth />; // New component
       case 'analytics': return <Analytics />;
-      case 'scoring-settings': return <ScoringSettings />;
       case 'announcements': return <ManageAnnouncements />;
       case 'profile': return <AdminProfile user={user} onNavigate={handleNavigation} />;
       default: return <Dashboard />;

@@ -7,7 +7,7 @@ const HolidayController = require('../controllers/holidayController.js');
 const LeaveController = require('../controllers/leaveController.js');
 const AttendanceController = require('../controllers/attendanceController.js');
 const TaskController = require('../controllers/taskController.js');
-const AuthController = require('../controllers/authController.js'); // Keep this if you have other auth routes
+const AuthController = require('../controllers/authController.js');
 const SetupController = require('../controllers/setupController.js');
 const SettingsController = require('../controllers/settingsController.js');
 const AnnouncementController = require('../controllers/announcementController.js');
@@ -71,10 +71,6 @@ router.put('/tasks/:id/reject', protect, TaskController.rejectTaskCompletion);
 router.post('/tasks/:id/comments', protect, TaskController.addTaskComment);
 router.delete('/tasks/:id', protect, TaskController.deleteTask);
 router.post('/tasks/process-due-tasks', protect, TaskController.processPastDueTasks);
-
-// Settings Routes
-router.get('/settings/scoring', protect, SettingsController.getScoringSettings);
-router.put('/settings/scoring', protect, SettingsController.updateScoringSettings);
 
 // Announcement Routes
 router.get('/announcements/active', AnnouncementController.getActiveAnnouncement); // Publicly accessible
