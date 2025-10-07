@@ -347,6 +347,33 @@ export const employeApi = apiSlice.injectEndpoints({
       invalidatesTags: ['Settings', { type: 'Employee', id: 'EOM' }], // Invalidate EOM to reflect new scores
     }),
 
+    // Announcement Endpoints
+    getActiveAnnouncement: builder.query({
+      query: () => '/announcements/active',
+      providesTags: ['Announcement'],
+    }),
+
+    getAllAnnouncements: builder.query({
+      query: () => '/announcements',
+      providesTags: (result = []) => [
+        ...result.map(({ _id }) => ({ type: 'Announcement', id: _id })),
+        { type: 'Announcement', id: 'LIST' },
+      ],
+    }),
+
+    createAnnouncement: builder.mutation({
+      query: (announcement) => ({
+        url: '/announcements',
+        method: 'POST',
+        body: announcement,
+      }),
+      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }, 'Announcement'],
+    }),
+
+    deleteAnnouncement: builder.mutation({
+      query: (id) => ({ url: `/announcements/${id}`, method: 'DELETE' }),
+      invalidatesTags: (result, error, id) => [{ type: 'Announcement', id }, { type: 'Announcement', id: 'LIST' }],
+    }),
   }),
 });
 
@@ -391,5 +418,9 @@ export const {
   useGetEmployeeOfTheMonthCandidatesQuery,
   useGetScoringSettingsQuery,
   useUpdateScoringSettingsMutation,
+  useGetActiveAnnouncementQuery,
+  useGetAllAnnouncementsQuery,
+  useCreateAnnouncementMutation,
+  useDeleteAnnouncementMutation,
 } = employeApi;
 export const { useProcessPastDueTasksMutation } = employeApi;

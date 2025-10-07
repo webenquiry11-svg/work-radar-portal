@@ -186,6 +186,27 @@ class ManageEmployeeController {
       res.status(500).json({ message: 'Server error while fetching stats.' });
     }
   };
+  static getDashboardStats = async (req, res) => {
+    try {
+      const totalEmployees = await Employee.countDocuments({ role: { $ne: 'Admin' } });
+
+      const managers = await Employee.find({ dashboardAccess: 'Manager Dashboard' }).select('_id');
+      const managerIds = managers.map(m => m._id);
+
+      const upcomingManagerTask = await Task.findOne({
+        assignedTo: { $in: managerIds },
+        status: { $ne: 'Completed' },
+        dueDate: { $exists: true }
+      })
+      .sort({ dueDate: 1 })
+      .populate('assignedTo', 'name');
+
+      res.status(200).json({ totalEmployees, upcomingManagerTask });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ message: 'Server error while fetching stats.' });
+    }
+  };
 
   /**
    * @description Get dashboard statistics for a specific manager's team

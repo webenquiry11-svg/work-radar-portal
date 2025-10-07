@@ -10,6 +10,7 @@ const TaskController = require('../controllers/taskController.js');
 const AuthController = require('../controllers/authController.js'); // Keep this if you have other auth routes
 const SetupController = require('../controllers/setupController.js');
 const SettingsController = require('../controllers/settingsController.js');
+const AnnouncementController = require('../controllers/announcementController.js');
 const { protect } = require('../middleware/authMiddleware.js');
 const multer = require('multer');
 const { storage } = require('../config/cloudinary.js');
@@ -74,5 +75,11 @@ router.post('/tasks/process-due-tasks', protect, TaskController.processPastDueTa
 // Settings Routes
 router.get('/settings/scoring', protect, SettingsController.getScoringSettings);
 router.put('/settings/scoring', protect, SettingsController.updateScoringSettings);
+
+// Announcement Routes
+router.get('/announcements/active', AnnouncementController.getActiveAnnouncement); // Publicly accessible
+router.get('/announcements', protect, AnnouncementController.getAllAnnouncements);
+router.post('/announcements', protect, AnnouncementController.createAnnouncement);
+router.delete('/announcements/:id', protect, AnnouncementController.deleteAnnouncement);
 
 module.exports = router;

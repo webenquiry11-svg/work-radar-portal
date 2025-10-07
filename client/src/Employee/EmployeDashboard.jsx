@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline';
 import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
@@ -11,6 +11,7 @@ import PastReportsList from './PastReports';
 import CurrentUserProvider from '../app/CurrentUserProvider.jsx';
 import AttendanceCalendar from '../services/AttendanceCalendar';
 import TaskApprovals from '../Admin/TaskApprovals.jsx';
+import ThemeToggle from '../ThemeToggle.jsx';
 import AssignTask from './AssignTask.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -20,7 +21,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
   if (!isOpen || !task) return null;
 
-  const InfoField = ({ label, value, icon: Icon }) => (
+  const InfoField = ({ label, value, icon: Icon }) => ( 
     <div className="flex items-start gap-3">
       <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
       <div>
@@ -42,11 +43,11 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full md:max-w-2xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full md:max-w-2xl h-auto max-h-[90vh] flex flex-col">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Task Details</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -54,11 +55,11 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
               <h4 className="font-bold text-xl text-blue-700">
-                {task.title} 
+                {task.title}
                 {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
               </h4>
-              <p className="text-sm text-slate-600">{task.description}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+              <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t dark:border-slate-700">
                 <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
                 <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
                 <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
@@ -66,7 +67,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
               </div>
             </div>
             <div className="md:col-span-1 bg-slate-50 p-4 rounded-lg border flex flex-col h-full">
-              <h5 className="font-semibold text-slate-700 mb-3 flex items-center gap-2 flex-shrink-0"><ChatBubbleLeftEllipsisIcon className="h-5 w-5" /> Comments</h5>
+              <h5 className="font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2 flex-shrink-0"><ChatBubbleLeftEllipsisIcon className="h-5 w-5" /> Comments</h5>
               <div className="flex-1 space-y-5 overflow-y-auto mb-4 pr-2 -mr-2 relative">
                 {task.comments?.map(c => (
                   <div key={c._id} className="relative flex items-start gap-4">
@@ -74,7 +75,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                     <img src={c.author.profilePicture || `https://ui-avatars.com/api/?name=${c.author.name}`} alt={c.author.name} className="relative z-10 h-8 w-8 rounded-full flex-shrink-0" />
                     <div className="flex-1">
                       <div className="flex items-baseline space-x-2">
-                        <span className="text-sm font-semibold text-slate-900">{c.author.name}</span>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{c.author.name}</span>
                         <span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <p className="text-sm text-slate-700 mt-0.5">{c.text}</p>
@@ -83,13 +84,13 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                 ))}
                 {task.comments?.length === 0 && <p className="text-xs text-slate-400 text-center">No comments yet.</p>}
               </div>
-              <div className="flex gap-2 flex-shrink-0 mt-auto pt-2 border-t border-slate-200">
+              <div className="flex gap-2 flex-shrink-0 mt-auto pt-2 border-t border-slate-200 dark:border-slate-700">
                 <input
                   type="text"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full text-xs border-slate-300 rounded-lg p-2"
+                  className="w-full text-xs border-slate-300 dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-700 dark:text-white"
                 />
                 <button onClick={handleAddComment} disabled={isAddingComment} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300">
                   <PaperAirplaneIcon className="h-4 w-4" />
@@ -98,7 +99,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
             </div>
           </div>
         </div>
-        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-end">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end">
           <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
         </div>
       </div>
@@ -176,8 +177,8 @@ const EmployeeProfile = ({ user }) => {
   );
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-4 sm:p-8">
-      <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200">
+    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl p-4 sm:p-8">
+      <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200 dark:border-slate-700">
         <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
         <img
           src={user.profilePicture || `https://i.pravatar.cc/150?u=${user.email}`}
@@ -185,9 +186,9 @@ const EmployeeProfile = ({ user }) => {
           className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
         />
         <div>
-          <h2 className="text-3xl font-bold text-blue-800">{user.name}</h2>
-          <p className="text-gray-600">{user.role}</p>
-          <p className="text-sm text-gray-500 font-mono mt-1">{user.employeeId}</p>
+          <h2 className="text-3xl font-bold text-blue-800 dark:text-slate-200">{user.name}</h2>
+          <p className="text-gray-600 dark:text-slate-400">{user.role}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500 font-mono mt-1">{user.employeeId}</p>
         </div>
       </div>
         {user.canEditProfile && (
@@ -253,6 +254,7 @@ const Dashboard = ({ user, onNavigate }) => {
   const { data: tasks = [], isLoading } = useGetMyTasksQuery();
   const { data: allTasks = [] } = useGetAllTasksQuery();
   const { data: allEmployees = [] } = useGetEmployeesQuery();
+  const { data: announcement } = useGetActiveAnnouncementQuery();
 
   // Find next due date for user's own tasks
   const nextMyTaskDueDate = useMemo(() => {
@@ -365,36 +367,46 @@ const Dashboard = ({ user, onNavigate }) => {
 
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" />
-          <p className="text-2xl font-bold text-blue-700">{stats.taskStats.pending + stats.taskStats.inProgress}</p>
-          <p className="text-sm font-semibold text-gray-500">Active Tasks</p>
+          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.pending + stats.taskStats.inProgress}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Tasks</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-emerald-500 hover:scale-105 transition-transform duration-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-emerald-500 hover:scale-105 transition-transform duration-200">
           <TrophyIcon className="h-10 w-10 text-emerald-500 mb-2" />
-          <p className="text-2xl font-bold text-emerald-700">{stats.gradeStats.Completed}</p>
-          <p className="text-sm font-semibold text-gray-500">Completed</p>
+          <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.gradeStats.Completed}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ShieldCheckIcon className="h-10 w-10 text-blue-500 mb-2" />
-          <p className="text-2xl font-bold text-blue-700">{stats.gradeStats.Moderate}</p>
-          <p className="text-sm font-semibold text-gray-500">Moderate</p>
+          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.gradeStats.Moderate}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Moderate</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200">
-          <StarIcon className="h-10 w-10 text-amber-500 mb-2" />
-          <p className="text-2xl font-bold text-amber-700">{stats.gradeStats.Low}</p>
-          <p className="text-sm font-semibold text-gray-500">Low</p>
-        </div>
+        {announcement ? (
+          <div className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between relative overflow-hidden">
+            <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
+                <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
+              </div>
+              <p className="text-xl font-bold mt-2 truncate">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 truncate">{announcement.content}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200"><StarIcon className="h-10 w-10 text-amber-500 mb-2" /><p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.gradeStats.Low}</p><p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Low</p></div>
+        )}
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions & Performance */}
         <div className="lg:col-span-1 space-y-8">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <button onClick={() => onNavigate('my-report')} className="w-full flex items-center gap-3 text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg font-semibold text-blue-700 transition-colors">
+              <button onClick={() => onNavigate('my-report')} className="w-full flex items-center gap-3 text-left p-4 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg font-semibold text-blue-700 dark:text-blue-300 transition-colors">
                 <DocumentTextIcon className="h-6 w-6" />
                 <span>Go to Today's Report</span>
               </button>
@@ -404,8 +416,8 @@ const Dashboard = ({ user, onNavigate }) => {
               </button>
             </div>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Performance Snapshot</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Performance Snapshot</h3>
             <div className="grid grid-cols-2 gap-4">
               <GradeCard label="Completed" value={stats.gradeStats.Completed} icon={TrophyIcon} colorClass="bg-emerald-500" />
               <GradeCard label="Moderate" value={stats.gradeStats.Moderate} icon={ShieldCheckIcon} colorClass="bg-blue-500" />
@@ -415,21 +427,21 @@ const Dashboard = ({ user, onNavigate }) => {
           </div>
         </div>
         {/* Recent Tasks */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xl p-8">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Your Active Tasks</h3>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-8">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Your Active Tasks</h3>
           <div className="space-y-4"> 
             {stats.recentTasks.length > 0 ? (
               stats.recentTasks.map((task, index) => (
-                <div key={task._id} className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                <div key={task._id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                   <div className="flex justify-between items-start">
-                    <p className="font-semibold text-slate-800">
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">
                       Task {index + 1}: {task.title}
                     </p>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${task.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>
                       {task.status}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
@@ -1090,21 +1102,19 @@ const MyDailyReport = ({ employeeId }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {assignedTasks
-          .filter(t => {
-            // A task should be visible if:
-            // 1. Its status is 'Pending' or 'In Progress' (and not rejected).
-            // 2. It has no start date OR its start date is today or in the past.
+          .filter(t => { 
             const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today at midnight
             const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
 
-            // A task should be visible if its status is 'Pending' or 'In Progress'.
-            // It should be hidden if it's completed or pending verification.
             const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+            const isNotPastDue = !dueDate || new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) >= today;
 
-            return isNotCompleted && hasStarted;
+            return isNotCompleted && hasStarted && isNotPastDue;
           })
           .map((task, index) => (
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
@@ -1234,6 +1244,8 @@ const EmployeeDashboard = ({ employeeId }) => {
   const notificationRef = useRef(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarHovering, setIsSidebarHovering] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
 
@@ -1306,8 +1318,14 @@ const EmployeeDashboard = ({ employeeId }) => {
   };
 
   const handleRefresh = () => {
-    dispatch(apiSlice.util.resetApiState());
-    toast.success("Data refreshed!");
+    dispatch(apiSlice.util.invalidateTags([// Invalidate specific tags to refetch data without a full state reset
+      'Task',
+      'Notification',
+      'Report',
+      'Leave',
+      'Holiday'
+    ]));
+    toast.success("Dashboard data refreshed!");
   };
 
   const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
@@ -1373,7 +1391,7 @@ const EmployeeDashboard = ({ employeeId }) => {
   };
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-gray-800 font-manrope">
+    <div className="h-screen flex bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-gray-800 font-manrope dark:bg-slate-900 dark:text-slate-200">
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -1384,95 +1402,104 @@ const EmployeeDashboard = ({ employeeId }) => {
           .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
         `}
       </style>
-      <aside className={`fixed md:static z-50 top-0 left-0 h-full w-72 flex-shrink-0 border-r border-gray-200 bg-white/80 backdrop-blur-lg shadow-lg flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-        <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
+      <aside className={`fixed md:static z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
+        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
           <img
             src={companyLogo}
             alt="Company Logo"
             className="h-9 w-9"
           />
-          <span
-            className="text-lg font-bold text-blue-800 truncate"
-            title={user?.company}
-          >
-            {user?.company || 'Company Portal'}
-          </span>
+          {!isSidebarCollapsed && (
+            <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
+              {user?.company || 'Company Portal'}
+            </span>
+          )}
         </div>
         <nav className="p-4 space-y-2">
-          <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
-            <HomeIcon className="h-6 w-6" />
-            <span className="font-semibold">Dashboard</span>
+          <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <HomeIcon className="h-6 w-6" /> 
+            {!isSidebarCollapsed && <span className="font-semibold">Dashboard</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <DocumentTextIcon className="h-6 w-6" />
-            <span className="font-semibold">Today's Report</span>
+            {!isSidebarCollapsed && <span className="font-semibold">Today's Report</span>}
           </button>
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <UserGroupIcon className="h-6 w-6" />
-              <span className="font-semibold">Team Reports</span>
+              {!isSidebarCollapsed && <span className="font-semibold">Team Reports</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <InformationCircleIcon className="h-6 w-6" />
-              <span className="font-semibold">Team Information</span>
+              {!isSidebarCollapsed && <span className="font-semibold">Team Information</span>}
             </button>
           )}
           {(user?.role === 'Admin' || user?.canViewAnalytics) && (
-            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ChartBarIcon className="h-6 w-6" />
-              <span className="font-semibold">Analytics</span>
+              {!isSidebarCollapsed && <span className="font-semibold">Analytics</span>}
             </button>
           )}
-          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CalendarDaysIcon className="h-6 w-6" />
-            <span className="font-semibold">My Attendance</span>
+            {!isSidebarCollapsed && <span className="font-semibold">My Attendance</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ClipboardDocumentListIcon className="h-6 w-6" />
-            <span className="font-semibold">My Tasks</span>
+            {!isSidebarCollapsed && <span className="font-semibold">My Tasks</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ArchiveBoxIcon className="h-6 w-6" />
-            <span className="font-semibold">My Report History</span>
+            {!isSidebarCollapsed && <span className="font-semibold">My Report History</span>}
           </button>
           
           {hasTeam && (user?.role === 'Admin' || user?.canApproveTask) && (
-          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CheckBadgeIcon className="h-6 w-6" />
-            <span className="font-semibold">Task Approvals</span>
+            {!isSidebarCollapsed && <span className="font-semibold">Task Approvals</span>}
           </button>
           )}
           {hasTeam && (user?.role === 'Admin' || user?.canAssignTask) && (
-            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ClipboardDocumentListIcon className="h-6 w-6" />
-              <span className="font-semibold">Assign Task</span>
+              {!isSidebarCollapsed && <span className="font-semibold">Assign Task</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
+            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <EyeIcon className="h-6 w-6" />
-              <span className="font-semibold">View Team Tasks</span>
+              {!isSidebarCollapsed && <span className="font-semibold">View Team Tasks</span>}
             </button>
           )}
         </nav>
+        <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
       </aside>
-      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
       <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-          <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-50 fixed top-0 left-0 right-0 md:relative md:left-auto">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600">
+          <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-30 fixed top-0 left-0 right-0 md:relative md:left-auto">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600 dark:text-slate-300">
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-800 md:text-xl">
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-slate-200 md:text-xl">
               {pageTitles[activeComponent] || 'Dashboard'}
             </h1>
             <div className="flex items-center gap-4">
-              <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
+              <ThemeToggle />
+              <button onClick={handleRefresh} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Data">
                 <ArrowPathIcon className="h-6 w-6" />
               </button>
               <div className="relative" ref={notificationRef}>
-                <button onClick={handleBellClick} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 relative">
+                <button onClick={handleBellClick} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 relative">
                   <BellIcon className="h-6 w-6" />
                   {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
@@ -1480,13 +1507,13 @@ const EmployeeDashboard = ({ employeeId }) => {
                 </button>
                 {isNotificationOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
-                    <div className="p-3 font-semibold text-sm border-b">Notifications</div>
+                    <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length > 0 ? notifications.map(n => (
                         <div 
                           key={n._id} 
                           onClick={() => handleNotificationClick(n)}
-                          className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
+                          className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                         >
                           <p className="text-slate-700">{n.message}</p>
                           <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
@@ -1495,31 +1522,31 @@ const EmployeeDashboard = ({ employeeId }) => {
                         <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
                       )}
                     </div>
-                      <div className="p-2 border-t bg-slate-50 text-center">
+                      <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
                         <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
                       </div>
                   </div>
                 )}
               </div>
 
-              <div className="w-px h-6 bg-gray-200"></div>
+              <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
               <div className="relative" ref={profileRef}>
-                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                   <img
                     src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
                     alt="Employee"
                     className="h-9 w-9 rounded-full object-cover"
                   />
                   <div className="text-right hidden sm:block">
-                    <div className="text-sm font-semibold text-gray-900">{user?.name || 'Employee'}</div>
-                    <div className="text-xs text-gray-500">{user?.role || 'Employee'}</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Employee'}</div>
+                    <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Employee'}</div>
                   </div>
-                  <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
                     {user?.canEditProfile && (
-                      <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         <UserCircleIcon className="h-5 w-5" />
                         My Profile
                       </button>
@@ -1533,7 +1560,7 @@ const EmployeeDashboard = ({ employeeId }) => {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto bg-slate-50">
+          <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900">
             {renderContent()}
           </main>
         </div>

@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
-import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/solid';
+import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
-import { apiSlice } from '../services/apiSlice'; 
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
+import { apiSlice } from '../services/apiSlice';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import PastReportsList from '../Employee/PastReports';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -16,8 +16,9 @@ import { useGetAllMyReportsQuery } from '../services/EmployeApi';
 import CurrentUserProvider from '../app/CurrentUserProvider';
 import AssignTask from './AssignTask.jsx';
 import TaskApprovals from '../Admin/TaskApprovals';
+import ThemeToggle from '../ThemeToggle.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
-import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
 
 const formatDueDate = (dateObj) => {
   if (!dateObj) return 'N/A';
@@ -59,11 +60,11 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full md:max-w-3xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full md:max-w-3xl h-auto max-h-[90vh] flex flex-col">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Task Details</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -71,11 +72,11 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
               <h4 className="font-bold text-xl text-blue-700">
-                {task.title} 
+                {task.title}
                 {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
               </h4>
-              <p className="text-sm text-slate-600">{task.description}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+              <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t dark:border-slate-700">
                 <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
                 <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
                 <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
@@ -83,15 +84,15 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
               </div>
             </div>
             <div className="md:col-span-1 bg-slate-50 p-3 rounded-xl border flex flex-col h-[350px] w-full max-w-xs mx-auto">
-              <div className="flex items-center gap-2 mb-2 border-b pb-2">
+              <div className="flex items-center gap-2 mb-2 border-b pb-2 dark:border-slate-700">
                 <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-blue-500" />
-                <h5 className="font-semibold text-slate-700 text-base">Comments</h5>
+                <h5 className="font-semibold text-slate-700 dark:text-slate-200 text-base">Comments</h5>
                 <span className="ml-auto text-xs text-slate-400">{task.comments?.length || 0}</span>
               </div>
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                 {task.comments?.length > 0 ? (
                   task.comments.map(c => (
-                    <div key={c._id} className="flex items-start gap-2 bg-white rounded-lg p-2 border border-slate-100 shadow-sm">
+                    <div key={c._id} className="flex items-start gap-2 bg-white dark:bg-slate-700 rounded-lg p-2 border border-slate-100 dark:border-slate-600 shadow-sm">
                       {c.author.profilePicture ? (
                         <img
                           src={c.author.profilePicture}
@@ -99,13 +100,13 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                           className="h-8 w-8 rounded-full object-cover border border-blue-100"
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-sm border border-blue-100">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
                           {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="font-semibold text-xs text-slate-800 truncate">{c.author.name}</span>
+                          <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{c.author.name}</span>
                           <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <p className="text-xs text-slate-700 mt-0.5 break-words">{c.text}</p>
@@ -113,7 +114,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-400 py-8">
+                  <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-8">
                     <ChatBubbleLeftEllipsisIcon className="h-7 w-7 mb-2" />
                     <p className="text-xs">No comments yet.</p>
                   </div>
@@ -144,7 +145,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
             </div>
           </div>
         </div>
-        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-end">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end">
           <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
         </div>
       </div>
@@ -172,19 +173,19 @@ const MyAttendance = ({ employeeId }) => {
   }, [holidays]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-slate-900">
       <div className="mb-6 sm:mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Attendance</h1>
-        <p className="text-slate-500 mt-2">Review your monthly attendance record.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">My Attendance</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Review your monthly attendance record.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+        <div className="lg:col-span-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
           <AttendanceCalendar employeeId={employeeId} />
         </div>
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Upcoming Holidays</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Upcoming Holidays</h3>
             <div className="space-y-3">
               {isLoadingHolidays ? <p className="text-sm text-slate-400">Loading...</p> : upcomingHolidays.length > 0 ? upcomingHolidays.slice(0, 5).map(holiday => (
                 <div key={holiday._id} className="p-3 rounded-lg bg-amber-50">
@@ -283,10 +284,10 @@ const TeamReports = ({ seniorId }) => {
   };
 
   return (
-    <div className="flex h-full bg-slate-100">
-      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-gray-200 overflow-y-auto">
-        <h2 className="text-lg font-semibold p-4 border-b text-gray-800">Team Members</h2>
-        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading...</p>}
+    <div className="flex h-full bg-slate-100 dark:bg-slate-900">
+      <div className="w-full md:w-1/3 max-w-sm bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 overflow-y-auto">
+        <h2 className="text-lg font-semibold p-4 border-b text-gray-800 dark:text-slate-200 dark:border-slate-700">Team Members</h2>
+        {isLoadingEmployees && <p className="p-4 text-gray-500 dark:text-slate-400">Loading...</p>}
         {isErrorEmployees && <p className="p-4 text-red-500">Failed to load team.</p>}
         <ul className="p-2">
           {teamMembers.map(employee => (
@@ -294,34 +295,32 @@ const TeamReports = ({ seniorId }) => {
               <button
                 onClick={() => setSelectedEmployee(employee)}
                 className={`w-full text-left p-3 my-1 rounded-lg transition-colors duration-200 flex flex-col ${
-                  selectedEmployee?._id === employee._id
-                    ? 'bg-blue-100'
-                    : 'hover:bg-gray-50'
+                  selectedEmployee?._id === employee._id ? 'bg-blue-100 dark:bg-blue-900/50' : 'hover:bg-gray-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <div className="flex justify-between items-center">
-                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800'}`}>{employee.name}</p>
-                  <p className="text-xs text-gray-500">{employee.employeeId}</p>
+                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800 dark:text-slate-200'}`}>{employee.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{employee.employeeId}</p>
                 </div>
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
-                  <span>Reports to: <span className="font-medium text-gray-600">{employee.teamLead?.name || 'N/A'}</span></span>
+                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-slate-400 mt-1">
+                  <span>Reports to: <span className="font-medium text-gray-600 dark:text-slate-300">{employee.teamLead?.name || 'N/A'}</span></span>
                   <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{employee.department}</span>
                 </div>
               </button>
             </li>
           ))}
-          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500">No team members assigned.</p>}
+          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500 dark:text-slate-400">No team members assigned.</p>}
         </ul>
       </div>
       <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
         {selectedEmployee ? (
           <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Reports for {selectedEmployee.name}</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
             {isLoadingReports && <p>Loading reports...</p>}
             <div className="space-y-6">
               {reports?.map(report => (
-                <div key={report._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-800 mb-2 flex justify-between">
+                <div key={report._id} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-slate-200 mb-2 flex justify-between">
                     {new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
                     <span className={`font-normal text-sm px-2.5 py-0.5 rounded-full ${
                       report.status === 'Submitted' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
@@ -330,11 +329,11 @@ const TeamReports = ({ seniorId }) => {
                   {renderReportContent(report.content)}
                 </div>
               ))}
-              {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
+              {reports?.length === 0 && <p className="text-gray-500 dark:text-slate-400">No reports found for this employee.</p>}
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">Select a team member to view their reports.</div>
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-slate-400">Select a team member to view their reports.</div>
         )}
       </div>
       <TaskDetailsModal
@@ -399,16 +398,16 @@ const TeamInformation = ({ seniorId }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 font-manrope">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-slate-900 font-manrope">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Information</h1>
-        <p className="text-slate-500 mt-2">View details and attendance for your team members.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">Team Information</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">View details and attendance for your team members.</p>
       </div>
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-lg flex flex-col">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold text-slate-800">Team Members ({teamMembers.length})</h2>
-            <input type="text" placeholder="Search team..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="mt-3 w-full text-sm border-slate-300 rounded-lg p-2 focus:ring-blue-500" />
+        <div className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg flex flex-col">
+          <div className="p-4 border-b dark:border-slate-700">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Team Members ({teamMembers.length})</h2>
+            <input type="text" placeholder="Search team..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="mt-3 w-full text-sm border-slate-300 dark:border-slate-600 rounded-lg p-2 focus:ring-blue-500 bg-white dark:bg-slate-700 dark:text-white" />
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {filteredTeamMembers.map(employee => (
@@ -416,7 +415,7 @@ const TeamInformation = ({ seniorId }) => {
                 <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-10 w-10 rounded-full object-cover" />
                 <div>
                   <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-slate-800'}`}>{employee.name}</p>
-                  <p className="text-xs text-slate-500">{employee.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{employee.role}</p>
                 </div>
               </button>
             ))}
@@ -424,20 +423,20 @@ const TeamInformation = ({ seniorId }) => {
         </div>
         <div className="md:col-span-2 lg:col-span-3">
           {selectedEmployee ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
-              <div className="flex items-center gap-4 mb-6 pb-6 border-b">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b dark:border-slate-700">
                 <img src={selectedEmployee.profilePicture || `https://ui-avatars.com/api/?name=${selectedEmployee.name}&background=random`} alt={selectedEmployee.name} className="h-20 w-20 rounded-full object-cover" />
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-800">{selectedEmployee.name}</h3>
-                  <p className="text-slate-500">{selectedEmployee.role} &middot; {selectedEmployee.department}</p>
-                  <p className="text-sm text-slate-400 font-mono">{selectedEmployee.employeeId}</p>
+                  <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200">{selectedEmployee.name}</h3>
+                  <p className="text-slate-500 dark:text-slate-400">{selectedEmployee.role} &middot; {selectedEmployee.department}</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 font-mono">{selectedEmployee.employeeId}</p>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Attendance Calendar</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Attendance Calendar</h3>
               <AttendanceCalendar employeeId={selectedEmployee._id} />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 bg-white rounded-2xl border-2 border-dashed p-8">
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border-2 border-dashed p-8">
               <UserGroupIcon className="h-16 w-16 text-slate-400 mb-4" />
               <p className="font-semibold">No Team Members Found</p>
               <p className="text-sm">You do not have any team members assigned to you.</p>
@@ -450,9 +449,10 @@ const TeamInformation = ({ seniorId }) => {
 };
 
 const Dashboard = ({ user, onNavigate }) => {
-  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
+  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery(); 
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+  const { data: announcement } = useGetActiveAnnouncementQuery();
 
   // Team member IDs (direct & indirect)
   const teamMemberIds = useMemo(() => {
@@ -539,7 +539,7 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // --- Redesigned Attractive Dashboard ---
   return (
-    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
+    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
@@ -570,43 +570,50 @@ const Dashboard = ({ user, onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 -mt-20 z-20 relative">
         <div
           onClick={() => onNavigate && onNavigate('team-info')}
-          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
         >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
-          <p className="text-2xl font-bold text-blue-700">{stats?.teamMemberCount ?? 0}</p>
-          <p className="text-sm font-semibold text-gray-500">Team Members</p>
+          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats?.teamMemberCount ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Team Members</p>
         </div>
         <div
           onClick={() => onNavigate && onNavigate('view-team-tasks')}
-          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
         >
           <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
-          <p className="text-2xl font-bold text-purple-700">{stats?.totalTeamTasks ?? 0}</p>
-          <p className="text-sm font-semibold text-gray-500">Team Tasks</p>
+          <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{stats?.totalTeamTasks ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Team Tasks</p>
         </div>
         <div
           onClick={() => onNavigate && onNavigate({ component: 'view-team-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
-          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
         >
           <CheckBadgeIcon className="h-10 w-10 text-amber-500 mb-2" />
-          <p className="text-2xl font-bold text-amber-700">{stats?.pendingApprovalsCount ?? 0}</p>
-          <p className="text-sm font-semibold text-gray-500">Pending Approvals</p>
+          <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats?.pendingApprovalsCount ?? 0}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-200">
-          <CalendarIcon className="h-10 w-10 text-green-500 mb-2" />
-          <p className="text-2xl font-bold text-green-700">
-            {formatDueDate(stats.teamUpcomingDueDate)}
-          </p>
-          <p className="text-sm font-semibold text-gray-500">Next Team Due</p>
-          <span className="text-xs text-gray-400 mt-1 truncate">{stats.teamUpcomingTaskTitle}</span>
-        </div>
+        {announcement ? (
+          <div className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between relative overflow-hidden">
+            <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
+                <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
+              </div>
+              <p className="text-xl font-bold mt-2 truncate">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 truncate">{announcement.content}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500"><CalendarIcon className="h-10 w-10 text-green-500 mb-2" /><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatDueDate(stats.teamUpcomingDueDate)}</p><p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Next Team Due</p><span className="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate">{stats.teamUpcomingTaskTitle}</span></div>
+        )}
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Team Task Status Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col justify-center">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Team Task Status</h3>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col justify-center">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Team Task Status</h3>
           {taskChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
@@ -627,22 +634,22 @@ const Dashboard = ({ user, onNavigate }) => {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-400">No task data available for your team.</div>
+            <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">No task data available for your team.</div>
           )}
         </div>
         {/* Pending Approvals */}
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 flex flex-col">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Pending Your Approval</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Pending Your Approval</h3>
           <div className="space-y-4">
             {stats.pendingApprovalTasks.length > 0 ? (
               stats.pendingApprovalTasks.map(notification => (
-                <div key={notification._id} className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
-                  <p className="font-semibold text-base text-slate-800">{notification.relatedTask?.title}</p>
-                  <p className="text-xs text-slate-500">Submitted by: {notification.subjectEmployee?.name}</p>
+                <div key={notification._id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <p className="font-semibold text-base text-slate-800 dark:text-slate-200">{notification.relatedTask?.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Submitted by: {notification.subjectEmployee?.name}</p>
                 </div>
               ))
             ) : (
-              <div className="text-center py-10 text-slate-400">
+              <div className="text-center py-10 text-slate-400 dark:text-slate-500">
                 <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
                 <p className="mt-2 font-semibold">All caught up!</p>
               </div>
@@ -1220,21 +1227,19 @@ const MyDailyReport = ({ employeeId }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {assignedTasks
-          .filter(t => {
-            // A task should be visible if:
-            // 1. Its status is 'Pending' or 'In Progress' (and not rejected).
-            // 2. It has no start date OR its start date is today or in the past.
+          .filter(t => { 
             const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today at midnight
             const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
 
-            // A task should be visible if its status is 'Pending' or 'In Progress'.
-            // It should be hidden if it's completed or pending verification.
             const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
+            const isNotPastDue = !dueDate || new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) >= today;
 
-            return isNotCompleted && hasStarted;
+            return isNotCompleted && hasStarted && isNotPastDue;
           })
           .map((task, index) => (
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col relative">
@@ -1308,6 +1313,8 @@ const MyDailyReport = ({ employeeId }) => {
 const ManagerDashboard = () => {
 
   const [activeView, setActiveView] = useState({ component: 'dashboard', props: {} });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovering, setIsSidebarHovering] = useState(false);
 
   // Inject slider thumb styles
   useEffect(() => {
@@ -1392,8 +1399,15 @@ const ManagerDashboard = () => {
   }, [notificationRef]);
 
   const handleRefresh = () => {
-    dispatch(apiSlice.util.resetApiState());
-    toast.success("Data refreshed!");
+    // Invalidate specific tags to refetch data without a full state reset
+    dispatch(apiSlice.util.invalidateTags([
+      { type: 'Employee', id: 'LIST' },
+      'Task',
+      'Notification',
+      'Report',
+      'Leave'
+    ]));
+    toast.success("Dashboard data refreshed!");
   };
 
   const navItems = useMemo(() => {
@@ -1471,7 +1485,7 @@ const ManagerDashboard = () => {
     };
 
     return (
-      <CurrentUserProvider>
+      <CurrentUserProvider> 
         <div className="flex h-screen bg-slate-100 font-manrope">
           <style>
             {`
@@ -1482,53 +1496,65 @@ const ManagerDashboard = () => {
             `}
           </style>
           {/* Mobile Topbar */}
-          <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-50">
+          <header className="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-40">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
               <Bars3Icon className="h-6 w-6" />
             </button>
             <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
-            <BellIcon className="h-6 w-6 text-gray-500" />
+            <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
           {/* Sidebar */}
-          <aside className={`fixed md:static z-50 top-0 left-0 h-full w-64 bg-white text-gray-800 flex flex-col border-r border-gray-200 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-            <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-200">
+          <aside 
+            className={`fixed md:static z-50 top-0 left-0 h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${!isSidebarCollapsed || isSidebarHovering ? 'w-64' : 'w-20'}`}
+            onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
+            onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
+          >
+            <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${!isSidebarCollapsed || isSidebarHovering ? 'px-4 gap-3' : 'justify-center'}`}>
               <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
-              <span className="text-lg font-bold text-gray-800 tracking-tight">
-                {user?.company || 'Company Portal'}
-              </span>
+              {(!isSidebarCollapsed || isSidebarHovering) && (
+                <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
+              )}
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2">
               {navItems.map(item => (
                 <button
                   key={item.id}
                   onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${
-                    activeView.component === item.id
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${!isSidebarCollapsed || isSidebarHovering ? '' : 'justify-center'} ${
+                    activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-700'
                   }`}
                 >
                   <item.icon className="h-6 w-6" />
-                  <span className="font-semibold text-sm">{item.label}</span>
+                  {(!isSidebarCollapsed || isSidebarHovering) && <span className="font-semibold text-sm">{item.label}</span>}
                   {activeView.component === item.id && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
                   )}
                 </button>
               ))}
             </nav>
+            <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
+              <button
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              >
+                <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
           </aside>
           {/* Overlay for mobile sidebar */}
-          {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+          {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
           {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-            <header className="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-50 relative">
-              <h1 className="text-xl font-semibold text-gray-800">{navItems.find(i => i.id === activeView.component)?.label}</h1>
+          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 dark:bg-slate-900">
+            <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-50 relative">
+              <h1 className="text-xl font-semibold text-gray-800 dark:text-slate-200">{navItems.find(i => i.id === activeView.component)?.label}</h1>
               <div className="flex items-center gap-4">
-                <button onClick={handleRefresh} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100" title="Refresh Data">
+                <ThemeToggle />
+                <button onClick={handleRefresh} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Data">
                   <ArrowPathIcon className="h-6 w-6" />
                 </button>
                 <div className="relative" ref={notificationRef}>
-                  <button onClick={handleBellClick} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 relative">
+                  <button onClick={handleBellClick} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 relative">
                     <BellIcon className="h-6 w-6" />
                     {unreadCount > 0 && (
                       <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
@@ -1536,14 +1562,14 @@ const ManagerDashboard = () => {
                   </button>
                   {isNotificationOpen && (
                     <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
-                      <div className="p-3 font-semibold text-sm border-b">Notifications</div>
+                      <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
                       <div className="max-h-80 overflow-y-auto">
                         {notifications.length > 0 ? (
                           notifications.map(n => (
                             <div 
                               key={n._id} 
                               onClick={() => handleNotificationClick(n)}
-                              className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
+                              className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                             >
                               <p className="text-slate-700">{n.message}</p>
                               <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
@@ -1553,29 +1579,29 @@ const ManagerDashboard = () => {
                           <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
                         )}
                       </div>
-                      <div className="p-2 border-t bg-slate-50 text-center">
+                      <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
                         <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
                       </div>
                     </div>
                   )}
                 </div>
-                <div className="w-px h-6 bg-gray-200"></div>
+                <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
                 <div className="relative" ref={profileRef}>
-                  <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                 <img
                   src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
                   alt="User"
                   className="h-9 w-9 rounded-full object-cover"
                 />
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm font-semibold text-gray-900">{user?.name || 'Manager'}</div>
-                  <div className="text-xs text-gray-500">{user?.role || 'Manager'}</div>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Manager'}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Manager'}</div>
                 </div>
-                <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60 border border-gray-200">
-                      <button onClick={() => { handleNavigation('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
+                      <button onClick={() => { handleNavigation('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         <UserCircleIcon className="h-5 w-5" />
                         My Profile
                       </button>
@@ -1588,7 +1614,7 @@ const ManagerDashboard = () => {
                 </div>
               </div>
             </header>
-            <main className="flex-1 overflow-y-auto bg-slate-100">{renderActiveComponent()}</main>
+            <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-900">{renderActiveComponent()}</main>
           </div>
         </div>
       </CurrentUserProvider>

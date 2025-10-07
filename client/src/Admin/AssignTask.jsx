@@ -47,9 +47,9 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
   const removeTask = (index) => setTasks(tasks.filter((_, i) => i !== index));
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="flex-1 bg-black bg-opacity-30" onClick={onClose}></div>
-      <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-slide-in-right">
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-slide-in-right">
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <ClipboardDocumentListIcon className="h-6 w-6 text-blue-600" />

@@ -7,7 +7,7 @@ import { useUpdateEmployeeMutation, useDeleteEmployeeMutation} from '../services
 import toast from 'react-hot-toast';
 import LeaveManagementModal from './LeaveManagementModal';
 
-const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => (
+const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => ( 
   <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
     <div className="relative">
       <img
@@ -17,10 +17,10 @@ const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }
       />
       <span className="absolute bottom-0 right-0 bg-green-400 border-2 border-white h-4 w-4 rounded-full"></span>
     </div>
-    <h3 className="mt-4 text-lg font-bold text-blue-900">{user.name}</h3>
-    <p className="text-sm text-blue-600 font-medium">{user.role}</p>
-    <p className="text-xs text-gray-500">{user.department || 'N/A'}</p>
-    <p className="text-xs text-gray-400 truncate w-full text-center">{user.email}</p>
+    <h3 className="mt-4 text-lg font-bold text-blue-900 dark:text-slate-200">{user.name}</h3>
+    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{user.role}</p>
+    <p className="text-xs text-gray-500 dark:text-slate-400">{user.department || 'N/A'}</p>
+    <p className="text-xs text-gray-400 dark:text-slate-500 truncate w-full text-center">{user.email}</p>
     <div className="flex gap-2 mt-4">
       <button onClick={() => onView(user)} className="p-2 rounded-full bg-blue-100 hover:bg-blue-200" title="View">
         <EyeIcon className="h-5 w-5 text-blue-600" />
@@ -60,11 +60,11 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Employee Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Employee Details</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -76,13 +76,13 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
               className="h-28 w-28 rounded-full object-cover border-4 border-blue-200 shadow-md"
             />
             <div>
-              <h2 className="text-3xl font-bold text-slate-800">{employee.name}</h2>
-              <p className="text-md text-blue-600 font-semibold">{employee.role}</p>
-              <p className="text-sm text-slate-500 font-mono mt-1">{employee.employeeId}</p>
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200">{employee.name}</h2>
+              <p className="text-md text-blue-600 dark:text-blue-400 font-semibold">{employee.role}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">{employee.employeeId}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <InfoField label="Email" value={employee.email} />
+            <InfoField label="Email" value={employee.email} /> 
             <InfoField label="Department" value={employee.department} />
             <InfoField label="Reports To" value={employee.teamLead?.name} />
             <InfoField label="Dashboard Access" value={employee.dashboardAccess} />
@@ -99,7 +99,7 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
             <InfoField label="Shift" value={employee.shift} />
           </div>
         </div>
-        <div className="p-4 bg-slate-50 rounded-b-2xl flex justify-end">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-2xl flex justify-end">
           <button type="button" onClick={onClose} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
         </div>
       </div>
@@ -158,10 +158,10 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-800">Manage Permissions for {employee.name}</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Manage Permissions for {employee.name}</h3>
         </div>
         <div className="p-6 space-y-4">
           <PermissionToggle label="Can Edit Own Profile" description="Allows the user to edit their personal information." enabled={permissions.canEditProfile} onToggle={() => handleToggle('canEditProfile')} />
@@ -172,7 +172,7 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
           <PermissionToggle label="Can Delete Tasks" description="Allows the user to delete tasks. Use with caution." enabled={permissions.canDeleteTask} onToggle={() => handleToggle('canDeleteTask')} />
           <PermissionToggle label="Can View Analytics" description="Allows the user to view the performance analytics page." enabled={permissions.canViewAnalytics} onToggle={() => handleToggle('canViewAnalytics')} />
         </div>
-        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-end gap-3">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3">
           <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
           <button type="button" onClick={handleSave} disabled={isSaving} className="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-blue-300">
             {isSaving && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
@@ -188,16 +188,16 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isDelet
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
         <div className="p-6 text-center">
-          <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-          <div className="mx-auto bg-red-100 rounded-full h-12 w-12 flex items-center justify-center my-4">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+          <div className="mx-auto bg-red-100 dark:bg-red-500/10 rounded-full h-12 w-12 flex items-center justify-center my-4">
             <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
           </div>
-          <p className="text-sm text-slate-500">{message}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
         </div>
-        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-center gap-3">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-center gap-3">
           <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">
             Cancel
           </button>
@@ -307,16 +307,16 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">{isEditMode ? 'Edit Employee' : 'Add New Employee'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl h-[90vh] flex flex-col">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{isEditMode ? 'Edit Employee' : 'Add New Employee'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 140px)'}}>
+          <div className="p-6 space-y-4 overflow-y-auto text-slate-700 dark:text-slate-300" style={{maxHeight: 'calc(90vh - 140px)'}}>
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
               <input type="text" name="fullName" id="fullName" value={formData.fullName} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
@@ -432,7 +432,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
             </div>
             {formError && <p className="text-sm text-red-600">{formError}</p>}
           </div>
-          <div className="p-6 bg-slate-50 rounded-b-lg flex justify-end gap-3">
+          <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3">
             <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">
               Cancel
             </button>
@@ -623,11 +623,11 @@ export default function EmployeeManagement() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full">
-      <div className="bg-white rounded-2xl border border-blue-100 shadow-xl h-full flex flex-col p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-blue-100 dark:border-slate-700 shadow-xl h-full flex flex-col p-8">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
           <div>
-            <h2 className="text-3xl font-extrabold text-blue-900 tracking-tight mb-1">Employee Management</h2>
-            <p className="text-blue-500 text-sm">Browse, search, and manage your team in a visually engaging way.</p>
+            <h2 className="text-3xl font-extrabold text-blue-900 dark:text-slate-200 tracking-tight mb-1">Employee Management</h2>
+            <p className="text-blue-500 dark:text-slate-400 text-sm">Browse, search, and manage your team in a visually engaging way.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -637,7 +637,7 @@ export default function EmployeeManagement() {
                 placeholder="Search employees..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full sm:w-64 text-sm border border-blue-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-blue-50"
+                className="pl-10 pr-4 py-2 w-full sm:w-64 text-sm border border-blue-200 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-blue-50 dark:bg-slate-700 dark:text-white"
               />
             </div>
             <button 
