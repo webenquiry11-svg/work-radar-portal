@@ -164,7 +164,7 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
   };
 
   const priorityStyles = { High: 'bg-red-100 text-red-800', Medium: 'bg-yellow-100 text-yellow-800', Low: 'bg-green-100 text-green-800' };
-  const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
+  const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800', 'Not Completed': 'bg-orange-100 text-orange-800' };
   const completionCategoryStyles = {
     Pending: 'bg-red-100 text-red-800',
     Low: 'bg-yellow-100 text-yellow-800',
@@ -192,8 +192,7 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
           <div className="flex items-center gap-4 w-full md:w-auto">
             <FunnelIcon className="h-5 w-5 text-slate-400" />
             <select onChange={(e) => handleFilterChange('status', e.target.value)} value={filters.status} className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500">
-              <option value="">All Statuses</option>
-              <option>Pending</option><option>In Progress</option><option>Pending Verification</option><option>Completed</option>
+              <option value="">All Statuses</option><option>Pending</option><option>In Progress</option><option>Pending Verification</option><option>Completed</option><option>Not Completed</option>
             </select>
             <select onChange={(e) => handleFilterChange('priority', e.target.value)} value={filters.priority} className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500">
               <option value="">All Priorities</option>
@@ -230,9 +229,9 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
                     <td className="px-6 py-4"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[task.status]}`}>{task.status}</span></td>
                     <td className="px-6 py-4"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span></td>
                     <td className="px-6 py-4">
-                      {task.status === 'Completed' && task.completionCategory !== 'N/A' ? (
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${completionCategoryStyles[task.completionCategory]}`}>
-                          {task.completionCategory}
+                      {['Completed', 'Not Completed'].includes(task.status) ? (
+                        <span className="text-sm font-semibold text-slate-700">
+                          {task.progress}%
                         </span>
                       ) : <span className="text-slate-400 text-xs">--</span>}
                     </td>

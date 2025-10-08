@@ -691,9 +691,11 @@ const GooglePieChart = ({ data, title, colors }) => {
       const options = {
         title: title,
         is3D: true,
-        backgroundColor: 'transparent',
-        legend: { textStyle: { color: '#333' } },
-        titleTextStyle: { color: '#333' },
+        backgroundColor: 'transparent', // Handled by parent container
+        legend: { 
+          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
+        },
+        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
         colors: colors ? data.map(item => colors[item.name]) : undefined,
       };
 
@@ -765,6 +767,11 @@ const Analytics = () => {
       averageCompletion: 0,
       tasksInProgress: 0,
       tasksInVerification: 0,
+      pending: 0,
+      inProgress: 0,
+      pendingVerification: 0,
+      completed: 0,
+      notCompleted: 0,
     };
     if (!selectedManager) return { performanceStats: stats, title: "Manager & Team Analytics" };
 
@@ -784,7 +791,7 @@ const Analytics = () => {
       }
     }
     
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || (task.status === 'In Progress' && task.rejectionReason));
+    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
 
     // Apply date range filter if dates are selected
     if (dateRange.startDate && dateRange.endDate) {
@@ -806,13 +813,29 @@ const Analytics = () => {
     stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress' && !t.rejectionReason).length;
     stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
 
+    relevantTasks.forEach(task => {
+      switch(task.status) {
+        case 'Pending': stats.pending++; break;
+        case 'In Progress': stats.inProgress++; break;
+        case 'Pending Verification': stats.pendingVerification++; break;
+        case 'Completed': stats.completed++; break;
+        case 'Not Completed': stats.notCompleted++; break;
+      }
+    });
+
     return { performanceStats: stats, title: viewTitle };
   }, [allTasks, selectedManager, selectedEmployee, teamMemberIds, view, dateRange]);
 
   const chartData = useMemo(() => {
     if (!performanceStats) return [];
-    const { tasksInProgress, tasksInVerification } = performanceStats;
-    return [{ name: 'In Progress', value: tasksInProgress }, { name: 'In Verification', value: tasksInVerification }];
+    const { pending, inProgress, pendingVerification, completed, notCompleted } = performanceStats;
+    return [
+      { name: 'Pending', value: pending },
+      { name: 'In Progress', value: inProgress },
+      { name: 'Pending Verification', value: pendingVerification },
+      { name: 'Completed', value: completed },
+      { name: 'Not Completed', value: notCompleted },
+    ].filter(item => item.value > 0);
   }, [performanceStats]);
 
   const GRADE_COLORS = {
@@ -820,6 +843,8 @@ const Analytics = () => {
     'Graded Tasks': '#3B82F6', // Blue
     'In Progress': '#F59E0B', // Amber
     'In Verification': '#8B5CF6', // Purple
+    'Pending Verification': '#8B5CF6', // Purple
+    'Not Completed': '#f97316', // Orange
     'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
@@ -1017,7 +1042,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const [logout] = useLogoutMutation();
-  const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 }); // Poll every 60 seconds
+  const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
   const dispatch = useDispatch();
   const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();

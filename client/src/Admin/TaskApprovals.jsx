@@ -171,40 +171,11 @@ const TaskApprovals = () => {
     return notifications.filter(n => n.type === 'task_approval' && n.relatedTask);
   }, [notifications]);
 
-  const approvalWindowMessage = (
-    <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded-r-lg" role="alert">
-      <p className="font-bold">Approval Window Closed</p>
-      <p>Task approvals and rejections can only be processed between Saturday 7:00 PM and Sunday 7:00 PM.</p>
-    </div>
-  );
-
-  const isApprovalWindowActive = () => {
-    if (currentUser?.role === 'Admin') {
-      return true; // Admins can always approve.
-    }
-    const now = new Date();
-    const day = now.getDay(); // Sunday = 0, Saturday = 6
-    const hour = now.getHours();
-
-    const isSaturdayAfter7PM = (day === 6 && hour >= 19);
-    const isSundayBefore7PM = (day === 0 && hour < 19);
-
-    return isSaturdayAfter7PM || isSundayBefore7PM;
-  };
-
   const handleApprove = (notification) => {
-    if (!isApprovalWindowActive()) {
-      toast.error('Approvals are only allowed between Saturday 7 PM and Sunday 7 PM.');
-      return;
-    }
     setApprovingNotification(notification);
   };
 
   const handleConfirmApprove = async (finalPercentage, comment) => {
-    if (!isApprovalWindowActive()) {
-      toast.error('Approvals are only allowed between Saturday 7 PM and Sunday 7 PM.');
-      return;
-    }
     if (!approvingNotification) return;
     try {
       await approveTask({ id: approvingNotification.relatedTask._id, finalPercentage, comment }).unwrap();
@@ -216,18 +187,10 @@ const TaskApprovals = () => {
   };
 
   const handleReject = (notification) => {
-    if (!isApprovalWindowActive()) {
-      toast.error('Rejections are only allowed between Saturday 7 PM and Sunday 7 PM.');
-      return;
-    }
     setRejectingNotification(notification);
   };
 
   const handleConfirmReject = async (reason, finalPercentage) => {
-    if (!isApprovalWindowActive()) {
-      toast.error('Rejections are only allowed between Saturday 7 PM and Sunday 7 PM.');
-      return;
-    }
     if (!rejectingNotification) return;
     try {
       await rejectTask({ id: rejectingNotification.relatedTask._id, reason, finalPercentage }).unwrap();
@@ -248,9 +211,6 @@ const TaskApprovals = () => {
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Task Completion Approvals</h1>
         <p className="text-slate-500 mt-2">Review and approve or reject tasks marked as complete by your team.</p>
       </div>
-      <div className="mb-6">
-        {currentUser?.role !== 'Admin' && !isApprovalWindowActive() && approvalWindowMessage}
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {approvalRequests.length > 0 ? (
           approvalRequests.map(notification => (
@@ -265,6 +225,10 @@ const TaskApprovals = () => {
                 </div>
                 <p className="text-lg font-semibold text-blue-700 my-2">"{notification.relatedTask.title}"</p>
                 <p className="text-xs text-slate-400">Submitted on: {new Date(notification.createdAt).toLocaleString()}</p>
+                <div className="mt-3">
+                  <p className="text-sm font-semibold text-slate-600">Submitted Progress:</p>
+                  <p className="text-2xl font-bold text-blue-600">{notification.relatedTask.progress}%</p>
+                </div>
               </div>
               <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <button onClick={() => setViewingTask(notification.relatedTask)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">

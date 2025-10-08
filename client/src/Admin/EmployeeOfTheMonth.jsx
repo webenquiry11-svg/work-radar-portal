@@ -59,6 +59,8 @@ const EmployeeOfTheMonth = () => {
   };
 
   const CandidateCard = ({ candidate, rank, isWinner }) => {
+    const hoursEarly = candidate.averageEarliness > 0 ? (candidate.averageEarliness / (1000 * 60 * 60)).toFixed(1) : 0;
+
     return (
       <div className={`bg-white rounded-2xl shadow-lg border border-slate-200 p-6 flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isWinner ? 'lg:col-span-2' : ''}`}>
         <div className={`flex flex-col ${isWinner ? 'sm:flex-row' : ''} items-center gap-5 mb-5`}>
@@ -73,7 +75,10 @@ const EmployeeOfTheMonth = () => {
           <div className={`${isWinner ? '' : 'text-center'}`}>
             <h3 className={`${isWinner ? 'text-2xl' : 'text-xl'} font-bold text-slate-800`}>{candidate.employee.name}</h3>
             <p className="text-sm text-slate-500">{candidate.employee.employeeId}</p>
-            <p className="text-sm text-slate-600 mt-1">Avg. Completion: <span className={`font-bold ${isWinner ? 'text-amber-600 text-lg' : 'text-blue-700'}`}>{candidate.totalScore.toFixed(2)}%</span></p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-sm text-slate-600">Avg. Completion: <span className={`font-bold ${isWinner ? 'text-amber-600 text-lg' : 'text-blue-700'}`}>{candidate.totalScore.toFixed(2)}%</span></p>
+              <p className="text-sm text-slate-600">Avg. Earliness: <span className={`font-bold ${isWinner ? 'text-green-600 text-lg' : 'text-green-700'}`}>{hoursEarly} hours</span></p>
+            </div>
           </div>
         </div>
         <blockquote className="text-sm text-slate-600 mb-5 flex-1 border-l-4 border-slate-200 pl-4 italic">

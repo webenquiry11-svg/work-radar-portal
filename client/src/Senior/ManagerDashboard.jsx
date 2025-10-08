@@ -8,10 +8,9 @@ import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
-import toast from 'react-hot-toast';
+import toast from 'react-hot-toast'; 
 import PastReportsList from '../Employee/PastReports';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import AttendanceCalendar from '../services/AttendanceCalendar';
+import AttendanceCalendar from '../services/AttendanceCalendar'; 
 import { useGetAllMyReportsQuery } from '../services/EmployeApi';
 import CurrentUserProvider from '../app/CurrentUserProvider';
 import AssignTask from './AssignTask.jsx';
@@ -611,24 +610,29 @@ const TeamInformation = ({ seniorId }) => {
 
 const GooglePieChart = ({ data, title }) => {
   const chartRef = useRef(null);
+  const isDarkMode = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     const drawChart = () => {
       if (!google || !google.visualization) {
         console.error("Google Charts library not loaded.");
         return;
-      }
+      } 
       const chartData = google.visualization.arrayToDataTable([
         ['Task Status', 'Count'],
-        ...data.map(item => [item.name, item.value])
+        ...data.map(item => [item.name, item.value]),
       ]);
 
       const options = {
         title: title,
         is3D: true,
         backgroundColor: 'transparent',
-        legend: { textStyle: { color: '#333' } },
-        titleTextStyle: { color: '#333' },
+        legend: { textStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' } },
+        titleTextStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' },
+        colors: data.map(item => {
+          const TASK_COLORS = { 'Completed': '#10B981', 'In Progress': '#3B82F6', 'Pending': '#F59E0B', 'Pending Verification': '#8B5CF6', 'Not Completed': '#f97316' };
+          return TASK_COLORS[item.name] || '#A9A9A9'; // Default color
+        }),
       };
 
       if (chartRef.current) {
@@ -649,7 +653,7 @@ const GooglePieChart = ({ data, title }) => {
       };
       document.head.appendChild(script);
     }
-  }, [data, title]);
+  }, [data, title, isDarkMode]);
 
   return (
     <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
@@ -684,13 +688,16 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // Stats & next due dates
   const stats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
     let teamUpcomingDueDate = null;
     let teamUpcomingTaskTitle = '';
     const taskStats = { completed: 0, inProgress: 0, pending: 0, pendingVerification: 0 };
 
     teamTasks.forEach(task => {
-      if (task.status !== 'Completed' && task.dueDate) {
+      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= today) {
         const dueDate = new Date(task.dueDate);
         if (!teamUpcomingDueDate || dueDate < teamUpcomingDueDate) {
           teamUpcomingDueDate = dueDate;
@@ -707,7 +714,7 @@ const Dashboard = ({ user, onNavigate }) => {
     let myUpcomingDueDate = null;
     let myUpcomingTaskTitle = '';
     myTasks.forEach(task => {
-      if (task.status !== 'Completed' && task.dueDate) {
+      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= today) {
         const dueDate = new Date(task.dueDate);
         if (!myUpcomingDueDate || dueDate < myUpcomingDueDate) {
           myUpcomingDueDate = dueDate;
@@ -716,12 +723,12 @@ const Dashboard = ({ user, onNavigate }) => {
       }
     });
 
-    const pendingApprovals = notifications.filter(n => n.type === 'task_approval');
+    const pendingApprovals = notifications.filter(n => n.type === 'task_approval' && n.relatedTask);
 
     return {
       teamMemberCount: teamMemberIds.size,
       totalTeamTasks: teamTasks.length,
-      pendingApprovalsCount: pendingApprovals.length,
+      pendingApprovalsCount: pendingApprovals.length, 
       pendingApprovalTasks: pendingApprovals.slice(0, 5),
       teamUpcomingDueDate,
       teamUpcomingTaskTitle,
@@ -808,8 +815,8 @@ const Dashboard = ({ user, onNavigate }) => {
                 <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
-              <p className="text-xl font-bold mt-2 truncate">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 truncate">{announcement.content}</p>
+              <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
@@ -830,7 +837,7 @@ const Dashboard = ({ user, onNavigate }) => {
         </div>
         {/* Pending Approvals */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Pending For Your Review</h3>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Pending Your Approval</h3>
           <div className="space-y-4">
             {stats.pendingApprovalTasks.length > 0 ? (
               stats.pendingApprovalTasks.map(notification => (
@@ -887,6 +894,11 @@ const Analytics = ({ user }) => {
       averageCompletion: 0,
       tasksInVerification: 0,
       tasksInProgress: 0,
+      pending: 0,
+      inProgress: 0,
+      pendingVerification: 0,
+      completed: 0,
+      notCompleted: 0,
     };
     let relevantTasks = [];
     let viewTitle = '';
@@ -901,7 +913,7 @@ const Analytics = ({ user }) => {
       viewTitle = "Team Performance Analytics";
     }
 
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || (task.status === 'In Progress' && task.rejectionReason));
+    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
 
     if (dateRange.startDate && dateRange.endDate) {
       const start = new Date(dateRange.startDate);
@@ -916,25 +928,43 @@ const Analytics = ({ user }) => {
     stats.totalTasks = gradedTasks.length;
     gradedTasks.forEach(task => {
       stats.totalProgress += task.progress || 0;
-      // These stats are now based on all tasks, not just graded ones. Let's adjust.
-      if (task.status === 'In Progress') stats.tasksInProgress++;
-      if (task.status === 'Pending Verification') stats.tasksInVerification++;
     });
     stats.averageCompletion = stats.totalTasks > 0 ? (stats.totalProgress / stats.totalTasks) : 0;
+
+    stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress').length;
+    stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
+
+    relevantTasks.forEach(task => {
+      switch(task.status) {
+        case 'Pending': stats.pending++; break;
+        case 'In Progress': stats.inProgress++; break;
+        case 'Pending Verification': stats.pendingVerification++; break;
+        case 'Completed': stats.completed++; break;
+        case 'Not Completed': stats.notCompleted++; break;
+      }
+    });
+
     return { performanceStats: stats, title: viewTitle };
   }, [allTasks, user, view, teamMemberIds, dateRange]);
 
   const chartData = useMemo(() => {
     if (!performanceStats) return [];
-    const { tasksInProgress, tasksInVerification, totalTasks } = performanceStats;
-    return [{ name: 'In Progress', value: tasksInProgress }, { name: 'In Verification', value: tasksInVerification }];
+    const { pending, inProgress, pendingVerification, completed, notCompleted } = performanceStats;
+    return [
+      { name: 'Pending', value: pending },
+      { name: 'In Progress', value: inProgress },
+      { name: 'Pending Verification', value: pendingVerification },
+      { name: 'Completed', value: completed },
+      { name: 'Not Completed', value: notCompleted },
+    ].filter(item => item.value > 0);
   }, [performanceStats]);
 
   const GRADE_COLORS = {
-    'Avg. Completion': '#10B981', // Green
-    'Total Tasks': '#3B82F6', // Blue
+    'Avg. Completion': '#10B981',
+    'Total Tasks': '#3B82F6',
     'In Progress': '#F59E0B', // Amber
     'In Verification': '#8B5CF6', // Purple
+    'Not Completed': '#f97316', // Orange
     'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
@@ -960,12 +990,12 @@ const Analytics = ({ user }) => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
           <p className="text-slate-500 mt-2">An overview of task completion and progress.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
           {user?.canViewTeam && (
             <div className="flex items-center bg-slate-200 rounded-lg p-1">
               <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
@@ -989,7 +1019,7 @@ const Analytics = ({ user }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
         <StatCard grade="Total Tasks" count={performanceStats.totalTasks} />
         <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
@@ -998,31 +1028,19 @@ const Analytics = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Task Progress Overview</h3>
-          {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
-                  {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} stroke="none" />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Active Task Status</h3>
+          {chartData.length > 0 ? ( 
+            <GooglePieChart data={chartData} title="" />
           ) : (
             <div className="flex items-center justify-center h-full text-slate-500">No task data to display for this view.</div>
           )}
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Metric Definitions</h3>
           <ul className="space-y-3 text-sm text-slate-600">
-            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Completed:</strong><span>Task progress was 100% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Moderate:</strong><span>Task progress was 80% - 99% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">Low:</strong><span>Task progress was 60% - 79% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-red-600 w-20">Pending:</strong><span>Task progress was below 60% upon approval.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-24">Avg. Completion:</strong><span>Average final progress of all graded tasks.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-24">Total Tasks:</strong><span>Total number of tasks that have received a final grade.</span></li>
           </ul>
         </div>
       </div>
@@ -1184,8 +1202,8 @@ const MyTasks = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const active = myTasks.filter(t => t.status !== 'Completed');
-    const completed = myTasks.filter(t => t.status === 'Completed');
+    const active = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status));
+    const completed = myTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
     const overdue = active.filter(t => t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
@@ -1251,7 +1269,7 @@ const MyTasks = () => {
             <ul className="space-y-4">
               {tasksToShow.map((task, index) => {
                 const priorityStyles = { High: 'bg-red-500', Medium: 'bg-amber-500', Low: 'bg-green-500' };
-                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
+                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800', 'Not Completed': 'bg-orange-100 text-orange-800' };
                 const isOverdue = task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) < new Date();
                 return (
                   <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-4">
@@ -1450,7 +1468,7 @@ const MyDailyReport = ({ employeeId }) => {
       const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
       const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
       const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-      const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+      const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
       const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
       const isNotPastDue = !dueDate || new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) >= today;
       return isNotCompleted && hasStarted && isNotPastDue;
@@ -1738,7 +1756,7 @@ const ManagerDashboard = () => {
             <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
           <div 
-            className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-20'}`}
+            className={`fixed top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-20'}`}
             onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
             onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
           >
@@ -1779,7 +1797,7 @@ const ManagerDashboard = () => {
           {/* Overlay for mobile sidebar */}
           {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
           {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 dark:bg-slate-900">
+          <div className={`flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 dark:bg-slate-900 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-20'}`}>
             <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-30 relative">
               <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">{navItems.find(i => i.id === activeView.component)?.label}</h1>
               <div className="flex items-center gap-4">

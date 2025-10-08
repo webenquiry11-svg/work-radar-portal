@@ -25,6 +25,7 @@ export const employeApi = apiSlice.injectEndpoints({
               { type: "Employee", id: "LIST" },
             ]
           : [{ type: "Employee", id: "LIST" }],
+      pollingInterval: 30000, // Poll every 30 seconds for real-time updates
     }),
 
     // Mutation to add a new employee
@@ -47,7 +48,7 @@ export const employeApi = apiSlice.injectEndpoints({
       // Invalidates the 'Employee' list tag to trigger a refetch.
       invalidatesTags: (result, error, { id }) => [
         { type: "Employee", id },
-        { type: "Employee", id: "LIST" }
+        { type: "Employee", id: "LIST" },
       ],
       async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
         try {
@@ -70,7 +71,10 @@ export const employeApi = apiSlice.injectEndpoints({
         method: "DELETE",
       }),
       // Invalidates the 'Employee' list tag to trigger a refetch.
-      invalidatesTags: (result, error, id) => [{ type: "Employee", id }],
+      invalidatesTags: (result, error, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+      ],
     }),
     // Mutation to assign an employee
     assignEmployee: builder.mutation({
@@ -163,8 +167,8 @@ export const employeApi = apiSlice.injectEndpoints({
         body: patch,
       }),
       invalidatesTags: (result, error, { employeeId }) => [
-        { type: "Report", id: employeeId },
-        { type: 'Report', id: 'LIST' } // Invalidate the list to refetch past reports
+        { type: "Report", id: employeeId }, 'Task',
+        { type: 'Report', id: 'LIST' }
       ],
     }),
 
@@ -182,6 +186,7 @@ export const employeApi = apiSlice.injectEndpoints({
     getNotifications: builder.query({
       query: () => '/notifications',
       providesTags: ['Notification'],
+      pollingInterval: 30000, // Poll every 30 seconds
     }),
 
     markNotificationsAsRead: builder.mutation({
@@ -245,7 +250,9 @@ export const employeApi = apiSlice.injectEndpoints({
 
     removeLeave: builder.mutation({
       query: (leaveId) => ({ url: `/leaves/${leaveId}`, method: 'DELETE' }),
-      invalidatesTags: (result, error, leaveId) => [{ type: 'Leave', id: leaveId }],
+      invalidatesTags: (result, error, leaveId) => [
+        { type: 'Leave', id: leaveId }, { type: 'Leave', id: 'LIST' }
+      ],
     }),
 
     // Attendance endpoint
@@ -267,11 +274,13 @@ export const employeApi = apiSlice.injectEndpoints({
     getMyTasks: builder.query({
       query: () => '/tasks/my-tasks',
       providesTags: ['Task'],
+      pollingInterval: 30000, // Poll every 30 seconds
     }),
 
     getAllTasks: builder.query({
       query: () => '/tasks/all',
       providesTags: ['Task'],
+      pollingInterval: 30000, // Poll every 30 seconds
     }),
 
     updateTask: builder.mutation({
@@ -280,7 +289,7 @@ export const employeApi = apiSlice.injectEndpoints({
         method: 'PUT',
         body: patch,
       }),
-      invalidatesTags: (result, error, { id }) => ['Task'],
+      invalidatesTags: (result, error, { id }) => ['Task', { type: 'Employee', id: 'LIST' }, 'Notification'],
     }),
 
     approveTask: builder.mutation({

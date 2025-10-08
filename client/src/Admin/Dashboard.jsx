@@ -28,9 +28,11 @@ const GooglePieChart = ({ data, title, colors }) => {
       const options = {
         title: title,
         is3D: true,
-        backgroundColor: 'transparent',
-        legend: { textStyle: { color: '#333' } },
-        titleTextStyle: { color: '#333' },
+        backgroundColor: 'transparent', // Handled by parent container
+        legend: { 
+          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
+        },
+        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
         colors: colors ? data.map(item => colors[item.name]) : undefined,
       };
 
@@ -88,27 +90,22 @@ const Dashboard = ({ onNavigate }) => {
   const dashboardData = useMemo(() => {
     if (isLoading) return null;
 
-    const tasksPendingVerification = allTasks.filter(t => t.status === 'Pending Verification').length;
-    const activeTasks = allTasks.filter(t => t.status !== 'Completed').length;
     const topCandidate = eomCandidates[0];
 
     const taskChartData = [
       { name: 'Pending', value: allTasks.filter(t => t.status === 'Pending').length },
       { name: 'In Progress', value: allTasks.filter(t => t.status === 'In Progress').length },
-      { name: 'Verification', value: tasksPendingVerification },
+      { name: 'Verification', value: stats?.tasksPendingVerification || 0 },
       { name: 'Completed', value: allTasks.filter(t => t.status === 'Completed').length },
     ].filter(entry => entry.value > 0);
-
-    const totalTasks = allTasks.length;
 
     return {
       totalEmployees: stats?.totalEmployees ?? 0,
       activeDepartments: stats?.employeesPerDepartment?.length ?? 0,
-      tasksPendingVerification,
-      activeTasks,
+      tasksPendingVerification: stats?.tasksPendingVerification ?? 0,
+      totalTasks: stats?.totalTasks ?? 0,
       topCandidate,
       taskChartData,
-      totalTasks,
       upcomingManagerTask: stats?.upcomingManagerTask,
     };
   }, [isLoading, stats, allTasks, eomCandidates]);
@@ -183,8 +180,8 @@ const Dashboard = ({ onNavigate }) => {
                 <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
-              <p className="text-xl font-bold mt-2 truncate">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 truncate">{announcement.content}</p>
+              <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
@@ -214,8 +211,12 @@ const Dashboard = ({ onNavigate }) => {
               className="h-20 w-20 rounded-full object-cover border-4 border-amber-200 my-4"
             />
             <p className="font-bold text-slate-800 dark:text-slate-200">{dashboardData.topCandidate.employee.name}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
-            <div className="mt-2">
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Earliness: <span className="font-bold text-lg text-green-600">{(dashboardData.topCandidate.averageEarliness / (1000 * 60 * 60)).toFixed(1)}h</span></p>
+            </div>
+
+            <div className="mt-3">
               <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">{dashboardData.topCandidate.totalTasks} tasks this month</span>
             </div>
           </div>

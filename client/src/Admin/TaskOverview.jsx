@@ -25,9 +25,11 @@ const GooglePieChart = ({ data, title, colors }) => {
       const options = {
         title: title,
         is3D: true,
-        backgroundColor: 'transparent',
-        legend: { textStyle: { color: '#333' } },
-        titleTextStyle: { color: '#333' },
+        backgroundColor: 'transparent', // Handled by parent container
+        legend: { 
+          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
+        },
+        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
         colors: colors ? data.map(item => colors[item.name]) : undefined,
       };
 

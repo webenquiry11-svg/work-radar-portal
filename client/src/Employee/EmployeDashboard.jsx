@@ -3,7 +3,7 @@ import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployees
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline';
 import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
@@ -269,36 +269,41 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // Find next due date for team tasks assigned by this user (if they are a team lead)
   const nextTeamTaskDueDate = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     if (!user?.canAssignTask) return null;
     const teamMemberIds = allEmployees
       .filter(emp => emp.teamLead?._id === user._id)
       .map(emp => emp._id);
     const teamTasks = allTasks
       .filter(task =>
-        teamMemberIds.includes(task.assignedTo?._id) &&
-        task.dueDate &&
+        teamMemberIds.includes(task.assignedTo?._id) && task.dueDate &&
         (task.status === 'Pending' || task.status === 'In Progress')
       )
       .map(task => new Date(task.dueDate))
-      .filter(date => date >= new Date())
+      .filter(date => date >= today)
       .sort((a, b) => a - b);
     return teamTasks.length > 0 ? teamTasks[0] : null;
   }, [allTasks, allEmployees, user]);
 
   const stats = useMemo(() => {
-    const taskStats = { pending: 0, inProgress: 0 };
-    const gradeStats = { Completed: 0, Moderate: 0, Low: 0, Pending: 0 };
+    const taskStats = { active: 0 };
+    const gradeStats = { Completed: 0, Moderate: 0, Low: 0, 'Not Completed': 0 };
     const recentTasks = [];
 
     tasks.forEach(task => {
-      if (task.status === 'Pending' || task.status === 'In Progress') {
-        if (task.status === 'Pending') taskStats.pending++;
-        if (task.status === 'In Progress') taskStats.inProgress++;
+      if (!['Completed', 'Not Completed'].includes(task.status)) {
+        taskStats.active++;
         recentTasks.push(task);
-      } else if (task.status === 'Completed') {
-        if (gradeStats.hasOwnProperty(task.completionCategory)) {
-          gradeStats[task.completionCategory]++;
-        }
+      } else if (task.status === 'Completed' || task.status === 'Not Completed') {
+        // Determine grade based on progress for completed/not completed tasks
+        const progress = task.progress || 0;
+        if (progress === 100) gradeStats.Completed++;
+        else if (progress >= 80) gradeStats.Moderate++;
+        else if (progress >= 60) gradeStats.Low++;
+        else gradeStats['Not Completed']++;
+      } else if (task.status === 'Pending Verification') {
+        recentTasks.push(task);
       }
     });
 
@@ -367,8 +372,8 @@ const Dashboard = ({ user, onNavigate }) => {
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
-          <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" />
-          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.pending + stats.taskStats.inProgress}</p>
+          <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" /> 
+          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.active}</p>
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Tasks</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-emerald-500 hover:scale-105 transition-transform duration-200">
@@ -389,8 +394,8 @@ const Dashboard = ({ user, onNavigate }) => {
                 <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
-              <p className="text-xl font-bold mt-2 truncate">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 truncate">{announcement.content}</p>
+              <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
@@ -407,7 +412,7 @@ const Dashboard = ({ user, onNavigate }) => {
             <div className="space-y-3">
               <button onClick={() => onNavigate('my-report')} className="w-full flex items-center gap-3 text-left p-4 bg-blue-50 dark:bg-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg font-semibold text-blue-700 dark:text-blue-300 transition-colors">
                 <DocumentTextIcon className="h-6 w-6" />
-                <span>Go to Today's Report</span>
+                <span>Update Today's Report</span>
               </button>
               <button onClick={() => onNavigate('my-tasks')} className="w-full flex items-center gap-3 text-left p-4 bg-slate-50 hover:bg-slate-100 rounded-lg font-semibold text-slate-700 transition-colors">
                 <ClipboardDocumentListIcon className="h-6 w-6" />
@@ -421,7 +426,7 @@ const Dashboard = ({ user, onNavigate }) => {
               <GradeCard label="Completed" value={stats.gradeStats.Completed} icon={TrophyIcon} colorClass="bg-emerald-500" />
               <GradeCard label="Moderate" value={stats.gradeStats.Moderate} icon={ShieldCheckIcon} colorClass="bg-blue-500" />
               <GradeCard label="Low" value={stats.gradeStats.Low} icon={StarIcon} colorClass="bg-amber-500" />
-              <GradeCard label="Pending" value={stats.gradeStats.Pending} icon={ExclamationTriangleIcon} colorClass="bg-red-500" />
+              <GradeCard label="Not Completed" value={stats.gradeStats['Not Completed']} icon={ExclamationTriangleIcon} colorClass="bg-red-500" />
             </div>
           </div>
         </div>
@@ -432,10 +437,8 @@ const Dashboard = ({ user, onNavigate }) => {
             {stats.recentTasks.length > 0 ? (
               stats.recentTasks.map((task, index) => (
                 <div key={task._id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">
-                      Task {index + 1}: {task.title}
-                    </p>
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{task.title}</p>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${task.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>
                       {task.status}
                     </span>
@@ -460,6 +463,7 @@ const Dashboard = ({ user, onNavigate }) => {
 
 const GooglePieChart = ({ data, title, colors }) => {
   const chartRef = useRef(null);
+  const isDarkMode = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     const drawChart = () => {
@@ -476,8 +480,8 @@ const GooglePieChart = ({ data, title, colors }) => {
         title: title,
         is3D: true,
         backgroundColor: 'transparent',
-        legend: { textStyle: { color: '#333' } },
-        titleTextStyle: { color: '#333' },
+        legend: { textStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' } },
+        titleTextStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' },
         colors: colors ? data.map(item => colors[item.name]) : undefined,
       };
 
@@ -490,16 +494,8 @@ const GooglePieChart = ({ data, title, colors }) => {
     if (window.google && window.google.charts) {
       google.charts.load('current', { packages: ['corechart'] });
       google.charts.setOnLoadCallback(drawChart);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
     }
-  }, [data, title, colors]);
+  }, [data, title, colors, isDarkMode]);
 
   return (
     <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
@@ -541,21 +537,24 @@ const Analytics = ({ user }) => {
       averageCompletion: 0,
       tasksInVerification: 0,
       tasksInProgress: 0,
+      pending: 0,
+      inProgress: 0,
+      pendingVerification: 0,
+      completed: 0,
+      notCompleted: 0,
     };
     let relevantTasks = [];
     let viewTitle = '';
 
     if (view === 'my_stats') {
-      // Only consider tasks that have been graded (approved or rejected)
       relevantTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
       viewTitle = "My Performance Analytics";
     } else if (view === 'team_stats') {
-      // Only consider tasks that have been graded (approved or rejected)
       relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
       viewTitle = "Team Performance Analytics";
     }
 
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || (task.status === 'In Progress' && task.rejectionReason));
+    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
 
     if (dateRange.startDate && dateRange.endDate) {
       const start = new Date(dateRange.startDate);
@@ -570,26 +569,44 @@ const Analytics = ({ user }) => {
     stats.totalTasks = gradedTasks.length;
     gradedTasks.forEach(task => {
       stats.totalProgress += task.progress || 0;
-      // These stats are now based on all tasks, not just graded ones. Let's adjust.
-      if (task.status === 'In Progress') stats.tasksInProgress++;
-      if (task.status === 'Pending Verification') stats.tasksInVerification++;
     });
     stats.averageCompletion = stats.totalTasks > 0 ? (stats.totalProgress / stats.totalTasks) : 0;
+    stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress').length;
+    stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
+
+    relevantTasks.forEach(task => {
+      switch(task.status) {
+        case 'Pending': stats.pending++; break;
+        case 'In Progress': stats.inProgress++; break;
+        case 'Pending Verification': stats.pendingVerification++; break;
+        case 'Completed': stats.completed++; break;
+        case 'Not Completed': stats.notCompleted++; break;
+      }
+    });
+
     return { performanceStats: stats, title: viewTitle };
   }, [allTasks, user, view, teamMemberIds, dateRange]);
 
   const chartData = useMemo(() => {
     if (!performanceStats) return [];
-    const { tasksInProgress, tasksInVerification } = performanceStats;
-    return [{ name: 'In Progress', value: tasksInProgress }, { name: 'In Verification', value: tasksInVerification }];
+    const { pending, inProgress, pendingVerification, completed, notCompleted } = performanceStats;
+    return [
+      { name: 'Pending', value: pending },
+      { name: 'In Progress', value: inProgress },
+      { name: 'Pending Verification', value: pendingVerification },
+      { name: 'Completed', value: completed },
+      { name: 'Not Completed', value: notCompleted },
+    ].filter(item => item.value > 0);
   }, [performanceStats]);
 
   const GRADE_COLORS = {
-    'Avg. Completion': '#10B981', // Green
-    'Total Tasks': '#3B82F6', // Blue
-    'In Progress': '#F59E0B', // Amber
-    'In Verification': '#8B5CF6', // Purple
-    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
+    'Avg. Completion': '#10B981',
+    'Total Tasks': '#3B82F6',
+    'In Progress': '#F59E0B',
+    'In Verification': '#8B5CF6',
+    'Not Completed': '#f97316',
+    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444',
+    'Pending Verification': '#8B5CF6',
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
 
@@ -614,13 +631,13 @@ const Analytics = ({ user }) => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
-          <p className="text-slate-500 mt-2">A breakdown of completed tasks by final grade.</p>
+          <p className="text-slate-500 mt-2">An overview of task completion and progress.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          {user?.canViewTeam && teamMemberIds.size > 0 && (
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
+          {user?.canViewTeam && (
             <div className="flex items-center bg-slate-200 rounded-lg p-1">
               <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
               <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
@@ -643,7 +660,7 @@ const Analytics = ({ user }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
         <StatCard grade="Total Tasks" count={performanceStats.totalTasks} />
         <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
@@ -652,7 +669,7 @@ const Analytics = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Task Progress Overview</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Active Task Status</h3>
           {chartData.length > 0 ? (
             <GooglePieChart data={chartData} title="" colors={GRADE_COLORS} />
           ) : (
@@ -661,12 +678,10 @@ const Analytics = ({ user }) => {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Metric Definitions</h3>
           <ul className="space-y-3 text-sm text-slate-600">
-            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Completed:</strong><span>Task progress was 100% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Moderate:</strong><span>Task progress was 80% - 99% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">Low:</strong><span>Task progress was 60% - 79% upon approval.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-red-600 w-20">Pending:</strong><span>Task progress was below 60% upon approval.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-24">Avg. Completion:</strong><span>Average final progress of all graded tasks.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-24">Total Tasks:</strong><span>Total number of tasks that have received a final grade.</span></li>
           </ul>
         </div>
       </div>
@@ -979,18 +994,19 @@ const TeamReports = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
-  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const teamMembers = useMemo(() => {
     if (!allEmployees || !seniorId) return [];
+
     const getAllSubordinates = (managerId, employees) => {
       const subordinates = [];
       const queue = employees.filter(emp => emp.teamLead?._id === managerId);
       const visited = new Set(queue.map(e => e._id));
+
       while (queue.length > 0) {
         const currentEmployee = queue.shift();
         subordinates.push(currentEmployee);
+
         const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
         for (const report of directReports) {
           if (!visited.has(report._id)) {
@@ -1001,15 +1017,15 @@ const TeamReports = ({ seniorId }) => {
       }
       return subordinates;
     };
+
     return getAllSubordinates(seniorId, allEmployees);
   }, [allEmployees, seniorId]);
 
-  const filteredEmployees = useMemo(() => {
-    if (!teamMembers) return [];
-    return teamMembers.filter(employee =>
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [teamMembers, searchTerm]);
+  useEffect(() => {
+    if (teamMembers.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(teamMembers[0]);
+    }
+  }, [teamMembers, selectedEmployee]);
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
     skip: !selectedEmployee,
@@ -1018,72 +1034,81 @@ const TeamReports = ({ seniorId }) => {
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
+      // Handle new progress-based reports
       if (data.taskUpdates) {
         return (
           <div className="space-y-3">
             {data.taskUpdates.map((update, i) => (
               <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold text-slate-800">Task {i + 1}: {update.taskId?.title || 'Unknown Task'}</p>
+                  <p className="font-semibold text-slate-800">{update.taskId?.title || 'Unknown Task'}</p>
                   <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
                 </div>
                 {update.taskId && (
-                  <button onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }} className="text-xs font-semibold text-blue-600 hover:underline">Details</button>
+                  <button onClick={() => setViewingTask(update.taskId)} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
                 )}
               </div>
             ))}
           </div>
         );
       }
-      return <p className="whitespace-pre-wrap text-sm text-slate-600">{JSON.stringify(data, null, 2)}</p>;
+      // Fallback for any old report format
+      return (
+        <div className="space-y-6 text-sm">
+          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
+        </div>
+      );
     } catch (e) {
-      return <p className="whitespace-pre-wrap text-sm text-slate-600">{content}</p>;
+      return <p className="whitespace-pre-line break-words">{content}</p>;
     }
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full">
-      {!selectedEmployee ? ( 
-        <>
-          <div className="mb-8"><h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1><p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p></div>
-          <div className="mb-6"><input type="text" placeholder="Search employees..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white" /></div>
-          {isLoadingEmployees ? <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p> : isErrorEmployees ? <p className="p-4 text-red-500">Failed to load employees.</p> : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredEmployees.map(employee => (
-                <div
-                  key={employee._id}
-                  onClick={() => setSelectedEmployee(employee)}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
-                >
-                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
-                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
+    <div className="flex h-full bg-slate-100">
+      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-gray-200 overflow-y-auto">
+        <h2 className="text-lg font-semibold p-4 border-b text-gray-800">Your Team</h2>
+        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading...</p>}
+        {isErrorEmployees && <p className="p-4 text-red-500">Failed to load team.</p>}
+        <ul className="p-2">
+          {teamMembers.map(employee => (
+            <li key={employee._id}>
+              <button onClick={() => setSelectedEmployee(employee)} className={`w-full text-left p-3 my-1 rounded-lg transition-colors duration-200 flex flex-col ${selectedEmployee?._id === employee._id ? 'bg-blue-100' : 'hover:bg-gray-50'}`} >
+                <div className="flex justify-between items-center">
+                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800'}`}>{employee.name}</p>
+                  <p className="text-xs text-gray-500">{employee.employeeId}</p>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
+                  <span>Reports to: <span className="font-medium text-gray-600">{employee.teamLead?.name || 'N/A'}</span></span>
+                  <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{employee.department || 'N/A'}</span>
+                </div>
+              </button>
+            </li>
+          ))}
+          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500">No team members assigned to you.</p>}
+        </ul>
+      </div>
+      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
+        {selectedEmployee ? (
+          <div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Reports for {selectedEmployee.name}</h2>
+            {isLoadingReports && <p>Loading reports...</p>}
+            <div className="space-y-6">
+              {reports?.map(report => (
+                <div key={report._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 flex justify-between">{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}<span className={`font-normal text-sm px-2.5 py-0.5 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{report.status}</span></h3>
+                  {renderReportContent(report.content)}
                 </div>
               ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors"><ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" /></button>
-              <div><h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2><p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p></div>
+              {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
             </div>
           </div>
-          {isLoadingReports && <p>Loading reports...</p>}
-          <div className="space-y-6">
-            {reports?.length > 0 ? reports.map(report => (
-              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2"><span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{report.status}</span></h3>
-                <div className="mb-4">{renderReportContent(report.content)}</div>
-              </div>
-            )) : <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>}
-          </div>
-        </div>
-      )}
-      <TaskDetailsModal isOpen={!!viewingTask} onClose={() => setViewingTask(null)} task={viewingTask} taskNumber={viewingTaskNumber} />
+        ) : <div className="flex items-center justify-center h-full text-gray-500">Select a team member to view their reports.</div>}
+      </div>
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+      />
     </div>
   );
 };
@@ -1190,7 +1215,7 @@ const MyDailyReport = ({ employeeId }) => {
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
             const dueDate = t.dueDate ? new Date(t.dueDate) : null;
 
-            const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+            const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
             const isNotPastDue = !dueDate || new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) >= today;
 
@@ -1237,7 +1262,7 @@ const MyDailyReport = ({ employeeId }) => {
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
 
-            const isNotCompleted = !['Completed', 'Pending Verification'].includes(t.status);
+            const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
             return isNotCompleted && hasStarted;
           }).length === 0 && (
@@ -1326,7 +1351,6 @@ const EmployeeDashboard = ({ employeeId }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
 
@@ -1445,9 +1469,9 @@ const EmployeeDashboard = ({ employeeId }) => {
       case 'dashboard':
         return <Dashboard user={user} onNavigate={setActiveComponent} />;
       case 'my-report':
-        return <MyDailyReport employeeId={user._id} />; 
+        return <MyDailyReport employeeId={user._id} />;
       case 'team-reports':
-        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={setActiveComponent} />;
+        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={onNavigate} />;
       case 'my-history':
         return <MyReportHistory employeeId={user._id} />;
       case 'team-info':
@@ -1483,83 +1507,77 @@ const EmployeeDashboard = ({ employeeId }) => {
           .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
         `}
       </style>
-      <div
-        className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-72' : 'w-20'}`}
-        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
-        onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
-      >
-        <aside className="w-full h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col">
-        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
+      <aside className={`fixed z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
+        <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
           <img
             src={companyLogo}
             alt="Company Logo"
             className="h-9 w-9"
           />
-          {isSidebarExpanded && (
+          {!isSidebarCollapsed && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}
             </span>
           )}
         </div>
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto"> 
-            <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+        <nav className="p-4 space-y-2">
+          <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <HomeIcon className="h-6 w-6" /> 
-            {isSidebarExpanded && <span className="font-semibold">Dashboard</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">Dashboard</span>}
           </button>
-            <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('my-report'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-report' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <DocumentTextIcon className="h-6 w-6" />
-            {isSidebarExpanded && <span className="font-semibold">Today's Report</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">Today's Report</span>}
           </button>
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-reports'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-reports' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <UserGroupIcon className="h-6 w-6" />
-              {isSidebarExpanded && <span className="font-semibold">Team Reports</span>}
+              {!isSidebarCollapsed && <span className="font-semibold">Team Reports</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('team-info'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'team-info' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <InformationCircleIcon className="h-6 w-6" />
-              {isSidebarExpanded && <span className="font-semibold">Team Information</span>}
+              {!isSidebarCollapsed && <span className="font-semibold">Team Information</span>}
             </button>
           )}
           {(user?.role === 'Admin' || user?.canViewAnalytics) && (
-            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'analytics' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ChartBarIcon className="h-6 w-6" />
-              {isSidebarExpanded && <span className="font-semibold">Analytics</span>}
+              {!isSidebarCollapsed && <span className="font-semibold">Analytics</span>}
             </button>
           )}
-          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('attendance'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'attendance' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CalendarDaysIcon className="h-6 w-6" />
-            {isSidebarExpanded && <span className="font-semibold">My Attendance</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">My Attendance</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('my-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ClipboardDocumentListIcon className="h-6 w-6" />
-            {isSidebarExpanded && <span className="font-semibold">My Tasks</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">My Tasks</span>}
           </button>
-          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('my-history'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'my-history' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <ArchiveBoxIcon className="h-6 w-6" />
-            {isSidebarExpanded && <span className="font-semibold">My Report History</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">My Report History</span>}
           </button>
           
           {hasTeam && (user?.role === 'Admin' || user?.canApproveTask) && (
-          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+          <button onClick={() => { setActiveComponent('task-approvals'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'task-approvals' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <CheckBadgeIcon className="h-6 w-6" />
-            {isSidebarExpanded && <span className="font-semibold">Task Approvals</span>}
+            {!isSidebarCollapsed && <span className="font-semibold">Task Approvals</span>}
           </button>
           )}
           {hasTeam && (user?.role === 'Admin' || user?.canAssignTask) && (
-            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('assign-task'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'assign-task' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <ClipboardDocumentListIcon className="h-6 w-6" />
-              {isSidebarExpanded && <span className="font-semibold">Assign Task</span>}
+              {!isSidebarCollapsed && <span className="font-semibold">Assign Task</span>}
             </button>
           )}
           {hasTeam && (
-            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${!isSidebarExpanded && 'justify-center'} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
+            <button onClick={() => { setActiveComponent('view-team-tasks'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'view-team-tasks' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
               <EyeIcon className="h-6 w-6" />
-              {isSidebarExpanded && <span className="font-semibold">View Team Tasks</span>}
+              {!isSidebarCollapsed && <span className="font-semibold">View Team Tasks</span>}
             </button>
-          )}
-        </nav>
+          )}          </nav>
           <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -1569,15 +1587,14 @@ const EmployeeDashboard = ({ employeeId }) => {
               <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
             </button>
           </div>
-        </aside>
-      </div>
+        </aside> 
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+      <div className={`flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-72'}`}>
           <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-30 fixed top-0 left-0 right-0 md:relative md:left-auto">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600 dark:text-slate-300">
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-slate-200 md:text-xl">
               {pageTitles[activeComponent] || 'Dashboard'}
             </h1>
             <div className="flex items-center gap-4">
@@ -1650,7 +1667,7 @@ const EmployeeDashboard = ({ employeeId }) => {
           <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900">
             {renderContent()}
           </main>
-      </div>
+        </div>
     </div>
    );
 };

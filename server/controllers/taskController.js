@@ -85,6 +85,11 @@ class TaskController {
       const isAssigner = task.assignedBy.toString() === updaterId.toString();
       const isAdmin = req.user.role === 'Admin';
 
+      // Prevent status updates on finally graded tasks
+      if (isAssignee && status && ['Completed', 'Not Completed'].includes(task.status)) {
+        return res.status(403).json({ message: 'This task has already been graded and cannot be modified.' });
+      }
+
       // An assignee can only update the status field.
       const canUpdate = isAdmin || (isAssigner && req.user.canUpdateTask);
 
@@ -118,7 +123,7 @@ class TaskController {
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== approverId.toString() && req.user.role !== 'Admin') {
+      if (task.assignedBy.toString() !== approverId.toString() && req.user.role !== 'Admin' && !req.user.canApproveTask) {
         return res.status(403).json({ message: 'You are not authorized to approve this task.' });
       }
 
@@ -135,7 +140,11 @@ class TaskController {
         task.completionCategory = 'Pending';
       }
 
-      task.status = 'Completed';
+      if (finalProgress < 100) {
+        task.status = 'Not Completed';
+      } else {
+        task.status = 'Completed';
+      }
       task.completionDate = task.submittedForCompletionDate || new Date();
       task.progress = finalProgress;
       task.rejectionReason = ''; // Clear any previous rejection reason
@@ -187,16 +196,35 @@ class TaskController {
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== rejectorId.toString() && req.user.role !== 'Admin') {
+      if (task.assignedBy.toString() !== rejectorId.toString() && req.user.role !== 'Admin' && !req.user.canApproveTask) {
         return res.status(403).json({ message: 'You are not authorized to reject this task.' });
       }
 
-      task.status = 'In Progress'; // Revert status
+      const finalProgress = parseInt(finalPercentage, 10);
+
+      // Set completion category based on the final percentage
+      if (finalProgress === 100) {
+        task.completionCategory = 'Completed';
+      } else if (finalProgress >= 80) {
+        task.completionCategory = 'Moderate';
+      } else if (finalProgress >= 60) {
+        task.completionCategory = 'Low';
+      } else {
+        task.completionCategory = 'Pending';
+      }
+
+      // Set final status based on progress
+      if (finalProgress < 100) {
+        task.status = 'Not Completed';
+      } else {
+        task.status = 'Completed';
+      }
+
+      task.completionDate = task.submittedForCompletionDate || new Date();
+      task.progress = finalProgress;
       task.rejectionReason = reason;
-      task.progress = parseInt(finalPercentage, 10);
-      // Add a comment to record the rejection event
       task.comments.push({
-        text: `Task rejected with progress set to ${task.progress}%. Reason: ${reason}`,
+        text: `Task reviewed and graded with progress set to ${task.progress}%. Reason: ${reason}`,
         author: rejectorId,
       });
       await task.save();
@@ -204,7 +232,7 @@ class TaskController {
       await Notification.create({
         recipient: task.assignedTo,
         subjectEmployee: rejectorId,
-        message: `Your task "${task.title}" was rejected and has been reopened. Reason: ${reason}`,
+        message: `Your task "${task.title}" has been reviewed. Final progress: ${finalProgress}%. Reason: ${reason}`,
         type: 'info',
         relatedTask: task._id,
       });

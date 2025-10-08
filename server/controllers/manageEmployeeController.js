@@ -139,69 +139,31 @@ class ManageEmployeeController {
    */
   static getDashboardStats = async (req, res) => {
     try {
-      const totalEmployees = await Employee.countDocuments({ role: { $ne: 'Admin' } });
+      const totalTasks = await Task.countDocuments();
+      const tasksPendingVerification = await Task.countDocuments({ status: 'Pending Verification' });
 
-      const employeesPerDepartment = await Assignment.aggregate([
-        {
-          $group: {
-            _id: '$department',
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $project: {
-            department: '$_id',
-            count: 1,
-            _id: 0,
-          },
-        },
-      ]);
-
-      const allReports = await Report.find({});
-      const taskStats = {
-        completed: 0,
-        inProgress: 0,
-        pending: 0,
-      };
-
-      allReports.forEach(report => {
-        try {
-          const content = JSON.parse(report.content);
-          if (content.tasks && Array.isArray(content.tasks)) {
-            content.tasks.forEach(task => {
-              if (task.status === 'Completed') {
-                taskStats.completed++;
-              } else if (task.status === 'In Progress') {
-                taskStats.inProgress++;
-              } else {
-                taskStats.pending++;
-              }
-            });
-          }
-        } catch (e) { /* Ignore reports with invalid JSON */ }
-      });
-      res.status(200).json({ totalEmployees, employeesPerDepartment, taskStats });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      res.status(500).json({ message: 'Server error while fetching stats.' });
-    }
-  };
-  static getDashboardStats = async (req, res) => {
-    try {
       const totalEmployees = await Employee.countDocuments({ role: { $ne: 'Admin' } });
 
       const managers = await Employee.find({ dashboardAccess: 'Manager Dashboard' }).select('_id');
       const managerIds = managers.map(m => m._id);
 
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
       const upcomingManagerTask = await Task.findOne({
         assignedTo: { $in: managerIds },
-        status: { $ne: 'Completed' },
-        dueDate: { $exists: true }
+        status: { $nin: ['Completed', 'Not Completed'] },
+        dueDate: { $gte: today }
       })
       .sort({ dueDate: 1 })
       .populate('assignedTo', 'name');
 
-      res.status(200).json({ totalEmployees, upcomingManagerTask });
+      res.status(200).json({ 
+        totalEmployees, 
+        upcomingManagerTask,
+        totalTasks,
+        tasksPendingVerification
+      });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       res.status(500).json({ message: 'Server error while fetching stats.' });
@@ -343,28 +305,43 @@ class ManageEmployeeController {
             employee: task.assignedTo,
             totalProgress: 0,
             totalTasks: 0,
+            totalEarliness: 0,
+            completedTasksCount: 0,
           };
         }
 
         employeePerformance[employeeId].totalProgress += task.progress || 0;
         employeePerformance[employeeId].totalTasks++;
+        if (task.status === 'Completed' && task.dueDate && task.completionDate) {
+          employeePerformance[employeeId].totalEarliness += new Date(task.dueDate) - new Date(task.completionDate);
+          employeePerformance[employeeId].completedTasksCount++;
+        }
       });
 
       const candidates = Object.values(employeePerformance).map(perf => {
         const averageProgress = perf.totalTasks > 0 ? perf.totalProgress / perf.totalTasks : 0;
+        const averageEarliness = perf.completedTasksCount > 0 ? perf.totalEarliness / perf.completedTasksCount : 0;
         return {
           ...perf,
           averageProgress,
+          averageEarliness, // in milliseconds
         };
       });
 
-      const sortedCandidates = candidates.sort((a, b) => b.averageProgress - a.averageProgress);
+      const sortedCandidates = candidates.sort((a, b) => {
+        if (b.averageProgress !== a.averageProgress) {
+          return b.averageProgress - a.averageProgress;
+        }
+        return b.averageEarliness - a.averageEarliness;
+      });
 
       const topCandidates = sortedCandidates.slice(0, 10).map(candidate => {
-        const { employee, totalTasks, averageProgress } = candidate;
+        const { employee, totalTasks, averageProgress, averageEarliness } = candidate;
         let reason = '';
+        const hoursEarly = averageEarliness > 0 ? (averageEarliness / (1000 * 60 * 60)).toFixed(1) : 0;
+
         if (totalTasks > 0) {
-          reason = `${employee.name} achieved an average task completion of ${averageProgress.toFixed(2)}% across ${totalTasks} tasks assigned this month.`;
+          reason = `${employee.name} achieved an average completion of ${averageProgress.toFixed(2)}% across ${totalTasks} tasks, finishing work on average ${hoursEarly} hours ahead of schedule.`;
         } else {
           reason = 'No completed tasks found for this period.';
         }
@@ -374,6 +351,7 @@ class ManageEmployeeController {
           totalScore: averageProgress, // Use averageProgress as the score
           totalTasks,
           reason,
+          averageEarliness,
         };
       });
 
