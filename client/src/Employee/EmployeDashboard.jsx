@@ -1068,12 +1068,12 @@ const MyDailyReport = ({ employeeId }) => {
             const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null; // This is already in UTC from backend
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
 
             const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
             // Compare dueDate (UTC) with the start of the user's local day
-            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart; 
+            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart;
 
             return isNotCompleted && hasStarted && isNotPastDue;
           })

@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useGetAllTasksQuery, useUpdateTaskMutation, useDeleteTaskMutation, useAddTaskCommentMutation } from '../services/EmployeApi';
+import { useGetAllTasksQuery, useGetEmployeesQuery, useUpdateTaskMutation, useDeleteTaskMutation, useAddTaskCommentMutation } from '../services/EmployeApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import toast from 'react-hot-toast';
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 
 const EditTaskModal = ({ isOpen, onClose, task, onUpdate }) => {
@@ -18,6 +18,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdate }) => {
         startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
         priority: task.priority || 'Medium',
+        status: task.status || 'Pending',
       });
     }
   }, [task]);
@@ -219,33 +220,73 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 };
 
 const ViewAllTasks = ({ initialFilters = {} }) => {
-  const { data: tasks = [], isLoading, refetch } = useGetAllTasksQuery();
+  const { data: tasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery();
+  const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
 
+  const isLoading = isLoadingTasks || isLoadingEmployees;
+
   useEffect(() => {
     setFilters({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
   }, [initialFilters]);
 
+  const handleSelectEmployee = (employee) => {
+    setSelectedEmployee(employee);
+    // Set default date range to the current week
+    const today = new Date();
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
+
+    setDateRange({
+      startDate: firstDayOfWeek.toISOString().split('T')[0],
+      endDate: lastDayOfWeek.toISOString().split('T')[0],
+    });
+  };
+
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    if (!selectedEmployee) return [];
+
+    let employeeTasks = tasks.filter(task => task.assignedTo?._id === selectedEmployee._id);
+
+    // Filter by date range (assignment date)
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999); // Include the whole end day
+
+      employeeTasks = employeeTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
+      });
+    }
+
+    return employeeTasks.filter(task => {
       const matchesSearch =
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.assignedTo?.name && task.assignedTo.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (task.assignedBy?.name && task.assignedBy.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        task.title.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = filters.status ? task.status === filters.status : true;
       const matchesPriority = filters.priority ? task.priority === filters.priority : true;
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [tasks, searchTerm, filters]);
+  }, [tasks, searchTerm, filters, selectedEmployee, dateRange]);
+
+  const filteredEmployees = useMemo(() => {
+    if (!employees) return [];
+    return employees.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [employees, searchTerm]);
 
   const handleFilterChange = (type, value) => {
     setFilters(prev => ({ ...prev, [type]: value }));
@@ -282,15 +323,54 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
     Completed: 'bg-emerald-100 text-emerald-800',
   };
 
-  if (isLoading) {
-    return <div className="p-8 text-center">Loading all tasks...</div>;
+  if (isLoading) return <div className="p-8 text-center">Loading...</div>;
+
+  if (!selectedEmployee) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">View Employee Tasks</h1>
+          <p className="text-slate-500 mt-2">Select an employee to view their assigned tasks.</p>
+        </div>
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-md text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredEmployees.map(employee => (
+            <div
+              key={employee._id}
+              onClick={() => handleSelectEmployee(employee)}
+              className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+            >
+              <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100" />
+              <p className="font-bold text-slate-800">{employee.name}</p>
+              <p className="text-sm text-blue-600 font-medium">{employee.role}</p>
+              <p className="text-xs text-slate-500 mt-1 font-mono">{employee.employeeId}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">All Tasks</h1>
-        <p className="text-slate-500 mt-2">A complete overview of all tasks assigned in the system.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => { setSelectedEmployee(null); setSearchTerm(''); }} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+            <ArrowLeftIcon className="h-5 w-5 text-slate-600" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Tasks for {selectedEmployee.name}</h1>
+            <p className="text-slate-500 mt-1">A complete overview of all tasks assigned to this employee.</p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-lg flex-1 flex flex-col">
@@ -301,12 +381,26 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
             <input
               type="text"
               placeholder="Search tasks or people..."
-              value={searchTerm}
+              value={searchTerm} // This now searches within the selected employee's tasks
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 w-full md:w-80 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <input 
+                type="date" 
+                value={dateRange.startDate}
+                onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+                className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              />
+              <input 
+                type="date" 
+                value={dateRange.endDate}
+                onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+                className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              />
+            </div>
             <FunnelIcon className="h-5 w-5 text-slate-400" />
             <select onChange={(e) => handleFilterChange('status', e.target.value)} value={filters.status} className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
               <option value="">All Statuses</option>
@@ -331,7 +425,6 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
             <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="px-6 py-3">Task Title</th>
-                <th scope="col" className="px-6 py-3">Assigned To</th>
                 <th scope="col" className="px-6 py-3">Assigned By</th>
                 <th scope="col" className="px-6 py-3">Due Date</th>
                 <th scope="col" className="px-6 py-3">Completed On</th>
@@ -349,7 +442,6 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                       <div className="font-semibold text-slate-900">{task.title}</div>
                       <div className="text-xs text-slate-500 truncate max-w-xs">{task.description}</div>
                     </td>
-                    <td className="px-6 py-4">{task.assignedTo?.name || 'N/A'}</td>
                     <td className="px-6 py-4">{task.assignedBy?.name || 'N/A'}</td>
                     <td className="px-6 py-4">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}</td>
                     <td className="px-6 py-4">{task.completionDate ? new Date(task.completionDate).toLocaleDateString() : <span className="text-slate-400 text-xs">--</span>}</td>

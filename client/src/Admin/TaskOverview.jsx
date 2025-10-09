@@ -29,6 +29,7 @@ const TaskOverview = () => {
       'In Progress': 0,
       'Pending Verification': 0,
       Completed: 0,
+      'Not Completed': 0,
     };
 
     allTasks.forEach(task => {
@@ -42,9 +43,10 @@ const TaskOverview = () => {
       { name: 'In Progress', value: statusCounts['In Progress'] },
       { name: 'Verification', value: statusCounts['Pending Verification'] },
       { name: 'Completed', value: statusCounts.Completed },
+      { name: 'Not Completed', value: statusCounts['Not Completed'] },
     ];
 
-    const activeTasks = allTasks.filter(t => t.status !== 'Completed');
+    const activeTasks = allTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status));
 
     return {
       chartData,
@@ -59,6 +61,7 @@ const TaskOverview = () => {
     'In Progress': '#3B82F6', // Blue
     'Verification': '#8B5CF6', // Purple
     'Completed': '#10B981', // Emerald
+    'Not Completed': '#F97316', // Orange
   };
 
   const TaskListItem = ({ task, isOverdue }) => (

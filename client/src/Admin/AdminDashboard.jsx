@@ -23,6 +23,7 @@ import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
 import AdminProfile from './AdminProfile'; 
 import ThemeToggle from '../ThemeToggle';
 import ManageAnnouncements from './ManageAnnouncements';
+import AllEmployeeAttendance from './AllEmployeeAttendance';
 import GooglePieChart from './GooglePieChart.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
@@ -926,6 +927,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'assign', icon: ClipboardDocumentCheckIcon, label: 'Assign Employee' },
     { id: 'team-reports', icon: UserGroupIcon, label: 'Team Reports' },
     { id: 'holidays', icon: CalendarDaysIcon, label: 'Holidays' }, { id: 'assign-task', icon: ClipboardDocumentListIcon, label: 'Assign Task' },
+    { id: 'all-attendance', icon: CalendarDaysIcon, label: 'All Attendance' },
     { id: 'view-tasks', icon: EyeIcon, label: 'View All Tasks' },
     { id: 'task-overview', icon: ListBulletIcon, label: 'Task Overview' },
     { id: 'task-approvals', icon: CheckBadgeIcon, label: 'Task Approvals' },
@@ -1167,6 +1169,7 @@ export default function AdminPageLayout() {
     'task-approvals': 'Task Completion Approvals',
     'employee-of-the-month': 'Employee of the Month', // New item
     'analytics': 'Team Analytics',
+    'all-attendance': 'All Employee Attendance',
     'announcements': 'Manage Announcements',
   };
 
@@ -1192,6 +1195,7 @@ export default function AdminPageLayout() {
       case 'employee-of-the-month': return <EmployeeOfTheMonth />; // New component
       case 'analytics': return <Analytics />;
       case 'announcements': return <ManageAnnouncements />;
+      case 'all-attendance': return <AllEmployeeAttendance />;
       case 'profile': return <AdminProfile user={user} onNavigate={handleNavigation} />;
       default: return <Dashboard />;
     }
