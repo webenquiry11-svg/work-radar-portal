@@ -9,57 +9,7 @@ import {
   MegaphoneIcon,
 } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
-import { useEffect, useRef } from 'react';
-
-const GooglePieChart = ({ data, title, colors }) => {
-  const chartRef = useRef(null);
-
-  useEffect(() => {
-    const drawChart = () => {
-      if (!window.google || !window.google.visualization) {
-        console.error("Google Charts library not loaded.");
-        return;
-      }
-      const chartData = google.visualization.arrayToDataTable([
-        ['Task Status', 'Count'],
-        ...data.map(item => [item.name, item.value])
-      ]);
-
-      const options = {
-        title: title,
-        is3D: true,
-        backgroundColor: 'transparent', // Handled by parent container
-        legend: { 
-          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
-        },
-        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
-        colors: colors ? data.map(item => colors[item.name]) : undefined,
-      };
-
-      if (chartRef.current) {
-        const chart = new google.visualization.PieChart(chartRef.current);
-        chart.draw(chartData, options);
-      }
-    };
-
-    if (window.google && window.google.charts) {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawChart);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
-    }
-  }, [data, title, colors]);
-
-  return (
-    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
-  );
-};
+import GooglePieChart from './GooglePieChart.jsx';
 
 const formatDueDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -195,7 +145,13 @@ const Dashboard = ({ onNavigate }) => {
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-blue-200 opacity-20 rounded-full blur-2xl"></div>
           <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4 tracking-tight z-10">Overall Task Status</h3>
           {dashboardData.totalTasks > 0 ? (
-            <GooglePieChart data={dashboardData.taskChartData} title="" colors={TASK_COLORS} />
+            <div className="relative w-full h-[500px]">
+              <GooglePieChart data={dashboardData.taskChartData} title="" colors={TASK_COLORS} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <p className="text-5xl font-bold text-slate-800 dark:text-slate-200">{dashboardData.totalTasks}</p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Tasks</p>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">No task data available.</div>
           )}

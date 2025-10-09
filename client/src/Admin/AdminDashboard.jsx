@@ -23,6 +23,7 @@ import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
 import AdminProfile from './AdminProfile'; 
 import ThemeToggle from '../ThemeToggle';
 import ManageAnnouncements from './ManageAnnouncements';
+import GooglePieChart from './GooglePieChart.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   const [comment, setComment] = useState('');
@@ -674,56 +675,6 @@ const OldTeamReports = () => {
   );
 };
 
-const GooglePieChart = ({ data, title, colors }) => {
-  const chartRef = useRef(null);
-
-  useEffect(() => {
-    const drawChart = () => {
-      if (!window.google || !window.google.visualization) {
-        console.error("Google Charts library not loaded.");
-        return;
-      }
-      const chartData = google.visualization.arrayToDataTable([
-        ['Task Status', 'Count'],
-        ...data.map(item => [item.name, item.value])
-      ]);
-
-      const options = {
-        title: title,
-        is3D: true,
-        backgroundColor: 'transparent', // Handled by parent container
-        legend: { 
-          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
-        },
-        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
-        colors: colors ? data.map(item => colors[item.name]) : undefined,
-      };
-
-      if (chartRef.current) {
-        const chart = new google.visualization.PieChart(chartRef.current);
-        chart.draw(chartData, options);
-      }
-    };
-
-    if (window.google && window.google.charts) {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawChart);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
-    }
-  }, [data, title, colors]);
-
-  return (
-    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
-  );
-};
-
 const Analytics = () => {
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
@@ -943,7 +894,7 @@ const Analytics = () => {
             <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
               <h3 className="text-lg font-bold text-slate-800 mb-4">Task Status Overview</h3>
               {chartData.length > 0 ? (
-                <GooglePieChart data={chartData} title="Grade Distribution" colors={GRADE_COLORS} />
+                <div className="w-full h-[400px]"><GooglePieChart data={chartData} title="Grade Distribution" colors={GRADE_COLORS} /></div>
               ) : <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this team.</div>}
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
@@ -1041,6 +992,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
 const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+  const notificationRef = useRef(null);
   const [logout] = useLogoutMutation();
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
   const dispatch = useDispatch();
@@ -1048,6 +1000,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
 
   useEffect(() => {
+    // Close profile dropdown on outside click
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
@@ -1057,11 +1010,25 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [profileRef]);
 
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  useEffect(() => {
+    // Close notification dropdown on outside click
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notificationRef]);
+
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
   const handleBellClick = () => {
+    setIsNotificationOpen(!isNotificationOpen);
     // When opening the notifications, mark them as read after a short delay
-    if (unreadCount > 0) {
+    if (!isNotificationOpen && unreadCount > 0) {
       setTimeout(() => {
         markNotificationsAsRead();
       }, 2000);
@@ -1069,6 +1036,7 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   };
 
   const handleNotificationClick = (notification) => {
+    setIsNotificationOpen(false); // Close dropdown on click
     if (notification.type === 'task_approval') {
       setActiveComponent('task-approvals');
     } else if (notification.type === 'info') {
@@ -1114,34 +1082,36 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
           <ArrowPathIcon className="h-6 w-6" />
         </button>
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-        <div className="relative group">
-          <button onClick={handleBellClick} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700 relative">
+        <div className="relative" ref={notificationRef}>
+          <button onClick={handleBellClick} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700 relative group">
             <span className="sr-only">View notifications</span>
             <BellIcon className="h-6 w-6" />
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
             )}
           </button>
-          <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-60">
-            <div className="p-3 font-semibold text-sm border-b">Notifications</div>
+          {isNotificationOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 z-60">
+            <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
             <div className="max-h-80 overflow-y-auto">
               {notifications.length > 0 ? notifications.map(n => (
                 <div 
                   key={n._id} 
                   onClick={() => handleNotificationClick(n)}
-                  className={`p-3 border-b text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : 'hover:bg-slate-100'}`}
+                  className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                 >
-                  <p className="text-slate-700">{n.message}</p>
-                  <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                  <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
+                  <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
               )) : (
                 <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
               )}
             </div>
-            <div className="p-2 border-t bg-slate-50 text-center">
+            <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
               <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
             </div>
           </div>
+          )}
         </div>
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
         <div className="relative" ref={profileRef}>

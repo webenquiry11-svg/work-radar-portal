@@ -29,9 +29,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { status, ...updateData } = taskData;
     try {
-      await updateTask({ id: task._id, ...updateData }).unwrap();
+      await updateTask({ id: task._id, ...taskData }).unwrap();
       toast.success('Task updated successfully!');
       onUpdate();
       onClose();

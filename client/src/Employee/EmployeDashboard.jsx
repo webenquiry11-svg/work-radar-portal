@@ -106,149 +106,6 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   );
 };
 
-
-const EmployeeProfile = ({ user }) => {
-  const dispatch = useDispatch();
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
-  const token = useSelector(state => state.auth.token);
-  const [formData, setFormData] = useState({
-    name: user.name || '',
-    email: user.email || '',
-    profilePicture: null,
-    address: user.address || '',
-    gender: user.gender || '',
-    country: user.country || '',
-    city: user.city || '',
-    qualification: user.qualification || '',
-  });
-
-  const handleChange = (e) => {
-    if (e.target.type === 'file') {
-      setFormData({ ...formData, profilePicture: e.target.files[0] });
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
-  };
-
-  const handleSave = async () => {
-    const profileData = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'profilePicture' && formData.profilePicture) {
-        profileData.append(key, formData.profilePicture);
-      } else if (formData[key] != null) {
-        profileData.append(key, formData[key]);
-      }
-    });
-
-    try {
-      const updatedData = await updateProfile({ id: user._id, formData: profileData }).unwrap();
-      toast.success('Profile updated successfully!', { icon: <CheckCircleIcon className="h-6 w-6 text-green-500" /> });
-      if (updatedData.employee) {
-        dispatch(setCredentials({ user: updatedData.employee, token }));
-      }
-      setIsEditMode(false);
-    } catch (err) {
-      toast.error(err.data?.message || 'Failed to update profile.');
-      console.error('Failed to update profile:', err);
-    }
-  };
-
-  const InfoField = ({ label, value }) => (
-    <div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-md font-semibold text-gray-800">{value || 'N/A'}</p>
-    </div>
-  );
-
-  const EditField = ({ label, name, value, onChange, type = 'text' }) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
-      <input
-        type={type}
-        name={name}
-        id={name}
-        value={value}
-        onChange={onChange}
-        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
-      />
-    </div>
-  );
-
-  return (
-    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl p-4 sm:p-8">
-      <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200 dark:border-slate-700">
-        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
-        <img
-          src={user.profilePicture || `https://i.pravatar.cc/150?u=${user.email}`}
-          alt="Profile"
-          className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
-        />
-        <div>
-          <h2 className="text-3xl font-bold text-blue-800 dark:text-slate-200">{user.name}</h2>
-          <p className="text-gray-600 dark:text-slate-400">{user.role}</p>
-          <p className="text-sm text-gray-500 dark:text-slate-500 font-mono mt-1">{user.employeeId}</p>
-        </div>
-      </div>
-        {user.canEditProfile && (
-          <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
-            {isEditMode ? 'Cancel' : 'Edit Profile'}
-          </button>
-        )}
-      </div>
-
-      {isEditMode ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <EditField label="Full Name" name="name" value={formData.name} onChange={handleChange} />
-            <EditField label="Email" name="email" value={formData.email} onChange={handleChange} type="email" />
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Gender</label>
-              <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Select...</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <EditField label="Address" name="address" value={formData.address} onChange={handleChange} />
-            <EditField label="City" name="city" value={formData.city} onChange={handleChange} />
-            <EditField label="Country" name="country" value={formData.country} onChange={handleChange} />
-            <EditField label="Qualification" name="qualification" value={formData.qualification} onChange={handleChange} />
-            <div>
-              <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">Profile Picture</label>
-              <input type="file" name="profilePicture" id="profilePicture" onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2" />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <button onClick={handleSave} disabled={isUpdating} className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400">
-              {isUpdating ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <InfoField label="Email" value={user.email} />
-          <InfoField label="Gender" value={user.gender} />
-          <InfoField label="Address" value={user.address} />
-          <InfoField label="City" value={user.city} />
-          <InfoField label="Country" value={user.country} />
-          <InfoField label="Qualification" value={user.qualification} />
-        </div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8 pt-8 border-t border-gray-200">
-        <InfoField label="Department" value={user.department} />
-        <InfoField label="Experience" value={user.experience} />
-        <InfoField label="Work Type" value={user.workType} />
-        <InfoField label="Company" value={user.company} />
-        <InfoField label="Joining Date" value={user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : 'N/A'} />
-        <InfoField label="Work Location" value={user.workLocation} />
-        <InfoField label="Shift" value={user.shift} />
-      </div>
-    </div>
-  );
-};
-
 const Dashboard = ({ user, onNavigate }) => {
   const { data: tasks = [], isLoading } = useGetMyTasksQuery();
   const { data: allTasks = [] } = useGetAllTasksQuery();
@@ -699,21 +556,19 @@ const MyTasks = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Active tasks are those not completed AND their due date hasn't passed.
-    const active = myTasks.filter(t => t.status !== 'Completed' && (!t.dueDate || new Date(t.dueDate) >= today));
-    const completed = myTasks.filter(t => t.status === 'Completed');
-    const overdue = active.filter(t => t.dueDate && new Date(t.dueDate) < today);
+    const activeAndNotOverdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
+    const completed = myTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
+    const overdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
-      // Overdue is now a separate category and not part of active
-      active: active.length,
+      active: activeAndNotOverdue.length,
       overdue: overdue.length,
       completed: completed.length,
     };
 
     let tasks = [];
     if (activeTab === 'Active') {
-      tasks = active;
+      tasks = activeAndNotOverdue;
     } else if (activeTab === 'Completed') {
       tasks = completed;
     } else {
@@ -1184,14 +1039,14 @@ const MyDailyReport = ({ employeeId }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto bg-slate-50/50">
+    <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-900">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Today's Progress Report</h1>
-          <p className="text-slate-500 mt-1">Update the completion status for your active tasks.</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">Today's Progress Report</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Update the completion status for your active tasks.</p>
         </div>
         {!isReadOnly && (
-          <button onClick={handleSubmit} disabled={isUpdating} className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm disabled:bg-blue-400 transition-colors shadow-lg shadow-blue-500/30">
+          <button onClick={handleSubmit} disabled={isUpdating} className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm disabled:bg-blue-400 transition-colors shadow-lg shadow-blue-500/30 dark:shadow-blue-800/50">
             {isUpdating ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <PaperAirplaneIcon className="h-5 w-5 mr-2" />}
             Submit Progress
           </button>
@@ -1199,7 +1054,7 @@ const MyDailyReport = ({ employeeId }) => {
       </div>
 
       {isReadOnly && (
-        <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-l-4 border-amber-500 text-amber-800 p-4 mb-6 rounded-r-lg shadow-sm" role="alert">
+        <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-l-4 border-amber-500 text-amber-800 p-4 mb-6 rounded-r-lg shadow-sm dark:bg-amber-500/10 dark:text-amber-300" role="alert">
           <p className="font-bold">Reporting Closed for Today</p>
           <p className="text-sm">You can submit progress once daily before 7:00 PM. Today's report may have already been submitted or the deadline has passed.</p>
         </div>
@@ -1209,25 +1064,26 @@ const MyDailyReport = ({ employeeId }) => {
         {assignedTasks
           .filter(t => { 
             const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today at midnight
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null; // This is already in UTC from backend
 
             const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
-            const isNotPastDue = !dueDate || new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) >= today;
+            // Compare dueDate (UTC) with the start of the user's local day
+            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart; 
 
             return isNotCompleted && hasStarted && isNotPastDue;
           })
-          .map((task, index) => (
-          <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 flex flex-col">
-            <div className="p-5 border-b border-slate-200"> 
-              <h3 className="font-bold text-lg text-slate-800">
+          .map((task, index) => ( 
+          <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700 flex flex-col">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-700"> 
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">
                 Task {index + 1}: {task.title}
               </h3>
-              <p className="text-sm text-slate-500 mt-1">{task.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{task.description}</p>
             </div>
             <div className="p-6 flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-5">
@@ -1235,7 +1091,7 @@ const MyDailyReport = ({ employeeId }) => {
                   {progress[task._id] || 0}%
                 </span>
                 <div className="relative w-full h-4 flex items-center">
-                  <div className="absolute h-1.5 w-full bg-slate-200 rounded-full"></div>
+                  <div className="absolute h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                   <div
                     className="absolute h-1.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
                     style={{ width: `${progress[task._id] || 0}%` }}
@@ -1266,7 +1122,7 @@ const MyDailyReport = ({ employeeId }) => {
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
             return isNotCompleted && hasStarted;
           }).length === 0 && (
-          <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
+          <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white dark:bg-slate-800 rounded-xl border border-dashed dark:border-slate-700">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
             <p className="mt-4 font-semibold text-lg">All tasks are completed!</p>
             <p className="text-sm">No pending tasks to report on.</p>
@@ -1339,6 +1195,164 @@ const MyAttendance = ({ employeeId }) => {
   );
 };
 
+const EmployeeProfile = ({ user }) => {
+  const dispatch = useDispatch();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
+  const token = useSelector(state => state.auth.token);
+  const [formData, setFormData] = useState({
+    name: user.name || '',
+    email: user.email || '',
+    profilePicture: null,
+    address: user.address || '',
+    gender: user.gender || '',
+    country: user.country || '',
+    city: user.city || '',
+    qualification: user.qualification || '',
+  });
+
+  // When edit mode is toggled, reset the form data to the current user prop
+  useEffect(() => {
+    if (user && isEditMode) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        profilePicture: null, // Don't try to pre-fill file input
+        address: user.address || '',
+        gender: user.gender || '',
+        country: user.country || '',
+        city: user.city || '',
+        qualification: user.qualification || '',
+      });
+    }
+  }, [user, isEditMode]);
+
+  const handleChange = (e) => {
+    if (e.target.type === 'file') {
+      setFormData({ ...formData, profilePicture: e.target.files[0] });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleSave = async () => {
+    const profileData = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (key === 'profilePicture' && formData.profilePicture) {
+        profileData.append(key, formData.profilePicture);
+      } else if (formData[key] != null) {
+        profileData.append(key, formData[key]);
+      }
+    });
+
+    try {
+      const updatedData = await updateProfile({ id: user._id, formData: profileData }).unwrap();
+      toast.success('Profile updated successfully!', { icon: <CheckCircleIcon className="h-6 w-6 text-green-500" /> });
+      if (updatedData.employee) {
+        dispatch(setCredentials({ user: updatedData.employee, token }));
+      }
+      setIsEditMode(false);
+    } catch (err) {
+      toast.error(err.data?.message || 'Failed to update profile.');
+      console.error('Failed to update profile:', err);
+    }
+  };
+
+  const InfoField = ({ label, value }) => (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="text-md font-semibold text-gray-800">{value || 'N/A'}</p>
+    </div>
+  );
+
+  const EditField = ({ label, name, value, onChange, type = 'text' }) => (
+    <div>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
+      <input
+        type={type}
+        name={name}
+        id={name}
+        value={value}
+        onChange={onChange}
+        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  );
+
+  return (
+    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl p-4 sm:p-8">
+      <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
+        <img
+          src={user.profilePicture || `https://i.pravatar.cc/150?u=${user.email}`}
+          alt="Profile"
+          className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
+        />
+        <div>
+          <h2 className="text-3xl font-bold text-blue-800 dark:text-slate-200">{user.name}</h2>
+          <p className="text-gray-600 dark:text-slate-400">{user.role}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500 font-mono mt-1">{user.employeeId}</p>
+        </div>
+      </div>
+        {user.canEditProfile && (
+          <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+            {isEditMode ? 'Cancel' : 'Edit Profile'}
+          </button>
+        )}
+      </div>
+
+      {isEditMode ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <EditField label="Full Name" name="name" value={formData.name} onChange={handleChange} />
+            <EditField label="Email" name="email" value={formData.email} onChange={handleChange} type="email" />
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Gender</label>
+              <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Select...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <EditField label="Address" name="address" value={formData.address} onChange={handleChange} />
+            <EditField label="City" name="city" value={formData.city} onChange={handleChange} />
+            <EditField label="Country" name="country" value={formData.country} onChange={handleChange} />
+            <EditField label="Qualification" name="qualification" value={formData.qualification} onChange={handleChange} />
+            <div>
+              <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">Profile Picture</label>
+              <input type="file" name="profilePicture" id="profilePicture" onChange={handleChange} className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={handleSave} disabled={isUpdating} className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400">
+              {isUpdating ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <InfoField label="Email" value={user.email} />
+          <InfoField label="Gender" value={user.gender} />
+          <InfoField label="Address" value={user.address} />
+          <InfoField label="City" value={user.city} />
+          <InfoField label="Country" value={user.country} />
+          <InfoField label="Qualification" value={user.qualification} />
+        </div>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8 pt-8 border-t border-gray-200">
+        <InfoField label="Department" value={user.department} />
+        <InfoField label="Experience" value={user.experience} />
+        <InfoField label="Work Type" value={user.workType} />
+        <InfoField label="Company" value={user.company} />
+        <InfoField label="Joining Date" value={user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : 'N/A'} />
+        <InfoField label="Work Location" value={user.workLocation} />
+        <InfoField label="Shift" value={user.shift} />
+      </div>
+    </div>
+  );
+};
+
 const EmployeeDashboard = ({ employeeId }) => {
   const user = useSelector(selectCurrentUser);
   const [logout] = useLogoutMutation();
@@ -1392,6 +1406,7 @@ const EmployeeDashboard = ({ employeeId }) => {
     const teamComponents = ['team-reports', 'team-info', 'task-approvals', 'assign-task', 'view-team-tasks'];
     if (!hasTeam && teamComponents.includes(activeComponent)) {
       setActiveComponent('dashboard');
+      setIsNotificationOpen(false);
     }
   }, [hasTeam, activeComponent]);
 
@@ -1447,17 +1462,20 @@ const EmployeeDashboard = ({ employeeId }) => {
 
   const handleNotificationClick = (notification) => {
     if (notification.type === 'task_approval') {
-      setActiveComponent('task-approvals');
+      setActiveComponent('task-approvals');setIsNotificationOpen(false);
     } else if (notification.type === 'info') {
       // Info notifications for employees are usually about their own tasks
       setActiveComponent('my-tasks');
+      setIsNotificationOpen(false);
     }
   };
 
   const handleClearRead = async () => {
     try {
-      // You may need to implement a mutation for deleting read notifications if not already present
-      await markNotificationsAsRead().unwrap();
+      // Assuming a mutation `deleteReadNotifications` exists and is imported
+      const { useDeleteReadNotificationsMutation } = await import('../services/EmployeApi.js');
+      const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+      await deleteReadNotifications().unwrap();
       toast.success('Read notifications cleared.');
     } catch {
       toast.error('Failed to clear notifications.');
@@ -1471,7 +1489,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       case 'my-report':
         return <MyDailyReport employeeId={user._id} />;
       case 'team-reports':
-        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={onNavigate} />;
+        return hasTeam ? <TeamReports seniorId={user._id} /> : <Dashboard user={user} onNavigate={setActiveComponent} />;
       case 'my-history':
         return <MyReportHistory employeeId={user._id} />;
       case 'team-info':
@@ -1616,11 +1634,11 @@ const EmployeeDashboard = ({ employeeId }) => {
                       {notifications.length > 0 ? notifications.map(n => (
                         <div 
                           key={n._id} 
-                          onClick={() => handleNotificationClick(n)}
+                          onClick={() => { handleNotificationClick(n); setIsNotificationOpen(false); }}
                           className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                         >
-                          <p className="text-slate-700">{n.message}</p>
-                          <p className="text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
+                          <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                         </div>
                       )) : (
                         <p className="p-4 text-center text-sm text-gray-500">No notifications</p>

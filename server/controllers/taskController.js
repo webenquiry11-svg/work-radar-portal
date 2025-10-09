@@ -332,9 +332,16 @@ class TaskController {
         status: { $in: ['Pending', 'In Progress'] }
       }).populate('assignedTo', 'name');
 
+      // Find reports submitted today to avoid double-triggering verification
+      const reportsFromToday = await Report.find({
+        reportDate: today,
+        status: 'Submitted'
+      }).select('employee');
+      const employeesWhoReportedToday = new Set(reportsFromToday.map(r => r.employee.toString()));
+
       for (const task of pastDueTasks) {
         task.status = 'Pending Verification';
-        task.submittedForCompletionDate = task.dueDate; // Set submission date to the due date
+        task.submittedForCompletionDate = new Date(); // Set submission date to now
         await task.save();
 
         // Check if an approval notification already exists for this task
@@ -343,10 +350,15 @@ class TaskController {
           type: 'task_approval'
         });
 
+        // If the employee already submitted a report today, don't auto-trigger.
+        if (employeesWhoReportedToday.has(task.assignedTo._id.toString())) {
+          continue;
+        }
+
         if (!existingNotification) {
             await Notification.create({
               recipient: task.assignedBy._id,
-              subjectEmployee: task.assignedTo,
+              subjectEmployee: task.assignedTo._id,
               message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
               type: 'task_approval',
               relatedTask: task._id,

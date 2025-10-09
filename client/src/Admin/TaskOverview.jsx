@@ -6,57 +6,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/solid'; 
-import { useEffect, useRef } from 'react';
-
-const GooglePieChart = ({ data, title, colors }) => {
-  const chartRef = useRef(null);
-
-  useEffect(() => {
-    const drawChart = () => {
-      if (!window.google || !window.google.visualization) {
-        console.error("Google Charts library not loaded.");
-        return;
-      }
-      const chartData = google.visualization.arrayToDataTable([
-        ['Task Status', 'Count'],
-        ...data.map(item => [item.name, item.value])
-      ]);
-
-      const options = {
-        title: title,
-        is3D: true,
-        backgroundColor: 'transparent', // Handled by parent container
-        legend: { 
-          textStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' } 
-        },
-        titleTextStyle: { color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#334155' },
-        colors: colors ? data.map(item => colors[item.name]) : undefined,
-      };
-
-      if (chartRef.current) {
-        const chart = new google.visualization.PieChart(chartRef.current);
-        chart.draw(chartData, options);
-      }
-    };
-
-    if (window.google && window.google.charts) {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawChart);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
-    }
-  }, [data, title, colors]);
-
-  return (
-    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
-  );
-};
+import GooglePieChart from './GooglePieChart.jsx';
 
 const TaskOverview = () => {
   const { data: allTasks = [], isLoading } = useGetAllTasksQuery();
@@ -72,7 +22,7 @@ const TaskOverview = () => {
     }
 
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const statusCounts = {
       Pending: 0,
@@ -99,7 +49,7 @@ const TaskOverview = () => {
     return {
       chartData,
       highPriorityTasks: activeTasks.filter(t => t.priority === 'High'),
-      overdueTasks: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < today),
+      overdueTasks: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < todayStart),
       totalTasks: allTasks.length,
     };
   }, [allTasks]);
@@ -142,12 +92,16 @@ const TaskOverview = () => {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 sm:p-8 mb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="relative h-80"> 
-            <GooglePieChart data={overviewData.chartData} title="Task Status Distribution" colors={TASK_COLORS} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <p className="text-5xl font-bold text-slate-800">{overviewData.totalTasks}</p>
-              <p className="text-sm font-semibold text-slate-500">Total Tasks</p>
+          <div className="relative h-[400px]">
+            <div className="w-full h-full">
+              <GooglePieChart data={overviewData.chartData} title="" colors={TASK_COLORS} is3D={false} pieHole={0.4} />
             </div>
+            {overviewData.totalTasks > 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <p className="text-5xl font-bold text-slate-800">{overviewData.totalTasks}</p>
+                <p className="text-sm font-semibold text-slate-500">Total Tasks</p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-lg">
