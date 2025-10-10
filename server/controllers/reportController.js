@@ -61,8 +61,14 @@ class ReportController {
                 task.progress = completion;
 
                 if (completion === 100) {
-                  // Only create a notification if the task is not already pending verification
-                  if (task.status !== 'Pending Verification') {
+                  // Check if an approval notification already exists for this task
+                  const existingNotification = await Notification.findOne({
+                    relatedTask: task._id,
+                    type: 'task_approval'
+                  });
+
+                  // Only create a notification if one doesn't already exist
+                  if (!existingNotification) {
                     task.status = 'Pending Verification';
                     task.submittedForCompletionDate = today; // Set submission date
                     

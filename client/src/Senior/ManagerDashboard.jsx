@@ -703,38 +703,29 @@ const Dashboard = ({ user, onNavigate }) => {
 
   // --- Redesigned Attractive Dashboard ---
   return (
-    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope">
+    <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope relative overflow-hidden">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
+      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="relative z-10 px-8 py-12 flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg">Welcome, {user.name}!</h1>
-            <p className="mt-3 text-lg text-blue-100/90 font-medium">Here’s a vibrant snapshot of your team’s progress and your own priorities.</p>
+            <p className="mt-3 text-lg text-blue-100/90 font-medium">Here’s a snapshot of your team’s progress.</p>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <CalendarIcon className="h-7 w-7 text-white/80" />
-              <span className="font-semibold text-lg">
-                Next Team Due: <span className="text-yellow-200">{formatDueDate(stats.teamUpcomingDueDate)}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <CalendarIcon className="h-7 w-7 text-white/80" />
-              <span className="font-semibold text-lg">
-                My Next Due: <span className="text-green-200">{formatDueDate(stats.myUpcomingDueDate)}</span>
-              </span>
-            </div>
+          <div className="bg-white/10 p-4 rounded-2xl text-center">
+            <p className="text-sm font-semibold text-blue-200">Next Team Deadline</p>
+            <p className="text-2xl font-bold text-yellow-300">{formatDueDate(stats.teamUpcomingDueDate)}</p>
+            <p className="text-xs font-medium text-blue-200 truncate max-w-[200px]">{stats.teamUpcomingTaskTitle}</p>
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 -mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 lg:grid-cols-4 gap-6 -mt-20 z-20 relative">
         <div
           onClick={() => onNavigate && onNavigate('team-info')}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats?.teamMemberCount ?? 0}</p>
@@ -742,7 +733,7 @@ const Dashboard = ({ user, onNavigate }) => {
         </div>
         <div
           onClick={() => onNavigate && onNavigate('view-team-tasks')}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
           <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{stats?.totalTeamTasks ?? 0}</p>
@@ -750,33 +741,37 @@ const Dashboard = ({ user, onNavigate }) => {
         </div>
         <div
           onClick={() => onNavigate && onNavigate({ component: 'view-team-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <CheckBadgeIcon className="h-10 w-10 text-amber-500 mb-2" />
           <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats?.pendingApprovalsCount ?? 0}</p>
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
         </div>
         {announcement ? (
-          <div className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between relative overflow-hidden">
+          <div className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between relative overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer col-span-2 lg:col-span-1" onClick={() => onNavigate('announcements')}>
             <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
             <div className="relative z-10">
               <div className="flex items-center gap-3">
                 <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
-              <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
+              <p className="text-lg font-bold mt-2 break-words">{announcement.title}</p>
+              <p className="text-xs text-indigo-200 mt-1 break-words line-clamp-2">{announcement.content}</p>
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500"><CalendarIcon className="h-10 w-10 text-green-500 mb-2" /><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatDueDate(stats.teamUpcomingDueDate)}</p><p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Next Team Due</p><span className="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate">{stats.teamUpcomingTaskTitle}</span></div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate('my-tasks')}>
+            <CalendarIcon className="h-10 w-10 text-green-500 mb-2" />
+            <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatDueDate(stats.myUpcomingDueDate)}</p>
+            <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">My Next Due Date</p>
+          </div>
         )}
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-4 mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10 mb-16">
         {/* Team Task Status Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col justify-center">
+        <div className="lg:col-span-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-blue-100 dark:border-slate-700 shadow-2xl p-8 flex flex-col justify-center hover:shadow-3xl transition-shadow duration-300">
           <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Team Task Status</h3>
           {taskChartData.length > 0 ? (
             <div className="w-full h-[400px]">
@@ -787,18 +782,18 @@ const Dashboard = ({ user, onNavigate }) => {
           )}
         </div>
         {/* Pending Approvals */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col">
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-amber-100 dark:border-slate-700 shadow-2xl p-8 flex flex-col hover:shadow-3xl transition-shadow duration-300">
           <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">Pending Your Approval</h3>
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 overflow-y-auto -mr-4 pr-4">
             {stats.pendingApprovalTasks.length > 0 ? (
               stats.pendingApprovalTasks.map(notification => (
-                <div key={notification._id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                <div key={notification._id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer" onClick={() => onNavigate('task-approvals')}>
                   <p className="font-semibold text-base text-slate-800 dark:text-slate-200">{notification.relatedTask?.title}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Submitted by: {notification.subjectEmployee?.name}</p>
                 </div>
               ))
             ) : (
-              <div className="text-center py-10 text-slate-400 dark:text-slate-500">
+              <div className="text-center py-10 text-slate-400 dark:text-slate-500 h-full flex flex-col items-center justify-center">
                 <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
                 <p className="mt-2 font-semibold">All caught up!</p>
               </div>
@@ -1150,14 +1145,40 @@ const MyTasks = () => {
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [activeTab, setActiveTab] = useState('Active');
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+
+  useEffect(() => {
+    // Set default date range to the current week
+    const today = new Date();
+    const firstDay = new Date(today.setDate(today.getDate() - today.getDay()));
+    const lastDay = new Date(firstDay);
+    lastDay.setDate(lastDay.getDate() + 6);
+
+    setDateRange({
+      startDate: firstDay.toISOString().split('T')[0],
+      endDate: lastDay.toISOString().split('T')[0],
+    });
+  }, []);
 
   const { stats, tasksToShow } = useMemo(() => {
+    let dateFilteredTasks = myTasks;
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999); // Include the whole end day
+
+      dateFilteredTasks = myTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
+      });
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const activeAndNotOverdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
-    const completed = myTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
-    const overdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
+    const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
+    const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
+    const overdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
       active: activeAndNotOverdue.length,
@@ -1170,12 +1191,12 @@ const MyTasks = () => {
       tasks = activeAndNotOverdue;
     } else if (activeTab === 'Completed') {
       tasks = completed;
-    } else {
-      tasks = myTasks;
+    } else { // 'All' tab
+      tasks = dateFilteredTasks;
     }
 
     return { stats, tasksToShow: tasks };
-  }, [myTasks, activeTab]);
+  }, [myTasks, activeTab, dateRange]);
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading tasks...</div>;
@@ -1214,6 +1235,20 @@ const MyTasks = () => {
                 {tab}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input 
+              type="date" 
+              value={dateRange.startDate}
+              onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+            <input 
+              type="date" 
+              value={dateRange.endDate}
+              onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
           </div>
         </div>
 

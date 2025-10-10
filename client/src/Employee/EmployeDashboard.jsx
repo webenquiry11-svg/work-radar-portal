@@ -551,14 +551,40 @@ const MyTasks = () => {
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [activeTab, setActiveTab] = useState('Active');
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+
+  useEffect(() => {
+    // Set default date range to the current week
+    const today = new Date();
+    const firstDay = new Date(today.setDate(today.getDate() - today.getDay()));
+    const lastDay = new Date(firstDay);
+    lastDay.setDate(lastDay.getDate() + 6);
+
+    setDateRange({
+      startDate: firstDay.toISOString().split('T')[0],
+      endDate: lastDay.toISOString().split('T')[0],
+    });
+  }, []);
 
   const { stats, tasksToShow } = useMemo(() => {
+    let dateFilteredTasks = myTasks;
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999); // Include the whole end day
+
+      dateFilteredTasks = myTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
+      });
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const activeAndNotOverdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
-    const completed = myTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
-    const overdue = myTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
+    const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
+    const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
+    const overdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
       active: activeAndNotOverdue.length,
@@ -571,12 +597,12 @@ const MyTasks = () => {
       tasks = activeAndNotOverdue;
     } else if (activeTab === 'Completed') {
       tasks = completed;
-    } else {
-      tasks = myTasks;
+    } else { // 'All' tab
+      tasks = dateFilteredTasks;
     }
 
     return { stats, tasksToShow: tasks };
-  }, [myTasks, activeTab]);
+  }, [myTasks, activeTab, dateRange]);
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading tasks...</div>;
@@ -615,6 +641,20 @@ const MyTasks = () => {
                 {tab}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input 
+              type="date" 
+              value={dateRange.startDate}
+              onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+            <input 
+              type="date" 
+              value={dateRange.endDate}
+              onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+              className="text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
           </div>
         </div>
 
@@ -1068,12 +1108,12 @@ const MyDailyReport = ({ employeeId }) => {
             const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
             const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+            const dueDate = t.dueDate ? new Date(t.dueDate) : null; // This is already in UTC from backend
 
             const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
             const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
             // Compare dueDate (UTC) with the start of the user's local day
-            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart;
+            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart; 
 
             return isNotCompleted && hasStarted && isNotPastDue;
           })

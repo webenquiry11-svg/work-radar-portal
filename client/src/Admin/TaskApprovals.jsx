@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useGetNotificationsQuery, useApproveTaskMutation, useRejectTaskMutation, useMarkNotificationsAsReadMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi.js';
 import toast from 'react-hot-toast';
-import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 
@@ -9,13 +9,19 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
   const [reason, setReason] = useState('');
   const [finalPercentage, setFinalPercentage] = useState(80);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+      setFinalPercentage(80);
+    }
+  }, [isOpen]);
 
   return (
+    !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-slate-800">Reason for Rejection</h3>
+          <h3 className="text-lg font-semibold text-slate-800">Review and Reject Task</h3>
         </div>
         <div className="p-6">
           <textarea
@@ -26,7 +32,7 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
             rows="4"
           />
           <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Set Final Progress</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Set Final Progress Percentage</label>
             <div className="flex items-center gap-4">
               <input
                 type="range"
@@ -50,14 +56,20 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
         </div>
       </div>
     </div>
+    )
   );
 };
 
-const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving }) => {
+const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, initialProgress }) => {
   const [comment, setComment] = useState('');
-  const [finalPercentage, setFinalPercentage] = useState(100);
+  const [finalPercentage, setFinalPercentage] = useState(initialProgress || 100);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setFinalPercentage(initialProgress || 100);
+      setComment('');
+    }
+  }, [isOpen, initialProgress]);
 
   const getGradeFromPercentage = (p) => {
     if (p === 100) return { label: 'Completed', color: 'text-emerald-600' };
@@ -69,6 +81,7 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving }) => {
   const currentGrade = getGradeFromPercentage(finalPercentage);
 
   return (
+    !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6 border-b">
@@ -107,6 +120,7 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving }) => {
         </div>
       </div>
     </div>
+    )
   );
 };
 
@@ -264,6 +278,7 @@ const TaskApprovals = () => {
         onClose={() => setApprovingNotification(null)}
         onConfirm={handleConfirmApprove}
         isApproving={isApproving}
+        initialProgress={approvingNotification?.relatedTask?.progress}
       />
       <TaskDetailsModal
         isOpen={!!viewingTask}

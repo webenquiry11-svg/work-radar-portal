@@ -202,10 +202,10 @@ class TaskController {
 
       const finalProgress = parseInt(finalPercentage, 10);
 
-      // Set completion category based on the final percentage
-      if (finalProgress === 100) {
+      // Set completion category based on the manager's final percentage
+      if (finalProgress >= 95) { // Let's consider 95-100 as completed
         task.completionCategory = 'Completed';
-      } else if (finalProgress >= 80) {
+      } else if (finalProgress >= 75) {
         task.completionCategory = 'Moderate';
       } else if (finalProgress >= 60) {
         task.completionCategory = 'Low';
@@ -214,7 +214,7 @@ class TaskController {
       }
 
       // Set final status based on progress
-      if (finalProgress < 100) {
+      if (finalProgress < 95) {
         task.status = 'Not Completed';
       } else {
         task.status = 'Completed';
@@ -340,30 +340,30 @@ class TaskController {
       const employeesWhoReportedToday = new Set(reportsFromToday.map(r => r.employee.toString()));
 
       for (const task of pastDueTasks) {
-        task.status = 'Pending Verification';
-        task.submittedForCompletionDate = new Date(); // Set submission date to now
-        await task.save();
-
         // Check if an approval notification already exists for this task
         const existingNotification = await Notification.findOne({
           relatedTask: task._id,
           type: 'task_approval'
         });
 
-        // If the employee already submitted a report today, don't auto-trigger.
-        if (employeesWhoReportedToday.has(task.assignedTo._id.toString())) {
+        // If a notification already exists, or if the employee submitted a report today, skip.
+        if (existingNotification || employeesWhoReportedToday.has(task.assignedTo._id.toString())) {
           continue;
         }
 
-        if (!existingNotification) {
-            await Notification.create({
-              recipient: task.assignedBy._id,
-              subjectEmployee: task.assignedTo._id,
-              message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
-              type: 'task_approval',
-              relatedTask: task._id,
-            });
-        }
+        // If we are here, it means no notification exists and the user hasn't reported today.
+        // Now, we can update the status and create the notification.
+        task.status = 'Pending Verification';
+        task.submittedForCompletionDate = new Date(); // Set submission date to now
+        await task.save();
+
+        await Notification.create({
+          recipient: task.assignedBy._id,
+          subjectEmployee: task.assignedTo._id,
+          message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
+          type: 'task_approval',
+          relatedTask: task._id,
+        });
       }
       res.status(200).json({ message: `${pastDueTasks.length} past-due tasks processed.` });
     } catch (error) {

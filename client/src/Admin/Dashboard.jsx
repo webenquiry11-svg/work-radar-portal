@@ -5,6 +5,7 @@ import {
   BriefcaseIcon,
   ClockIcon,
   TrophyIcon,
+  CheckBadgeIcon,
   CheckCircleIcon,
   MegaphoneIcon,
 } from '@heroicons/react/24/outline';
@@ -49,6 +50,12 @@ const Dashboard = ({ onNavigate }) => {
       { name: 'Completed', value: allTasks.filter(t => t.status === 'Completed').length },
     ].filter(entry => entry.value > 0);
 
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const tasksCompletedThisMonth = allTasks.filter(t => 
+      t.status === 'Completed' && 
+      t.completionDate && new Date(t.completionDate) >= startOfMonth
+    ).length;
+
     return {
       totalEmployees: stats?.totalEmployees ?? 0,
       activeDepartments: stats?.employeesPerDepartment?.length ?? 0,
@@ -57,6 +64,7 @@ const Dashboard = ({ onNavigate }) => {
       topCandidate,
       taskChartData,
       upcomingManagerTask: stats?.upcomingManagerTask,
+      tasksCompletedThisMonth,
     };
   }, [isLoading, stats, allTasks, eomCandidates]);
 
@@ -135,7 +143,11 @@ const Dashboard = ({ onNavigate }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500"><BuildingOfficeIcon className="h-10 w-10 text-green-500 mb-2" /><p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.activeDepartments}</p><p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Departments</p></div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-200 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
+            <CheckBadgeIcon className="h-10 w-10 text-green-500 mb-2" />
+            <p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.tasksCompletedThisMonth}</p>
+            <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed This Month</p>
+          </div>
         )}
       </div>
 

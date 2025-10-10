@@ -292,7 +292,8 @@ class ManageEmployeeController {
 
     try {
       const tasks = await Task.find({
-        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        completionDate: { $gte: startOfMonth, $lte: endOfMonth },
+        status: { $in: ['Completed', 'Not Completed'] }
       }).populate('assignedTo', 'name profilePicture employeeId');
 
       const employeePerformance = {};
