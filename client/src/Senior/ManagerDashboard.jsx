@@ -154,7 +154,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 };
 
 const MyAttendance = ({ employeeId }) => {
-  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery();
+  const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery(); 
 
   const legendItems = [
     { label: 'Present', color: 'bg-green-100 text-green-800' },
@@ -202,7 +202,7 @@ const MyAttendance = ({ employeeId }) => {
 };
 
 const TeamReports = ({ seniorId }) => {
-  const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
+  const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery(); 
   const [selectedEmployee, setSelectedEmployee] = useState(null); 
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
@@ -508,7 +508,7 @@ const OldTeamReports = ({ seniorId }) => {
 };
 
 const TeamInformation = ({ seniorId }) => {
-  const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
@@ -859,23 +859,24 @@ const Analytics = ({ user }) => {
       viewTitle = "Team Performance Analytics";
     }
 
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    let dateFilteredTasks = relevantTasks;
 
     if (dateRange.startDate && dateRange.endDate) {
       const start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
       end.setHours(23, 59, 59, 999);
-      gradedTasks = gradedTasks.filter(task => {
-        const gradedDate = new Date(task.completionDate || task.updatedAt);
-        return gradedDate >= start && gradedDate <= end;
+      dateFilteredTasks = relevantTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
       });
     }
 
-    stats.totalTasks = gradedTasks.length;
+    const gradedTasks = dateFilteredTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    stats.totalTasks = dateFilteredTasks.length;
     gradedTasks.forEach(task => {
       stats.totalProgress += task.progress || 0;
     });
-    stats.averageCompletion = stats.totalTasks > 0 ? (stats.totalProgress / stats.totalTasks) : 0;
+    stats.averageCompletion = gradedTasks.length > 0 ? (stats.totalProgress / gradedTasks.length) : 0;
 
     stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress').length;
     stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
@@ -911,7 +912,8 @@ const Analytics = ({ user }) => {
     'In Progress': '#F59E0B', // Amber
     'In Verification': '#8B5CF6', // Purple
     'Not Completed': '#f97316', // Orange
-    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
+    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444',
+    'Pending Verification': '#8B5CF6', // Purple
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
 
@@ -1300,7 +1302,7 @@ const MyTasks = () => {
 };
 
 const MyReportHistory = ({ employeeId }) => {
-  const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId);
+  const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId); 
   const [selectedReport, setSelectedReport] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
@@ -1384,7 +1386,7 @@ const MyReportHistory = ({ employeeId }) => {
 };
 
 const MyDailyReport = ({ employeeId }) => {
-  const { data: assignedTasks = [], isLoading: isLoadingTasks } = useGetMyTasksQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: assignedTasks = [], isLoading: isLoadingTasks } = useGetMyTasksQuery(undefined, { refetchOnMountOrArgChange: true }); 
   const { data: todaysReport, isLoading: isLoadingReport } = useGetTodaysReportQuery(employeeId);
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
   const [progress, setProgress] = useState({});
@@ -1735,7 +1737,7 @@ const ManagerDashboard = () => {
 
     return (
       <CurrentUserProvider>
-        <div className="flex min-h-screen bg-slate-100 font-manrope">
+      <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 font-manrope">
           <style>
             {`
               @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -1745,7 +1747,7 @@ const ManagerDashboard = () => {
             `}
           </style>
           {/* Mobile Topbar */}
-          <header className="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-40">
+        <header className="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-40">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
               <Bars3Icon className="h-6 w-6" />
             </button>
@@ -1753,7 +1755,7 @@ const ManagerDashboard = () => {
             <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
           <div 
-            className={`fixed top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-20'}`}
+          className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
             onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
             onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
           >
@@ -1769,8 +1771,8 @@ const ManagerDashboard = () => {
                 <button
                   key={item.id}
                   onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative ${!isSidebarExpanded && 'justify-center'} ${
-                    activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-700'
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors duration-200 text-left relative ${!isSidebarExpanded && 'justify-center'} ${ 
+                    activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700' 
                   }`}
                 >
                   <item.icon className="h-6 w-6" />
@@ -1793,8 +1795,7 @@ const ManagerDashboard = () => {
           </div>
           {/* Overlay for mobile sidebar */}
           {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-          {/* Main Content */}
-          <div className={`flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 dark:bg-slate-900 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-20'}`}>
+          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
             <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-30 relative">
               <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">{navItems.find(i => i.id === activeView.component)?.label}</h1>
               <div className="flex items-center gap-4">

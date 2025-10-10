@@ -3,7 +3,7 @@ import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployees
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
@@ -411,23 +411,24 @@ const Analytics = ({ user }) => {
       viewTitle = "Team Performance Analytics";
     }
 
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    let dateFilteredTasks = relevantTasks;
 
     if (dateRange.startDate && dateRange.endDate) {
       const start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
       end.setHours(23, 59, 59, 999);
-      gradedTasks = gradedTasks.filter(task => {
-        const gradedDate = new Date(task.completionDate || task.updatedAt);
-        return gradedDate >= start && gradedDate <= end;
+      dateFilteredTasks = relevantTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
       });
     }
 
-    stats.totalTasks = gradedTasks.length;
+    const gradedTasks = dateFilteredTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    stats.totalTasks = dateFilteredTasks.length;
     gradedTasks.forEach(task => {
       stats.totalProgress += task.progress || 0;
     });
-    stats.averageCompletion = stats.totalTasks > 0 ? (stats.totalProgress / stats.totalTasks) : 0;
+    stats.averageCompletion = gradedTasks.length > 0 ? (stats.totalProgress / gradedTasks.length) : 0;
     stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress').length;
     stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
 
@@ -537,8 +538,8 @@ const Analytics = ({ user }) => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-6">
           <h3 className="text-lg font-bold text-slate-800 mb-4">Metric Definitions</h3>
           <ul className="space-y-3 text-sm text-slate-600">
-            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-24">Avg. Completion:</strong><span>Average final progress of all graded tasks.</span></li>
-            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-24">Total Tasks:</strong><span>Total number of tasks that have received a final grade.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-24">Avg. Completion:</strong><span>Average final progress of all graded tasks in the selected range.</span></li>
+            <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-24">Total Tasks:</strong><span>All tasks assigned in the selected date range, regardless of status.</span></li>
           </ul>
         </div>
       </div>
@@ -888,7 +889,9 @@ const TeamInformation = ({ seniorId }) => {
 const TeamReports = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [viewingTask, setViewingTask] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null); 
+  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const teamMembers = useMemo(() => {
     if (!allEmployees || !seniorId) return [];
@@ -916,11 +919,12 @@ const TeamReports = ({ seniorId }) => {
     return getAllSubordinates(seniorId, allEmployees);
   }, [allEmployees, seniorId]);
 
-  useEffect(() => {
-    if (teamMembers.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(teamMembers[0]);
-    }
-  }, [teamMembers, selectedEmployee]);
+  const filteredEmployees = useMemo(() => {
+    if (!teamMembers) return [];
+    return teamMembers.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [teamMembers, searchTerm]);
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
     skip: !selectedEmployee,
@@ -940,7 +944,10 @@ const TeamReports = ({ seniorId }) => {
                   <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
                 </div>
                 {update.taskId && (
-                  <button onClick={() => setViewingTask(update.taskId)} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
+                  <button onClick={() => {
+                    setViewingTask(update.taskId);
+                    setViewingTaskNumber(i + 1);
+                  }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
                 )}
               </div>
             ))}
@@ -959,50 +966,80 @@ const TeamReports = ({ seniorId }) => {
   };
 
   return (
-    <div className="flex h-full bg-slate-100">
-      <div className="w-full md:w-1/3 max-w-sm bg-white border-r border-gray-200 overflow-y-auto">
-        <h2 className="text-lg font-semibold p-4 border-b text-gray-800">Your Team</h2>
-        {isLoadingEmployees && <p className="p-4 text-gray-500">Loading...</p>}
-        {isErrorEmployees && <p className="p-4 text-red-500">Failed to load team.</p>}
-        <ul className="p-2">
-          {teamMembers.map(employee => (
-            <li key={employee._id}>
-              <button onClick={() => setSelectedEmployee(employee)} className={`w-full text-left p-3 my-1 rounded-lg transition-colors duration-200 flex flex-col ${selectedEmployee?._id === employee._id ? 'bg-blue-100' : 'hover:bg-gray-50'}`} >
-                <div className="flex justify-between items-center">
-                  <p className={`font-semibold ${selectedEmployee?._id === employee._id ? 'text-blue-800' : 'text-gray-800'}`}>{employee.name}</p>
-                  <p className="text-xs text-gray-500">{employee.employeeId}</p>
-                </div>
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
-                  <span>Reports to: <span className="font-medium text-gray-600">{employee.teamLead?.name || 'N/A'}</span></span>
-                  <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{employee.department || 'N/A'}</span>
-                </div>
-              </button>
-            </li>
-          ))}
-          {teamMembers.length === 0 && !isLoadingEmployees && <p className="p-4 text-gray-500">No team members assigned to you.</p>}
-        </ul>
-      </div>
-      <div className="flex-1 p-2 sm:p-6 overflow-y-auto">
-        {selectedEmployee ? (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Reports for {selectedEmployee.name}</h2>
-            {isLoadingReports && <p>Loading reports...</p>}
-            <div className="space-y-6">
-              {reports?.map(report => (
-                <div key={report._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-800 mb-2 flex justify-between">{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}<span className={`font-normal text-sm px-2.5 py-0.5 rounded-full ${report.status === 'Submitted' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{report.status}</span></h3>
-                  {renderReportContent(report.content)}
+    <div className="p-4 sm:p-6 lg:p-8 h-full">
+      {!selectedEmployee ? (
+        <>
+          <div className="mb-8">
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1>
+            <p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p>
+          </div>
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white"
+            />
+          </div>
+          {isLoadingEmployees ? (
+            <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p>
+          ) : isErrorEmployees ? (
+            <p className="p-4 text-red-500">Failed to load employees.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredEmployees.map(employee => (
+                <div
+                  key={employee._id}
+                  onClick={() => setSelectedEmployee(employee)}
+                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                >
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
+                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
                 </div>
               ))}
-              {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
+                <ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p>
+              </div>
             </div>
           </div>
-        ) : <div className="flex items-center justify-center h-full text-gray-500">Select a team member to view their reports.</div>}
-      </div>
+
+          {isLoadingReports && <p>Loading reports...</p>}
+          <div className="space-y-6">
+            {reports?.length > 0 ? reports.map(report => (
+              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2">
+                  <span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>{report.status}</span>
+                </h3>
+                <div className="mb-4">{renderReportContent(report.content)}</div>
+              </div>
+            )) : (
+              <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>
+            )}
+          </div>
+        </div>
+      )}
       <TaskDetailsModal
         isOpen={!!viewingTask}
         onClose={() => setViewingTask(null)}
         task={viewingTask}
+        taskNumber={viewingTaskNumber}
       />
     </div>
   );

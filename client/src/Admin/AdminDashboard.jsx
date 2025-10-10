@@ -743,7 +743,7 @@ const Analytics = () => {
       }
     }
     
-    let gradedTasks = relevantTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    let dateFilteredTasks = relevantTasks;
 
     // Apply date range filter if dates are selected
     if (dateRange.startDate && dateRange.endDate) {
@@ -751,17 +751,18 @@ const Analytics = () => {
       const end = new Date(dateRange.endDate);
       end.setHours(23, 59, 59, 999); // Include the whole end day
 
-      gradedTasks = gradedTasks.filter(task => {
-        const gradedDate = new Date(task.completionDate || task.updatedAt);
-        return gradedDate >= start && gradedDate <= end;
+      dateFilteredTasks = relevantTasks.filter(task => {
+        const assignedDate = new Date(task.createdAt);
+        return assignedDate >= start && assignedDate <= end;
       });
     }
 
-    stats.totalGradedTasks = gradedTasks.length;
+    const gradedTasks = dateFilteredTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
+    stats.totalGradedTasks = dateFilteredTasks.length;
     gradedTasks.forEach(task => {
       stats.totalProgress += task.progress || 0;
     });
-    stats.averageCompletion = stats.totalGradedTasks > 0 ? (stats.totalProgress / stats.totalGradedTasks) : 0;
+    stats.averageCompletion = gradedTasks.length > 0 ? (stats.totalProgress / gradedTasks.length) : 0;
     stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress' && !t.rejectionReason).length;
     stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
 
@@ -887,7 +888,7 @@ const Analytics = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
             <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
-            <StatCard grade="Graded Tasks" count={performanceStats.totalGradedTasks} />
+            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} />
             <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
             <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
           </div>
@@ -902,7 +903,7 @@ const Analytics = () => {
               <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
               <ul className="space-y-3 text-sm text-slate-600">
                 <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Average:</strong><span>Calculated from the final progress percentage of all approved or rejected tasks.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Graded:</strong><span>Includes all tasks that have a final grade, either from approval or rejection.</span></li>
+                <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Total Tasks:</strong><span>Includes all tasks assigned to the selected view, regardless of status.</span></li>
                 <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">In Progress:</strong><span>Tasks currently being worked on by employees.</span></li>
               </ul>
             </div>

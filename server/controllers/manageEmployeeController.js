@@ -299,6 +299,7 @@ class ManageEmployeeController {
       const employeePerformance = {};
 
       tasks.forEach(task => {
+        
         if (!task.assignedTo) return; // Skip tasks without an assignee
         const employeeId = task.assignedTo._id.toString();
         if (!employeePerformance[employeeId]) {
