@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, ArrowLeftIcon
+  HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, ArrowLeftIcon, SparklesIcon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
 import toast from 'react-hot-toast'; 
 import PastReportsList from '../Employee/PastReports';
 import AttendanceCalendar from '../services/AttendanceCalendar'; 
@@ -17,6 +17,9 @@ import AssignTask from './AssignTask.jsx';
 import TaskApprovals from '../Admin/TaskApprovals';
 import ThemeToggle from '../ThemeToggle.jsx';
 import GooglePieChart from '../Admin/GooglePieChart.jsx';
+import HolidayManagement from '../Admin/HolidayManagement.jsx';
+import LeaveManagement from '../Admin/LeaveManagement.jsx';
+import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
 
@@ -511,6 +514,11 @@ const TeamInformation = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(selectedEmployee?._id, {
+    skip: !selectedEmployee,
+  });
+
+  const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
 
   const teamMembers = useMemo(() => {
     if (!allEmployees || !seniorId) return [];
@@ -593,6 +601,19 @@ const TeamInformation = ({ seniorId }) => {
                   <p className="text-sm text-slate-400 dark:text-slate-500 font-mono">{selectedEmployee.employeeId}</p>
                 </div>
               </div>
+              {eomHistory.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-3">Hall of Fame</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {eomHistory.map((win) => (
+                      <div key={win._id} className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <SparklesIcon className="w-4 h-4" />
+                        <span>EOM: {monthNames[win.month - 1]} {win.year} <span className="font-normal opacity-80">(Avg. {win.score.toFixed(1)}%)</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Attendance Calendar</h3>
               <AttendanceCalendar employeeId={selectedEmployee._id} />
             </div>
@@ -609,7 +630,7 @@ const TeamInformation = ({ seniorId }) => {
   );
 };
 
-const Dashboard = ({ user, onNavigate }) => {
+const ManagerDashboardContent = ({ user, onNavigate }) => {
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery(); 
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
@@ -704,6 +725,7 @@ const Dashboard = ({ user, onNavigate }) => {
   // --- Redesigned Attractive Dashboard ---
   return (
     <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope relative overflow-hidden">
+      <AnnouncementWidget />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
@@ -1589,6 +1611,15 @@ const ManagerDashboard = () => {
   const notificationRef = useRef(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const user = useSelector(selectCurrentUser);
+  const { data: allEmployees = [] } = useGetEmployeesQuery();
+  const isHrHead = user?.department === 'Human Resource' && user?.role === 'HR Head';
+  const hasTeam = useMemo(() => {
+    if (!user?.canViewTeam || !allEmployees.length) {
+      return false;
+    }
+    // Check if anyone has this user as their teamLead
+    return allEmployees.some(emp => emp.teamLead?._id === user._id);
+  }, [user, allEmployees]);
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
@@ -1676,8 +1707,14 @@ const ManagerDashboard = () => {
     if (user?.role === 'Admin' || user?.canViewTeam) {
       items.push({ id: 'view-team-tasks', icon: EyeIcon, label: 'View Team Tasks' });
     }
+    if (isHrHead) {
+      items.push({ id: 'holidays', icon: BuildingLibraryIcon, label: 'Holiday Management' });
+    }
+    if (isHrHead) {
+      items.push({ id: 'leave-management', icon: CalendarIcon, label: 'Leave Management' });
+    }
     return items;
-  }, [user]);
+  }, [user, isHrHead, hasTeam]);
 
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
@@ -1717,9 +1754,19 @@ const ManagerDashboard = () => {
     setIsNotificationOpen(false);
   };
 
+  useEffect(() => {
+    // If the active component is a team-only component and the user has no team,
+    // default back to the dashboard.
+    const teamComponents = ['team-reports', 'team-info', 'task-approvals', 'assign-task', 'view-team-tasks'];
+    if (!hasTeam && teamComponents.includes(activeView.component)) {
+      setActiveView({ component: 'dashboard', props: {} });
+      setIsNotificationOpen(false);
+    }
+  }, [hasTeam, activeView.component]);
+
     const renderActiveComponent = () => {
       switch (activeView.component) {
-        case 'dashboard': return <Dashboard user={user} onNavigate={handleNavigation} />;
+        case 'dashboard': return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
         case 'team-reports': return user?.canViewTeam ? <TeamReports seniorId={user?._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'team-info': return user?.canViewTeam ? <TeamInformation seniorId={user?._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'my-report': return <MyDailyReport employeeId={user?._id} />;
@@ -1731,7 +1778,9 @@ const ManagerDashboard = () => {
         case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'assign-task': return user?.canViewTeam ? <AssignTask teamLeadId={user._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} {...activeView.props} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
-        default: return <div className="p-8">Select an option.</div>;
+        case 'holidays': return isHrHead ? <HolidayManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        case 'leave-management': return isHrHead ? <LeaveManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        default: return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
       }
     };
 

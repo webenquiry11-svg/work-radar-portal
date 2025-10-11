@@ -3,7 +3,30 @@ const Announcement = require('../models/announcement.js');
 class AnnouncementController {
   static getActiveAnnouncement = async (req, res) => {
     try {
-      const announcement = await Announcement.findOne({ isActive: true }).sort({ createdAt: -1 });
+      const userCompany = req.user.company;
+
+      // Prioritize finding a company-specific announcement
+      let announcement = await Announcement.findOne({
+        isActive: true,
+        company: userCompany,
+        $or: [
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      }).sort({ createdAt: -1 }).populate('relatedEmployee', 'name profilePicture');
+
+      // If no company-specific announcement is found, look for a global one
+      if (!announcement) {
+        announcement = await Announcement.findOne({
+          isActive: true,
+          company: null, // Global announcement
+          $or: [
+            { expiresAt: null },
+            { expiresAt: { $gt: new Date() } }
+          ]
+        }).sort({ createdAt: -1 }).populate('relatedEmployee', 'name profilePicture');
+      }
+
       res.status(200).json(announcement); // Will be null if none are active
     } catch (error) {
       res.status(500).json({ message: 'Error fetching announcement.' });

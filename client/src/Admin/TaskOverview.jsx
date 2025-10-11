@@ -24,6 +24,14 @@ const TaskOverview = () => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Get the start of the current week (Sunday)
+    const firstDayOfWeek = new Date(todayStart);
+    firstDayOfWeek.setDate(firstDayOfWeek.getDate() - todayStart.getDay());
+
+    const endOfWeek = new Date(firstDayOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
     const statusCounts = {
       Pending: 0,
       'In Progress': 0,
@@ -50,8 +58,15 @@ const TaskOverview = () => {
 
     return {
       chartData,
-      highPriorityTasks: activeTasks.filter(t => t.priority === 'High'),
-      overdueTasks: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < todayStart),
+      highPriorityTasks: activeTasks.filter(
+        (t) =>
+          t.priority === 'High' &&
+          t.dueDate &&
+          new Date(t.dueDate) >= firstDayOfWeek && new Date(t.dueDate) <= endOfWeek,
+      ),
+      overdueTasks: activeTasks.filter(
+        t => t.dueDate && new Date(t.dueDate) < todayStart && new Date(t.dueDate) >= firstDayOfWeek
+      ),
       totalTasks: allTasks.length,
     };
   }, [allTasks]);
@@ -97,7 +112,7 @@ const TaskOverview = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="relative h-[400px]">
             <div className="w-full h-full">
-              <GooglePieChart data={overviewData.chartData} title="" colors={TASK_COLORS} is3D={false} pieHole={0.4} />
+              <GooglePieChart data={overviewData.chartData} title="" colors={TASK_COLORS} is3D={true} />
             </div>
             {overviewData.totalTasks > 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

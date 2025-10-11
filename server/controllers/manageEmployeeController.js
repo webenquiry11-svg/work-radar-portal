@@ -3,6 +3,8 @@ const Assignment = require('../models/assignment.js');
 const Report = require('../models/report.js');
 const { cloudinary } = require('../config/cloudinary.js');
 const Task = require('../models/task.js');
+const EmployeeOfMonth = require('../models/employeeOfMonth.js');
+const Announcement = require('../models/announcement.js');
 const ScoringSettings = require('../models/scoringSettings.js');
 
 class ManageEmployeeController {
@@ -294,7 +296,7 @@ class ManageEmployeeController {
       const tasks = await Task.find({
         completionDate: { $gte: startOfMonth, $lte: endOfMonth },
         status: { $in: ['Completed', 'Not Completed'] }
-      }).populate('assignedTo', 'name profilePicture employeeId');
+      }).populate('assignedTo', 'name profilePicture employeeId company');
 
       const employeePerformance = {};
 
@@ -361,6 +363,108 @@ class ManageEmployeeController {
     } catch (error) {
       console.error('Error fetching employee of the month candidates:', error);
       res.status(500).json({ message: 'Server error while fetching candidates.' });
+    }
+  };
+
+  /**
+   * @description Set an employee as the Employee of the Month for a specific company.
+   * @route POST /api/employees/employee-of-the-month
+   * @access Admin
+   */
+  static setEmployeeOfTheMonth = async (req, res) => {
+    const { employeeId, company, month, year, score } = req.body;
+
+    if (!employeeId || !company || !month || !year || score === undefined) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    try {
+      const winner = await EmployeeOfMonth.findOneAndUpdate(
+        { company, month, year },
+        { employee: employeeId, company, month, year, score },
+        { new: true, upsert: true, runValidators: true }
+      ).populate('employee', 'name profilePicture employeeId company');
+
+      // Deactivate previous EOM announcements for the same company
+      await Announcement.updateMany(
+        { company: winner.company, title: { $regex: /Employee of the Month/ } },
+        { isActive: false }
+      );
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 7); // Set to expire in 7 days
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthName = monthNames[month - 1];
+
+      await Announcement.create({
+        title: `🏆 Employee of the Month for ${monthName}!`,
+        content: `Congratulations to ${winner.employee.name} from ${winner.employee.company} for their outstanding performance!`,
+        createdBy: req.user._id,
+        company: winner.company, // Scope the announcement to the winner's company
+        relatedEmployee: winner.employee._id,
+        expiresAt: expiryDate,
+      });
+
+      res.status(201).json(winner);
+    } catch (error) {
+      console.error('Error setting employee of the month:', error);
+      res.status(500).json({ message: 'Server error while setting winner.' });
+    }
+  };
+
+  /**
+   * @description Get the official Employees of the Month for a given period.
+   * @route GET /api/employees/official-eom
+   * @access Private
+   */
+  static getOfficialEOM = async (req, res) => {
+    const { month, year } = req.query;
+    try {
+      const winners = await EmployeeOfMonth.find({ month, year }).populate('employee', 'name profilePicture employeeId company');
+      res.status(200).json(winners);
+    } catch (error) {
+      res.status(500).json({ message: 'Server error while fetching official winners.' });
+    }
+  };
+
+  /**
+   * @description Get all past Employee of the Month winners for a Hall of Fame.
+   * @route GET /api/employees/hall-of-fame
+   * @access Private
+   */
+  static getHallOfFame = async (req, res) => {
+    try {
+      const allWinners = await EmployeeOfMonth.find({}).sort({ year: -1, month: -1 }).populate('employee', 'name profilePicture employeeId company');
+
+      const hallOfFameData = allWinners.reduce((acc, winner) => {
+        const { year, month } = winner;
+        if (!acc[year]) acc[year] = {};
+        if (!acc[year][month]) acc[year][month] = [];
+        acc[year][month].push(winner);
+        return acc;
+      }, {});
+
+      res.status(200).json(hallOfFameData);
+    } catch (error) {
+      console.error('Error fetching Hall of Fame data:', error);
+      res.status(500).json({ message: 'Server error while fetching Hall of Fame data.' });
+    }
+  };
+
+  /**
+   * @description Get all Employee of the Month wins for a specific employee.
+   * @route GET /api/employees/:employeeId/eom-history
+   * @access Private
+   */
+  static getEmployeeEOMHistory = async (req, res) => {
+    const { employeeId } = req.params;
+    try {
+      const wins = await EmployeeOfMonth.find({ employee: employeeId }).sort({ year: -1, month: -1 });
+      res.status(200).json(wins);
+    } catch (error) {
+      console.error('Error fetching employee EOM history:', error);
+      res.status(500).json({ message: 'Server error while fetching EOM history.' });
     }
   };
 }

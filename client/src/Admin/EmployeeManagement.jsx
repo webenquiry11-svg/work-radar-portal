@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   UserPlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon, XMarkIcon, ArrowPathIcon, ExclamationTriangleIcon, AtSymbolIcon, BuildingOffice2Icon, UserCircleIcon, EyeIcon, KeyIcon, CalendarIcon
 } from '@heroicons/react/24/outline';
-import { useAddEmployeeMutation, useGetEmployeesQuery } from '../services/EmployeApi';
+import { useAddEmployeeMutation, useGetEmployeesQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
 import { useUpdateEmployeeMutation, useDeleteEmployeeMutation} from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import LeaveManagementModal from './LeaveManagementModal';
@@ -52,6 +52,11 @@ const EmployeeCardGrid = ({ users, ...actions }) => (
 const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
   if (!isOpen || !employee) return null;
 
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
+    skip: !employee,
+  });
+  const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
+
   const InfoField = ({ label, value }) => (
     <div>
       <p className="text-xs text-slate-500">{label}</p>
@@ -81,6 +86,19 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
               <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">{employee.employeeId}</p>
             </div>
           </div>
+          {eomHistory.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-md font-semibold text-slate-700 mb-3">Hall of Fame</h4>
+              <div className="flex flex-wrap gap-2">
+                {eomHistory.map((win) => (
+                  <div key={win._id} className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M8 1.75a.75.75 0 0 1 .692.462l1.41 3.393 3.663.293a.75.75 0 0 1 .428 1.317l-2.79 2.39.853 3.575a.75.75 0 0 1-1.12.814L8 11.97l-3.126 1.92a.75.75 0 0 1-1.12-.814l.852-3.574-2.79-2.39a.75.75 0 0 1 .427-1.318l3.663-.293L7.308 2.212A.75.75 0 0 1 8 1.75Z" clipRule="evenodd" /></svg>
+                    <span>EOM: {monthNames[win.month - 1]} {win.year} <span className="font-normal opacity-80">(Avg. {win.score.toFixed(1)}%)</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             <InfoField label="Email" value={employee.email} /> 
             <InfoField label="Department" value={employee.department} />

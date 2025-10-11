@@ -1,18 +1,28 @@
 import React, { useState, useMemo } from 'react';
-import { useGetEmployeeOfTheMonthCandidatesQuery } from '../services/EmployeApi.js';
-import { TrophyIcon, UserCircleIcon, ChartBarIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { useGetEmployeeOfTheMonthCandidatesQuery, useSetEmployeeOfTheMonthMutation, useGetOfficialEOMQuery } from '../services/EmployeApi.js';
+import { TrophyIcon, ArrowDownTrayIcon, CheckBadgeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const EmployeeOfTheMonth = () => {
   const currentMonth = new Date().getMonth() + 1; // 1-indexed
   const currentYear = new Date().getFullYear();
 
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth); 
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [companyFilter, setCompanyFilter] = useState('All'); // 'All', 'Star Publicity', 'Volga Infosys'
 
   const { data: candidates = [], isLoading, isFetching } = useGetEmployeeOfTheMonthCandidatesQuery(
     { month: selectedMonth, year: selectedYear },
     { refetchOnMountOrArgChange: true }
   );
+
+  const { data: officialWinners = [] } = useGetOfficialEOMQuery(
+    { month: selectedMonth, year: selectedYear },
+    { refetchOnMountOrArgChange: true }
+  );
+
+  const [setWinner, { isLoading: isSettingWinner }] = useSetEmployeeOfTheMonthMutation();
+
 
   const years = useMemo(() => {
     const y = [];
@@ -29,17 +39,47 @@ const EmployeeOfTheMonth = () => {
     { value: 10, label: 'October' }, { value: 11, label: 'November' }, { value: 12, label: 'December' },
   ], []);
 
+  const allCandidates = useMemo(() => (Array.isArray(candidates) ? candidates : []), [candidates]);
+
+  const filteredCandidates = useMemo(() => {
+    if (companyFilter === 'All') return allCandidates;
+    return allCandidates.filter(c => c.employee.company === companyFilter);
+  }, [allCandidates, companyFilter]);
+
+  const officialWinnerIds = useMemo(() => new Set(officialWinners.map(w => w.employee._id)), [officialWinners]);
+  const officialWinnersByCompany = useMemo(() => {
+    return officialWinners.reduce((acc, winner) => {
+      acc[winner.company] = winner.employee;
+      return acc;
+    }, {});
+  }, [officialWinners]);
+
+  const handleSetWinner = async (candidate) => {
+    try {
+      await setWinner({
+        employeeId: candidate.employee._id,
+        company: candidate.employee.company,
+        month: selectedMonth,
+        year: selectedYear,
+        score: candidate.totalScore,
+      }).unwrap();
+      toast.success(`${candidate.employee.name} is now Employee of the Month!`);
+    } catch (err) {
+      toast.error('Failed to set winner.');
+    }
+  };
+
   const handleExport = () => {
-    if (candidates.length === 0) {
+    if (filteredCandidates.length === 0) {
       toast.error("No data to export.");
       return;
     }
-
     const csvContent = [
-      "Rank,Employee Name,Employee ID,Average Completion (%),Total Tasks",
-      ...candidates.map((c, index) => 
+      "Rank,Company,Employee Name,Employee ID,Average Completion (%),Total Tasks",
+      ...filteredCandidates.map((c, index) => 
         [
           index + 1,
+          `"${c.employee.company}"`,
           `"${c.employee.name}"`,
           c.employee.employeeId,
           c.totalScore.toFixed(2),
@@ -57,33 +97,56 @@ const EmployeeOfTheMonth = () => {
     link.click();
     document.body.removeChild(link);
   };
-
-  const CandidateCard = ({ candidate, rank, isWinner }) => {
+  
+  const CandidateCard = ({ candidate }) => {
     const hoursEarly = candidate.averageEarliness > 0 ? (candidate.averageEarliness / (1000 * 60 * 60)).toFixed(1) : 0;
+    const isOfficialWinner = officialWinnerIds.has(candidate.employee._id);
+    const isCompanyWinnerSet = !!officialWinnersByCompany[candidate.employee.company];
 
     return (
-      <div className={`bg-white rounded-2xl shadow-lg border border-slate-200 p-6 flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isWinner ? 'lg:col-span-2' : ''}`}>
-        <div className={`flex flex-col ${isWinner ? 'sm:flex-row' : ''} items-center gap-5 mb-5`}>
-          <div className={`relative flex-shrink-0 ${isWinner ? 'self-start' : ''}`}>
+      <div className={`bg-white rounded-2xl shadow-lg border p-6 flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isOfficialWinner ? 'border-amber-400' : 'border-slate-200'}`}>
+        <div className="flex flex-col sm:flex-row items-center gap-5 mb-5">
+          <div className="relative flex-shrink-0 self-start">
             <img
               src={candidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${candidate.employee.name}&background=random`}
               alt={candidate.employee.name}
-              className={`${isWinner ? 'h-24 w-24' : 'h-20 w-20'} rounded-full object-cover border-4 ${isWinner ? 'border-amber-400' : 'border-blue-200'}`}
+              className={`h-24 w-24 rounded-full object-cover border-4 ${isOfficialWinner ? 'border-amber-400' : 'border-blue-200'}`}
             />
-            <span className={`absolute -top-2 -left-2 ${isWinner ? 'bg-amber-500' : 'bg-blue-600'} text-white text-sm font-bold px-3 py-1 rounded-full shadow-md`}>#{rank}</span>
+            {isOfficialWinner && (
+              <div className="absolute -top-2 -left-2 bg-amber-500 text-white p-2 rounded-full shadow-md">
+                <TrophyIcon className="h-5 w-5" />
+              </div>
+            )}
           </div>
-          <div className={`${isWinner ? '' : 'text-center'}`}>
-            <h3 className={`${isWinner ? 'text-2xl' : 'text-xl'} font-bold text-slate-800`}>{candidate.employee.name}</h3>
+          <div>
+            <h3 className="text-2xl font-bold text-slate-800">{candidate.employee.name}</h3>
+            <p className="text-md font-semibold text-blue-600">{candidate.employee.company}</p>
             <p className="text-sm text-slate-500">{candidate.employee.employeeId}</p>
             <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm text-slate-600">Avg. Completion: <span className={`font-bold ${isWinner ? 'text-amber-600 text-lg' : 'text-blue-700'}`}>{candidate.totalScore.toFixed(2)}%</span></p>
-              <p className="text-sm text-slate-600">Avg. Earliness: <span className={`font-bold ${isWinner ? 'text-green-600 text-lg' : 'text-green-700'}`}>{hoursEarly} hours</span></p>
+              <p className="text-sm text-slate-600">Avg. Completion: <span className="font-bold text-amber-600 text-lg">{candidate.totalScore.toFixed(2)}%</span></p>
+              <p className="text-sm text-slate-600">Avg. Earliness: <span className="font-bold text-green-600 text-lg">{hoursEarly} hours</span></p>
             </div>
           </div>
         </div>
         <blockquote className="text-sm text-slate-600 mb-5 flex-1 border-l-4 border-slate-200 pl-4 italic">
           {candidate.reason}
         </blockquote>
+        <div className="mt-auto pt-4 border-t border-slate-100">
+          {isOfficialWinner ? (
+            <div className="flex items-center justify-center gap-2 text-amber-600 font-bold py-2 px-4 rounded-lg bg-amber-100">
+              <CheckBadgeIcon className="h-5 w-5" /> Official Winner
+            </div>
+          ) : (
+            <button
+              onClick={() => handleSetWinner(candidate)}
+              disabled={isSettingWinner || isCompanyWinnerSet}
+              className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-blue-300 disabled:cursor-not-allowed"
+            >
+              {isSettingWinner ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <TrophyIcon className="h-5 w-5 mr-2" />}
+              {isCompanyWinnerSet ? `Winner Already Selected for ${candidate.employee.company}` : 'Make Winner'}
+            </button>
+          )}
+        </div>
       </div>
     );
   };
@@ -96,6 +159,15 @@ const EmployeeOfTheMonth = () => {
           <p className="text-slate-500 mt-2">Identify top performers based on task completion grades.</p>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="All">All Companies</option>
+            <option value="Star Publicity">Star Publicity</option>
+            <option value="Volga Infosys">Volga Infosys</option>
+          </select>
           <div className="flex gap-2">
             <select
               value={selectedMonth}
@@ -126,14 +198,11 @@ const EmployeeOfTheMonth = () => {
         <div className="text-center py-16 text-slate-500">Loading candidates...</div>
       ) : (
         <>
-          {candidates.length > 0 ? (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <CandidateCard key={candidates[0].employee._id} candidate={candidates[0]} rank={1} isWinner={true} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {candidates.slice(1, 3).map((candidate, index) => (
-                  <CandidateCard key={candidate.employee._id} candidate={candidate} rank={index + 2} />
-                ))}
-              </div>
+          {filteredCandidates.length > 0 ? ( 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {filteredCandidates.map((candidate) => (
+                <CandidateCard key={candidate.employee._id} candidate={candidate} />
+              ))}
             </div>
           ) : (
             <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">

@@ -19,6 +19,20 @@ const announcementSchema = new mongoose.Schema({
     ref: 'Employee',
     required: true,
   },
+  company: {
+    type: String,
+    trim: true,
+    default: null, // Null means it's a global announcement
+  },
+  relatedEmployee: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    default: null,
+  },
+  expiresAt: {
+    type: Date,
+    default: null, // Will be null for permanent announcements
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Announcement', announcementSchema);

@@ -34,6 +34,10 @@ router.get('/stats', protect, ManageEmployeeController.getDashboardStats);
 router.get('/manager-stats/:managerId', protect, ManageEmployeeController.getManagerDashboardStats);
 router.get('/employees', protect, ManageEmployeeController.getAllEmployees);
 router.get('/employees/employee-of-the-month', protect, ManageEmployeeController.getEmployeeOfTheMonthCandidates);
+router.post('/employees/employee-of-the-month', protect, ManageEmployeeController.setEmployeeOfTheMonth);
+router.get('/employees/official-eom', protect, ManageEmployeeController.getOfficialEOM);
+router.get('/employees/hall-of-fame', protect, ManageEmployeeController.getHallOfFame);
+router.get('/employees/:employeeId/eom-history', protect, ManageEmployeeController.getEmployeeEOMHistory);
 
 // Report Routes
 router.get('/reports/my-today/:employeeId', protect, ReportController.getMyTodaysReport);
@@ -73,7 +77,7 @@ router.delete('/tasks/:id', protect, TaskController.deleteTask);
 router.post('/tasks/process-due-tasks', protect, TaskController.processPastDueTasks);
 
 // Announcement Routes
-router.get('/announcements/active', AnnouncementController.getActiveAnnouncement); // Publicly accessible
+router.get('/announcements/active', protect, AnnouncementController.getActiveAnnouncement);
 router.get('/announcements', protect, AnnouncementController.getAllAnnouncements);
 router.post('/announcements', protect, AnnouncementController.createAnnouncement);
 router.delete('/announcements/:id', protect, AnnouncementController.deleteAnnouncement);

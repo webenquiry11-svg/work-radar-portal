@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon
+  HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import * as XLSX from 'xlsx';
 import AssignEmployee from './AssignEmployee';
 import Dashboard from './Dashboard';
@@ -20,6 +20,7 @@ import TaskOverview from './TaskOverview';
 import TaskApprovals from './TaskApprovals';
 import AssignTask from './AssignTask';
 import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
+import HallOfFame from './HallOfFame';
 import AdminProfile from './AdminProfile'; 
 import ThemeToggle from '../ThemeToggle';
 import ManageAnnouncements from './ManageAnnouncements';
@@ -934,6 +935,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'task-approvals', icon: CheckBadgeIcon, label: 'Task Approvals' },
     { id: 'employee-of-the-month', icon: TrophyIcon, label: 'Employee of the Month' },
     { id: 'analytics', icon: ChartBarIcon, label: 'Analytics' },
+    { id: 'hall-of-fame', icon: BuildingLibraryIcon, label: 'Hall of Fame' },
     { id: 'announcements', icon: MegaphoneIcon, label: 'Announcements' },
   ];
 
@@ -1169,6 +1171,7 @@ export default function AdminPageLayout() {
     'task-overview': 'Task Status Overview',
     'task-approvals': 'Task Completion Approvals',
     'employee-of-the-month': 'Employee of the Month', // New item
+    'hall-of-fame': 'Hall of Fame',
     'analytics': 'Team Analytics',
     'all-attendance': 'All Employee Attendance',
     'announcements': 'Manage Announcements',
@@ -1194,6 +1197,7 @@ export default function AdminPageLayout() {
       case 'task-overview': return <TaskOverview />;
       case 'task-approvals': return <TaskApprovals />;
       case 'employee-of-the-month': return <EmployeeOfTheMonth />; // New component
+      case 'hall-of-fame': return <HallOfFame />;
       case 'analytics': return <Analytics />;
       case 'announcements': return <ManageAnnouncements />;
       case 'all-attendance': return <AllEmployeeAttendance />;

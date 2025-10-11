@@ -7,11 +7,13 @@ export const employeApi = apiSlice.injectEndpoints({
     getDashboardStats: builder.query({
       query: () => "/stats",
       providesTags: (result, error, arg) => [{ type: "Employee", id: "LIST" }],
+      pollingInterval: 30000,
     }),
     // Query to get manager dashboard stats
     getManagerDashboardStats: builder.query({
       query: (managerId) => `/manager-stats/${managerId}`,
       providesTags: ["Report", { type: "Employee", id: "LIST" }],
+      pollingInterval: 30000,
     }),
     // Query to get all employees
     getEmployees: builder.query({
@@ -237,6 +239,7 @@ export const employeApi = apiSlice.injectEndpoints({
         ...result.map(({ _id }) => ({ type: 'Leave', id: _id })),
         { type: 'Leave', id: 'LIST', employeeId },
       ],
+      pollingInterval: 30000,
     }),
 
     addLeave: builder.mutation({
@@ -339,12 +342,43 @@ export const employeApi = apiSlice.injectEndpoints({
       providesTags: (result, error, { month, year }) => [
         { type: 'Employee', id: `EOM-${month}-${year}` }
       ],
+      pollingInterval: 30000,
+    }),
+
+    setEmployeeOfTheMonth: builder.mutation({
+      query: (body) => ({
+        url: '/employees/employee-of-the-month',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (result, error, { month, year }) => [
+        { type: 'EOMOfficial', id: `${month}-${year}` },
+        'Announcement', // Invalidate announcement to show the new EOM winner
+      ],
+    }),
+
+    getOfficialEOM: builder.query({
+      query: ({ month, year }) => `/employees/official-eom?month=${month}&year=${year}`,
+      providesTags: (result, error, { month, year }) => [{ type: 'EOMOfficial', id: `${month}-${year}` }],
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 30000,
+    }),
+
+    getHallOfFame: builder.query({
+      query: () => '/employees/hall-of-fame',
+      providesTags: ['EOMOfficial'],
+    }),
+
+    getEmployeeEOMHistory: builder.query({
+      query: (employeeId) => `/employees/${employeeId}/eom-history`,
+      providesTags: (result, error, employeeId) => [{ type: 'EOMHistory', id: employeeId }],
     }),
 
     // Announcement Endpoints
     getActiveAnnouncement: builder.query({
       query: () => '/announcements/active',
       providesTags: ['Announcement'],
+      pollingInterval: 30000,
     }),
 
     getAllAnnouncements: builder.query({
@@ -411,6 +445,10 @@ export const {
   useDeleteTaskMutation,
   useGetEmployeeOfTheMonthCandidatesQuery,
   useGetActiveAnnouncementQuery,
+  useSetEmployeeOfTheMonthMutation,
+  useGetOfficialEOMQuery,
+  useGetHallOfFameQuery,
+  useGetEmployeeEOMHistoryQuery,
   useGetAllAnnouncementsQuery,
   useCreateAnnouncementMutation,
   useDeleteAnnouncementMutation,

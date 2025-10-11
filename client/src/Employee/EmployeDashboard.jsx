@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
@@ -12,7 +12,8 @@ import CurrentUserProvider from '../app/CurrentUserProvider.jsx';
 import AttendanceCalendar from '../services/AttendanceCalendar';
 import TaskApprovals from '../Admin/TaskApprovals.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
-import AssignTask from './AssignTask.jsx';
+import AssignTask from './AssignTask.jsx'; 
+import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
@@ -198,6 +199,7 @@ const Dashboard = ({ user, onNavigate }) => {
   // --- Redesigned Employee Dashboard ---
   return (
     <div className="p-0 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-manrope">
+      <AnnouncementWidget />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
@@ -1277,6 +1279,11 @@ const EmployeeProfile = ({ user }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
   const token = useSelector(state => state.auth.token);
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(user._id, {
+    skip: !user,
+  });
+  const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
+
   const [formData, setFormData] = useState({
     name: user.name || '',
     email: user.email || '',
@@ -1377,6 +1384,20 @@ const EmployeeProfile = ({ user }) => {
           </button>
         )}
       </div>
+
+      {eomHistory.length > 0 && !isEditMode && (
+        <div className="mb-8">
+          <h4 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-3">Hall of Fame</h4>
+          <div className="flex flex-wrap gap-2">
+            {eomHistory.map((win) => (
+              <div key={win._id} className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M8 1.75a.75.75 0 0 1 .692.462l1.41 3.393 3.663.293a.75.75 0 0 1 .428 1.317l-2.79 2.39.853 3.575a.75.75 0 0 1-1.12.814L8 11.97l-3.126 1.92a.75.75 0 0 1-1.12-.814l.852-3.574-2.79-2.39a.75.75 0 0 1 .427-1.318l3.663-.293L7.308 2.212A.75.75 0 0 1 8 1.75Z" clipRule="evenodd" /></svg>
+                <span>EOM: {monthNames[win.month - 1]} {win.year} <span className="font-normal opacity-80">(Avg. {win.score.toFixed(1)}%)</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isEditMode ? (
         <div className="space-y-6">
