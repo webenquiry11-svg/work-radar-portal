@@ -54,6 +54,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # CORRECTED SCRIPT: Add common executable paths to the PATH variable
+            export PATH=$PATH:/usr/bin:/usr/local/bin:/root/.npm-global/bin
             cd ${{ secrets.PROJECT_PATH }}/server
             npm install --production
             pm2 reload work-radar-api
+
