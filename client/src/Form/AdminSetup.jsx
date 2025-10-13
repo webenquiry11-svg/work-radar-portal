@@ -45,7 +45,7 @@ const SelectField = ({ id, name, label, value, onChange, children, icon: Icon })
 );
 
 const AdminSetup = ({ onSetupComplete }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({ 
     name: '',
     email: '',
     password: '',
@@ -140,26 +140,51 @@ const AdminSetup = ({ onSetupComplete }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 sm:p-8 flex items-center justify-center font-manrope">
-      <div className="w-full max-w-5xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-slate-200/50 overflow-hidden grid md:grid-cols-3">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-manrope grid lg:grid-cols-2 overflow-hidden">
+       <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Orbitron:wght@700;900&display=swap');
+          .font-manrope { font-family: 'Manrope', sans-serif; }
+          .font-orbitron { font-family: 'Orbitron', sans-serif; }
+          .animate-slide-in-left { animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+          @keyframes slideInLeft { 0% { transform: translateX(-100px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+          .wave-g { transform-origin: bottom; }
+          .animate-wave-1 { animation: wave 7s ease-in-out infinite; }
+          .animate-wave-2 { animation: wave 5s ease-in-out infinite .5s; }
+          .animate-wave-3 { animation: wave 3.5s ease-in-out infinite 1s; }
+          @keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.08); } }
+        `}
+      </style>
         {/* Sidebar */}
-        <div className="md:col-span-1 bg-gradient-to-b from-blue-50 to-indigo-100 p-8 border-r border-slate-200/80">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg">
-              <SparklesIcon className="h-8 w-8 text-white" />
-            </div>
-            <h2 className="text-3xl font-extrabold text-blue-800 tracking-tight">Portal Setup</h2>
+        <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-slate-900 text-white relative lg:rounded-r-3xl overflow-hidden">
+          <div className="absolute inset-0">
+            <svg width="0" height="0" style={{position: 'absolute'}}>
+              <defs>
+                <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style={{stopColor: '#1e293b', stopOpacity: 1}} /><stop offset="100%" style={{stopColor: '#0f172a', stopOpacity: 1}} /></linearGradient>
+                <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style={{stopColor: '#334155', stopOpacity: 1}} /><stop offset="100%" style={{stopColor: '#1e293b', stopOpacity: 1}} /></linearGradient>
+              </defs>
+            </svg>
+            <svg className="absolute bottom-0 left-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><g className="wave-g animate-wave-1"><path fill="url(#waveGradient1)" d="M0,96L48,112C96,128,192,160,288,149.3C384,139,480,85,576,74.7C672,64,768,96,864,122.7C960,149,1056,171,1152,154.7C1248,139,1344,85,1392,58.7L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></g></svg>
+            <svg className="absolute bottom-0 left-0 opacity-70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><g className="wave-g animate-wave-2"><path fill="url(#waveGradient2)" d="M0,160L48,144C96,128,192,96,288,101.3C384,107,480,149,576,138.7C672,128,768,64,864,48C960,32,1056,64,1152,85.3C1248,107,1344,117,1392,122.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></g></svg>
+            <svg className="absolute bottom-0 left-0 opacity-40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><g className="wave-g animate-wave-3"><path fill="url(#waveGradient2)" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></g></svg>
           </div>
-          <nav>
-            <ul className="space-y-4">
+          <div className="z-10 text-center animate-slide-in-left">
+            <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
+              <img src="/assets/fevicon.png" alt="Logo" className="h-20 w-20" />
+            </div>
+            <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
+            <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Initial Portal Setup</p>
+          </div>
+          <nav className="z-10 mt-12 w-full max-w-sm">
+            <ul className="space-y-4 animate-slide-in-left" style={{animationDelay: '0.2s'}}>
               {steps.map((s) => (
                 <li key={s.number} className="flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${step >= s.number ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'}`}>
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${step >= s.number ? 'bg-green-400 text-white shadow-lg' : 'bg-white/10 text-indigo-200'}`}>
                     {step > s.number ? <CheckIcon className="h-6 w-6" /> : <s.icon className="h-6 w-6" />}
                   </div>
                   <div>
-                    <p className={`text-sm font-bold transition-colors ${step >= s.number ? 'text-blue-800' : 'text-slate-500'}`}>Step {s.number}</p>
-                    <p className={`text-lg font-semibold transition-colors ${step >= s.number ? 'text-slate-800' : 'text-slate-400'}`}>{s.title}</p>
+                    <p className={`text-sm font-bold transition-colors ${step >= s.number ? 'text-indigo-200' : 'text-slate-400'}`}>Step {s.number}</p>
+                    <p className={`text-lg font-semibold transition-colors ${step >= s.number ? 'text-white' : 'text-slate-400'}`}>{s.title}</p>
                   </div>
                 </li>
               ))}
@@ -168,13 +193,13 @@ const AdminSetup = ({ onSetupComplete }) => {
         </div>
 
         {/* Form Content */}
-        <div className="md:col-span-2 p-8">
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex items-center justify-center p-4 sm:p-8 bg-slate-50 dark:bg-slate-900">
+          <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8">
             <div className="flex-1 overflow-y-auto pr-4 -mr-4">
               {step === 1 && (
                 <fieldset className="space-y-8 animate-fade-in">
                   <div className="relative">
-                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-white shadow-lg">
                       <UserIcon className="h-8 w-8" />
                     </div>
                     <div className="pl-16 pt-2">
@@ -196,7 +221,7 @@ const AdminSetup = ({ onSetupComplete }) => {
               {step === 2 && (
                 <fieldset className="space-y-8 animate-fade-in">
                   <div className="relative">
-                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-white shadow-lg">
                       <BuildingOfficeIcon className="h-8 w-8" />
                     </div>
                     <div className="pl-16 pt-2">
@@ -226,7 +251,7 @@ const AdminSetup = ({ onSetupComplete }) => {
               {step === 3 && (
                 <fieldset className="space-y-8 animate-fade-in">
                   <div className="relative">
-                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                    <div className="absolute -left-4 -top-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-white shadow-lg">
                       <IdentificationIcon className="h-8 w-8" />
                     </div>
                     <div className="pl-16 pt-2">
@@ -257,20 +282,20 @@ const AdminSetup = ({ onSetupComplete }) => {
 
             <div className="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
               {step > 1 && (
-                <button type="button" onClick={prevStep} className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-slate-600 bg-slate-200 hover:bg-slate-300 transition-all">
+                <button type="button" onClick={prevStep} className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all">
                   <ArrowLeftIcon className="h-5 w-5" />
                   Back
                 </button>
               )}
               <div className="flex-grow"></div> {/* Spacer */}
               {step < 3 && (
-                <button type="button" onClick={nextStep} className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-8 rounded-xl shadow-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all transform hover:scale-105">
+                <button type="button" onClick={nextStep} className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-8 rounded-xl shadow-lg font-semibold text-white bg-slate-700 hover:bg-slate-600 transition-all transform hover:scale-105">
                   Next
                   <ArrowRightIcon className="h-5 w-5" />
                 </button>
               )}
               {step === 3 && (
-                <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center py-3 px-8 rounded-xl shadow-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:from-slate-400 disabled:to-slate-400 transition-all duration-300 transform hover:scale-105">
+                <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center py-3 px-8 rounded-xl shadow-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:from-slate-500 disabled:to-slate-600 transition-all duration-300 transform hover:scale-105">
                   {isLoading ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-3" /> : <SparklesIcon className="h-5 w-5 mr-3" />}
                   {isLoading ? 'Setting Up...' : 'Create Admin & Launch'}
                 </button>
@@ -278,7 +303,6 @@ const AdminSetup = ({ onSetupComplete }) => {
             </div>
           </form>
         </div>
-      </div>
     </div>
   );
 };

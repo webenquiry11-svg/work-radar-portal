@@ -199,7 +199,7 @@ const Dashboard = ({ onNavigate }) => {
 
       {/* Footer */}
       <div className="text-center py-10 mt-8 text-blue-300 dark:text-slate-600 text-xs">
-        &copy; {new Date().getFullYear()} StarTrack Portal
+        &copy; {new Date().getFullYear()} Work Radar
       </div>
     </div>
   );

@@ -1801,7 +1801,7 @@ const ManagerDashboard = () => {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <h1 className="text-lg font-bold text-blue-800">StarTrack</h1>
+            <h1 className="text-lg font-bold text-blue-800">Work Radar</h1>
             <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
           </header>
           <div 

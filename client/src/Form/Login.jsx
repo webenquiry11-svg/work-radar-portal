@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { ArrowPathIcon, UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, ArrowRightOnRectangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../services/EmployeApi";
@@ -75,36 +75,123 @@ const Login = () => {
         toast.error(err.data?.message || 'Login failed. Please try again.');
       }
       console.error("Failed to login:", err);
-    } finally {
-      // No need to manage isLoading manually, the hook does it.
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 via-blue-50 to-purple-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 relative overflow-hidden font-manrope">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-manrope grid lg:grid-cols-2 overflow-hidden">
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Orbitron:wght@700;900&display=swap');
           .font-manrope {
             font-family: 'Manrope', sans-serif;
           }
+          .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+          }
+          .animate-slide-in-left { animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+          @keyframes slideInLeft { 0% { transform: translateX(-100px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+          .animation-delay-300 { animation-delay: 0.3s; }
+          
+          /* --- IMPROVED STAGGERED WAVE ANIMATION --- */
+          .wave-g {
+            transform-origin: bottom; /* Anchors the animation to the bottom */
+          }
+          .animate-wave-1 {
+            animation: wave 7s ease-in-out infinite;
+          }
+          .animate-wave-2 {
+            animation: wave 5s ease-in-out infinite .5s; /* Staggered start */
+          }
+          .animate-wave-3 {
+            animation: wave 3.5s ease-in-out infinite 1s; /* Staggered start */
+          }
+          @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.08); } /* Scales vertically */
+          }
         `}
       </style>
-      {/* Animated background shapes */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob dark:opacity-20"></div>
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-2000 dark:opacity-20"></div>
-      <div className="absolute -bottom-10 -left-20 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-4000 dark:opacity-20"></div>
+      {/* Left side - Branding */}
+      <div className="flex flex-col items-center justify-center p-8 lg:p-12 bg-slate-900 text-white relative lg:rounded-r-3xl overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full">
+            {/* SVG definitions for gradients, reusable by all waves */}
+            <svg width="0" height="0" style={{position: 'absolute'}}>
+              <defs>
+                <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#1e293b', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#0f172a', stopOpacity: 1}} />
+                </linearGradient>
+                <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#334155', stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: '#1e293b', stopOpacity: 1}} />
+                </linearGradient>
+              </defs>
+            </svg>
 
-      <div className="relative w-full max-w-md">
-        {/* Animated gradient border */}
-        <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-400 via-blue-400 to-purple-400 animate-pulse-slow opacity-20 blur-xl"></div>
-        {/* Floating glassmorphism card */}
-        <div className="relative z-10 w-full p-8 sm:p-10 space-y-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 transition-transform duration-300 hover:-translate-y-1 hover:shadow-3xl">
+            {/* Back wave (calmest) */}
+            <svg className="absolute bottom-0 left-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+              <g className="wave-g animate-wave-1">
+                <path fill="url(#waveGradient1)" d="M0,96L48,112C96,128,192,160,288,149.3C384,139,480,85,576,74.7C672,64,768,96,864,122.7C960,149,1056,171,1152,154.7C1248,139,1344,85,1392,58.7L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+              </g>
+            </svg>
+
+            {/* Middle wave */}
+            <svg className="absolute bottom-0 left-0 opacity-70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+              <g className="wave-g animate-wave-2">
+                <path fill="url(#waveGradient2)" d="M0,160L48,144C96,128,192,96,288,101.3C384,107,480,149,576,138.7C672,128,768,64,864,48C960,32,1056,64,1152,85.3C1248,107,1344,117,1392,122.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+              </g>
+            </svg>
+            
+            {/* Front wave (most active) */}
+            <svg className="absolute bottom-0 left-0 opacity-40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+              <g className="wave-g animate-wave-3">
+                <path fill="url(#waveGradient2)" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+              </g>
+            </svg>
+        </div>
+        <div className="z-10 text-center animate-slide-in-left">
+          <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
+            <img src="/assets/fevicon.png" alt="Logo" className="h-20 w-20" />
+          </div>
+          <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
+          <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Your daily hub for productivity and progress.</p>
+        </div>
+        <div className="z-10 mt-12 text-left max-w-md animate-slide-in-left animation-delay-300">
+            <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2">Portal Guidelines</h2>
+            <ul className="space-y-3 text-indigo-200 text-sm">
+                <li className="flex items-start gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>Submit your daily progress report once every working day before 7:00 PM.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>For security, you will be automatically logged out after 15 minutes of inactivity.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>Tasks past their due date will be automatically submitted for verification.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>Once a task is graded by a manager, its status is final and cannot be changed.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>Your performance, including task scores and timeliness, contributes to the 'Employee of the Month' selection.</span>
+                </li>
+            </ul>
+        </div>
+      </div>
+
+      {/* Right side - Login Form */}
+      <div className="flex items-center justify-center p-4 sm:p-8 bg-slate-50 dark:bg-slate-900">
+        <div className="relative z-10 w-full max-w-md p-8 sm:p-10 space-y-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 transition-transform duration-300 hover:-translate-y-1 hover:shadow-3xl">
           <div className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/50 dark:via-indigo-900/50 dark:to-purple-900/50 shadow-lg ring-4 ring-white/20 animate-bounce-slow">
               <img src="/assets/fevicon.png" alt="Logo" className="h-12 w-12" />
             </div>
-            <h1 className="text-4xl font-extrabold text-indigo-700 dark:text-indigo-300 drop-shadow-md mb-2 tracking-tight animate-fade-in">
+            <h1 className="text-4xl font-extrabold text-slate-800 dark:text-indigo-300 drop-shadow-md mb-2 tracking-tight animate-fade-in">
               {getGreeting()}!
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-base mb-2 animate-fade-in">{wish}</p>
@@ -159,15 +246,16 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full inline-flex justify-center py-3 px-4 rounded-xl shadow-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                className="w-full group inline-flex items-center justify-center py-3 px-4 rounded-xl shadow-lg font-semibold text-white bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 disabled:from-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-blue-500/20"
               >
                 {isLoading && <ArrowPathIcon className="animate-spin h-5 w-5 mr-3" />}
-                {isLoading ? "Signing In..." : "Sign In"}
+                {!isLoading && <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:translate-x-1" />}
+                <span>{isLoading ? "Signing In..." : "Sign In"}</span>
               </button>
             </div>
           </form>
           <div className="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
-            &copy; {new Date().getFullYear()} StarTrack Portal
+            &copy; {new Date().getFullYear()} Work Radar
           </div>
         </div>
       </div>
