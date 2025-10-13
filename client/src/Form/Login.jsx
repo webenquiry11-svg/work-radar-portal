@@ -4,7 +4,7 @@ import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../services/EmployeApi";
-import starPublicityLogo from '../assets/fevicon.png';
+import starPublicityLogo from '/assets/fevicon.png';
 import { setCredentials } from "../app/authSlice";
 
 const Login = () => {

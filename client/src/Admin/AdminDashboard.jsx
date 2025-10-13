@@ -3,7 +3,7 @@ import {
   HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
-import starPublicityLogo from '../assets/fevicon.png';
+import starPublicityLogo from '/assets/fevicon.png';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';

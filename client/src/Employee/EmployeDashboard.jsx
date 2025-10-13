@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
-import starPublicityLogo from '../assets/fevicon.png';
+import starPublicityLogo from '/assets/fevicon.png';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
