@@ -85,7 +85,7 @@ const Login = () => {
         <div className="relative z-10 w-full p-10 space-y-8 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-300/30 transition-transform duration-300 hover:-translate-y-1 hover:shadow-3xl">
           <div className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-blue-200 via-indigo-200 to-blue-300 shadow-lg ring-4 ring-blue-300/30 animate-bounce-slow">
-              <img src="/src/assets/fevicon.png" alt="Logo" className="h-12 w-12" />
+              <img src="/assets/fevicon.png" alt="Logo" className="h-12 w-12" />
             </div>
             <h1 className="text-4xl font-extrabold text-indigo-700 drop-shadow mb-2 tracking-tight animate-fade-in">
               Welcome Back

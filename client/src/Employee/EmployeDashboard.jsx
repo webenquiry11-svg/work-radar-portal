@@ -1490,12 +1490,12 @@ const EmployeeDashboard = ({ employeeId }) => {
 
   const companyLogo = useMemo(() => {
     if (user?.company === 'Volga Infosys') {
-      return '/src/assets/volgainfosys.png';
+      return '/assets/volgainfosys.png';
     }
     if (user?.company === 'Star Publicity') {
-      return '/src/assets/fevicon.png';
+      return '/assets/fevicon.png';
     }
-    return '/src/assets/fevicon.png';
+    return '/assets/fevicon.png';
   }, [user?.company]);
 
   useEffect(() => {
