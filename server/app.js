@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./db/connectDB.js');
 const webRoutes = require('./routes/web.js');
 // Socket.IO and http imports have been removed as they are no longer needed.
@@ -16,15 +17,20 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// The Socket.IO connection handler (io.on(...)) has been removed.
-// Add this root route for a health check
-app.get('/', (req, res) => {
-  res.send('report managemnet backend server is live and running!');
-});
+// Serve static files from the React build directory in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+}
 
 // API Routes
 app.use('/api', webRoutes);
 
+// In production, all other non-API routes should serve the React app
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 2000;
 
