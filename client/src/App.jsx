@@ -12,6 +12,20 @@ import { useCheckAdminSetupQuery } from "./services/EmployeApi";
 import AdminSetup from "./Form/AdminSetup";
 import InactivityDetector from "./app/InactivityDetector";
 
+// This component will act as a gatekeeper.
+// If setup is needed, it redirects to /setup. Otherwise, it renders the main app.
+const SetupGate = ({ children, setupNeeded }) => {
+  const location = useLocation();
+
+  if (setupNeeded) {
+    // If setup is needed and we're not already on the setup page, redirect.
+    if (location.pathname !== '/setup') {
+      return <Navigate to="/setup" replace />;
+    }
+  }
+  return children;
+};
+
 function App() {
   const user = useSelector(selectCurrentUser);
   const { data: setupData, isLoading, refetch } = useCheckAdminSetupQuery();
@@ -25,33 +39,30 @@ function App() {
       <CurrentUserProvider>
         <Toaster position="top-right" />
         <Routes>
-          {setupData?.setupNeeded ? (
-            <>
-              <Route path="/setup" element={<AdminSetup onSetupComplete={refetch} />} />
-              <Route path="*" element={<Navigate to="/setup" />} />
-            </>
-          ) : (
-            <>
-              <Route path="/login" element={!user ? <Login /> : <Navigate to={
-                user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
-                user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
-                '/employee-dashboard'
-              } />} />
-              <Route
-                path="/employee-dashboard"
-                element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard employeeId={user._id} /> : <Navigate to="/login" />}
-              />
-              <Route
-                path="/manager-dashboard"
-                element={user && user.dashboardAccess === 'Manager Dashboard' ? <ManagerDashboard /> : <Navigate to="/login" />}
-              />
-              <Route
-                path="/admin-dashboard"
-                element={user && user.dashboardAccess === 'Admin Dashboard' ? <AdminDashboard /> : <Navigate to="/login" />}
-              />
-              <Route path="/*" element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} />
-            </>
-          )}
+          {/* The setup route is now always available */}
+          <Route path="/setup" element={<AdminSetup onSetupComplete={refetch} />} />
+
+          {/* All other routes are wrapped by the SetupGate */}
+          <Route element={<SetupGate setupNeeded={setupData?.setupNeeded} />}>
+            <Route path="/login" element={!user ? <Login /> : <Navigate to={
+              user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
+              user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
+              '/employee-dashboard'
+            } />} />
+            <Route
+              path="/employee-dashboard"
+              element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard employeeId={user._id} /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/manager-dashboard"
+              element={user && user.dashboardAccess === 'Manager Dashboard' ? <ManagerDashboard /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/admin-dashboard"
+              element={user && user.dashboardAccess === 'Admin Dashboard' ? <AdminDashboard /> : <Navigate to="/login" />}
+            />
+            <Route path="/*" element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} />
+          </Route>
         </Routes>
       </CurrentUserProvider>
     </InactivityDetector>
