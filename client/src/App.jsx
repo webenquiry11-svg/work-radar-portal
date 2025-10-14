@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; 
+import { Routes, Route, Navigate } from 'react-router-dom'; 
 import { useSelector } from 'react-redux';
 import AdminDashboard from "./Admin/AdminDashboard";
 import { Toaster } from "react-hot-toast";
@@ -25,7 +25,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <InactivityDetector>
       <CurrentUserProvider>
         <Toaster position="top-right" />
         <Routes>
@@ -52,7 +52,7 @@ function App() {
           />
         </Routes>
       </CurrentUserProvider>
-    </Router>
+    </InactivityDetector>
   );
 }
 
