@@ -1,6 +1,5 @@
 import React from "react";
-// Remove "BrowserRouter as Router" from the import
-import { Routes, Route, Navigate } from 'react-router-dom'; 
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; 
 import { useSelector } from 'react-redux';
 import AdminDashboard from "./Admin/AdminDashboard";
 import { Toaster } from "react-hot-toast";
@@ -26,8 +25,7 @@ function App() {
   }
 
   return (
-    // The <Router> wrapper has been removed
-    <InactivityDetector>
+    <Router>
       <CurrentUserProvider>
         <Toaster position="top-right" />
         <Routes>
@@ -54,7 +52,7 @@ function App() {
           />
         </Routes>
       </CurrentUserProvider>
-    </InactivityDetector>
+    </Router>
   );
 }
 
