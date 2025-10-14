@@ -20,15 +20,18 @@ function App() {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (setupData?.setupNeeded) {
-    return <AdminSetup onSetupComplete={refetch} />;
-  }
-
   return (
     <InactivityDetector>
       <CurrentUserProvider>
         <Toaster position="top-right" />
         <Routes>
+          {setupData?.setupNeeded ? (
+            <>
+              <Route path="/setup" element={<AdminSetup onSetupComplete={refetch} />} />
+              <Route path="*" element={<Navigate to="/setup" />} />
+            </>
+          ) : (
+            <>
           <Route path="/login" element={!user ? <Login /> : <Navigate to={
             user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
             user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
@@ -50,6 +53,8 @@ function App() {
             path="/*" 
             element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} 
           />
+            </>
+          )}
         </Routes>
       </CurrentUserProvider>
     </InactivityDetector>
