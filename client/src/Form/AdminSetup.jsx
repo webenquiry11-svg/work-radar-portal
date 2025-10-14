@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { useCreateAdminMutation } from '../services/EmployeApi';
 import { UserIcon, EnvelopeIcon, LockClosedIcon, ArrowPathIcon, IdentificationIcon, MapPinIcon, GlobeAltIcon, AcademicCapIcon, BriefcaseIcon, BuildingOfficeIcon, CalendarIcon, SunIcon, BuildingLibraryIcon, SparklesIcon, CheckIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
@@ -66,6 +67,7 @@ const AdminSetup = ({ onSetupComplete }) => {
   });
   const [step, setStep] = useState(1);
 
+  const navigate = useNavigate();
   const [createAdmin, { isLoading }] = useCreateAdminMutation();
 
   const handleChange = (e) => {
@@ -104,7 +106,11 @@ const AdminSetup = ({ onSetupComplete }) => {
     try {
       await createAdmin(adminFormData).unwrap();
       toast.success('Admin account created successfully! You can now log in.');
-      onSetupComplete();
+      // Instead of just refetching, we will navigate to login.
+      // The App component will naturally pick up the new setup state on the next load.
+      // This provides a cleaner transition.
+      navigate('/login');
+      onSetupComplete(); // Still call this to update the query cache for subsequent visits.
     } catch (err) {
       toast.error(err.data?.message || 'Failed to create admin account.');
       console.error('Admin setup failed:', err);
