@@ -20,16 +20,6 @@ function App() {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  // This function determines the correct dashboard path for the user
-  const getDashboardPath = () => {
-    if (!user) return "/login";
-    switch (user.dashboardAccess) {
-      case 'Admin Dashboard': return '/admin-dashboard';
-      case 'Manager Dashboard': return '/manager-dashboard';
-      default: return '/employee-dashboard';
-    }
-  };
-
   return (
     <InactivityDetector>
       <CurrentUserProvider>
@@ -42,7 +32,11 @@ function App() {
             </>
           ) : (
             <>
-              <Route path="/login" element={!user ? <Login /> : <Navigate to={getDashboardPath()} />} />
+              <Route path="/login" element={!user ? <Login /> : <Navigate to={
+                user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
+                user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
+                '/employee-dashboard'
+              } />} />
               <Route
                 path="/employee-dashboard"
                 element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard employeeId={user._id} /> : <Navigate to="/login" />}
@@ -55,8 +49,7 @@ function App() {
                 path="/admin-dashboard"
                 element={user && user.dashboardAccess === 'Admin Dashboard' ? <AdminDashboard /> : <Navigate to="/login" />}
               />
-              {/* This catch-all route correctly redirects any other path */}
-              <Route path="/*" element={<Navigate to={getDashboardPath()} />} />
+              <Route path="/*" element={<Navigate to={!user ? "/login" : user.dashboardAccess === 'Admin Dashboard' ? "/admin-dashboard" : user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' : "/employee-dashboard"} />} />
             </>
           )}
         </Routes>
