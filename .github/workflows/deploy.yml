@@ -27,7 +27,7 @@ jobs:
           node-version: '20' # Use a modern LTS version of Node.js
 
       # Step 3: Install frontend dependencies and build the static files
-      # This happens on the GitHub runner.
+      # This happens on the GitHub runner, which is fast and efficient.
       - name: Install Frontend Dependencies & Build
         run: |
           echo "--- Installing client dependencies ---"
@@ -56,7 +56,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # THIS IS THE KEY FIX from your working pipeline:
+            # THIS IS THE KEY FIX from your working "Star Publicity" pipeline:
             # Source NVM to load Node.js, npm, and pm2 into the environment
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -65,10 +65,11 @@ jobs:
             cd ${{ secrets.PROJECT_PATH }}/server
             
             echo "--- Installing backend dependencies ---"
-            # Use 'npm ci' for a clean, reliable install
+            # Use 'npm ci --production' for a clean, fast, and reliable install
             npm ci --production
             
             echo "--- Reloading application with PM2 for zero downtime ---"
+            # 'pm2 reload' is a graceful restart that ensures no service interruption
             pm2 reload work-radar-api
             
             echo "--- Deployment Complete ---"

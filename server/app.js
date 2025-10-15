@@ -4,39 +4,34 @@ const cors = require('cors');
 const path = require('path');
 const connectDB = require('./db/connectDB.js');
 const webRoutes = require('./routes/web.js');
-// Socket.IO and http imports have been removed as they are no longer needed.
 
 dotenv.config();
 const app = express();
 
-// The separate http server and Socket.IO initialization have been removed.
-
-// Middleware
+// --- Middleware ---
 app.use(cors({
   origin: process.env.FRONTEND_URL,
 }));
 app.use(express.json());
 
-// Serve static files from the React build directory in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve the static files from the /workradar path
-  app.use('/workradar', express.static(path.join(__dirname, '../client/dist')));
-}
+// --- THE FIX ---
+// All code related to serving static files has been removed.
+// Nginx is now solely responsible for serving the frontend.
+// The server's only job is to handle API requests.
 
-// API Routes
+// --- API Routes ---
+// The server will only respond to routes that start with /api
 app.use('/api', webRoutes);
 
-// In production, all other non-API routes should serve the React app's index.html
-// This now specifically handles requests that should be routed by the React app.
-if (process.env.NODE_ENV === 'production') {
-  app.get('/workradar/*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
-  });
-}
+// Optional: Add a root route for a simple health check
+app.get('/', (req, res) => {
+  res.send('Work Radar API is running.');
+});
+
 
 const PORT = process.env.PORT || 2000;
 
 connectDB().then(() => {
-  // --- Use the standard app.listen ---
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
+
