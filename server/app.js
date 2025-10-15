@@ -19,15 +19,17 @@ app.use(express.json());
 
 // Serve static files from the React build directory in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+  // Serve the static files from the /workradar path
+  app.use('/workradar', express.static(path.join(__dirname, '../client/dist')));
 }
 
 // API Routes
 app.use('/api', webRoutes);
 
-// In production, all other non-API routes should serve the React app
+// In production, all other non-API routes should serve the React app's index.html
+// This now specifically handles requests that should be routed by the React app.
 if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
+  app.get('/workradar/*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
   });
 }

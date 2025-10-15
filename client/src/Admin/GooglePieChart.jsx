@@ -34,19 +34,9 @@ const GooglePieChart = ({ data, title, colors, is3D = true, pieHole }) => {
       }
     };
 
-    if (window.google && window.google.charts) {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawChart);
-    } else {
-      // Fallback to load the script if it's not already there
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
-    }
+    // Assuming the script is loaded in index.html
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
   }, [data, title, colors, is3D, pieHole, isDarkMode]);
 
   return <div ref={chartRef} style={{ width: '100%', height: '100%' }}></div>;

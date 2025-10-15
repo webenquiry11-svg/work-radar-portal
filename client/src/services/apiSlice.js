@@ -17,11 +17,11 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
   // If a request fails with a 401 Unauthorized or 403 Forbidden,
   // it means the token is invalid or expired.
-  // We dispatch the logOut action to reset the client-side auth state.
-  if (result.error && (result.error.status === 401 || result.error.status === 403)) {
+  // We dispatch the logOut action to reset the client-side auth state for 401 errors.
+  if (result.error && result.error.status === 401) {
     console.error('API Error:', result.error);
     // Dispatching a logout action will clear the user's session.
-    // This is a "hard" logout.
+    // This is a "hard" logout for invalid tokens.
     // Note: This will cause a full page reload if your routing is set up to redirect on logout.
     api.dispatch({ type: 'auth/logOut' });
     // We could also try to re-authenticate here with a refresh token if we had one.

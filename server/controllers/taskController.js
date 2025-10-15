@@ -29,6 +29,29 @@ class TaskController {
     }
   };
 
+  static createMultipleTasks = async (req, res) => {
+    const tasksData = req.body.tasks; // Expect an array of tasks
+    const assignedBy = req.user._id;
+
+    if (!Array.isArray(tasksData) || tasksData.length === 0) {
+      return res.status(400).json({ message: 'An array of tasks is required.' });
+    }
+
+    try {
+      const tasksToInsert = tasksData.map(task => ({
+        ...task,
+        assignedBy,
+      }));
+
+      const createdTasks = await Task.insertMany(tasksToInsert);
+
+      res.status(201).json({ message: `${createdTasks.length} tasks created successfully`, tasks: createdTasks });
+    } catch (error) {
+      console.error('Error creating multiple tasks:', error);
+      res.status(500).json({ message: 'Server error while creating tasks.' });
+    }
+  };
+
   static getMyTasks = async (req, res) => {
     try {
       const tasks = await Task.find({ assignedTo: req.user._id })

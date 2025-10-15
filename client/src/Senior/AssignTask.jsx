@@ -122,10 +122,8 @@ const AssignTask = ({ teamLeadId }) => {
 
   const handleAssignTask = async (tasks) => {
     try {
-      // Sequentially create each task
-      for (const task of tasks) {
-        await createTask(task).unwrap();
-      }
+      // Concurrently create all tasks
+      await Promise.all(tasks.map(task => createTask(task).unwrap()));
       toast.success(`${tasks.length} task(s) assigned to ${selectedEmployee.name} successfully!`);
       setSelectedEmployee(null); // Close modal on success
     } catch (err) {
