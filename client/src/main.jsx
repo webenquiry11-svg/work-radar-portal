@@ -7,18 +7,20 @@ import './index.css';
 import { store } from './app/store';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
-import CurrentUserProvider from './app/CurrentUserProvider.jsx'; // 1. IMPORT THE PROVIDER
+import CurrentUserProvider from './app/CurrentUserProvider.jsx'; // Make sure this path is correct
 
 const basename = import.meta.env.MODE === 'production' ? '/workradar' : '/';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter basename={basename}>
+    {/* All providers live here, and only here. */}
+    <BrowserRouter basename={basename}>
+      <Provider store={store}>
         <CurrentUserProvider>
           <App />
         </CurrentUserProvider>
-      </BrowserRouter>
-    </Provider>
+      </Provider>
+    </BrowserRouter>
   </React.StrictMode>,
 );
+
