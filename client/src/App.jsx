@@ -1,5 +1,4 @@
 import React from "react";
-// Remove "BrowserRouter as Router" from the import
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import AdminDashboard from "./Admin/AdminDashboard";
