@@ -15,12 +15,9 @@ const basename = import.meta.env.MODE === 'production' ? '/workradar' : '/';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* 3. USE THE DYNAMIC BASENAME VARIABLE */}
-    <BrowserRouter basename={basename}>
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </BrowserRouter>
+    <Provider store={store}>
+      {/* The single, top-level BrowserRouter now lives inside App.jsx */}
+      <App />
+    </Provider>
   </React.StrictMode>,
 );
-
