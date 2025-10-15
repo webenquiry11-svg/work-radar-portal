@@ -298,13 +298,22 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
-    if (!formData.fullName || !formData.email || !formData.role || !formData.employeeId) {
-      setFormError('Please fill out all required fields.');
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.role.trim() || !formData.employeeId.trim() || !formData.company.trim() || !formData.department) {
+      setFormError('Please fill out all required fields: Full Name, Email, Role, Employee ID, Company, and Department.');
       return;
     }
     // Password is only required when creating a new user
     if (!isEditMode && !formData.password) {
       setFormError('Password is required for new employees.');
+      return;
+    }
+    if (formData.password && formData.password.length < 6) {
+      setFormError('Password must be at least 6 characters long.');
+      return;
+    }
+    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(formData.email)) {
+      setFormError('Please enter a valid email address.');
       return;
     }
 

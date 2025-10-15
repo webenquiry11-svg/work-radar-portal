@@ -113,18 +113,30 @@ const AdminSetup = ({ onSetupComplete }) => {
 
   const nextStep = () => {
     if (step === 1) {
-      if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-        toast.error("Please fill all account fields.");
+      if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
+        toast.error("Please fill all required account fields.");
         return;
       }
       if (formData.password !== formData.confirmPassword) {
         toast.error("Passwords do not match.");
         return;
       }
+      if (formData.password.length < 6) {
+        toast.error("Password must be at least 6 characters long.");
+        return;
+      }
     }
     if (step === 2) {
-      if (!formData.company || !formData.employeeId || !formData.department) {
-        toast.error("Please fill all company and role fields.");
+      if (!formData.company.trim()) {
+        toast.error("Company Name is required.");
+        return;
+      }
+      if (!formData.employeeId.trim()) {
+        toast.error("Employee ID is required.");
+        return;
+      }
+      if (!formData.department) {
+        toast.error("Please select a department.");
         return;
       }
     }

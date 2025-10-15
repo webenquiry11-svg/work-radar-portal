@@ -7,7 +7,6 @@ import Login from "./Form/Login";
 import { selectCurrentUser } from "./app/authSlice";
 import EmployeeDashboard from "./Employee/EmployeDashboard";
 import ManagerDashboard from "./Senior/ManagerDashboard"; 
-import CurrentUserProvider from "./app/CurrentUserProvider";
 import { useCheckAdminSetupQuery } from "./services/EmployeApi";
 import AdminSetup from "./Form/AdminSetup";
 import InactivityDetector from "./app/InactivityDetector";

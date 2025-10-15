@@ -17,6 +17,10 @@ const employeeSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
+    match: [
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+      'Please fill a valid email address',
+    ],
   },
   password: {
     type: String,
@@ -30,6 +34,7 @@ const employeeSchema = new mongoose.Schema({
   employeeId: {
     type: String,
     required: true,
+    minlength: [3, 'Employee ID must be at least 3 characters long.'],
     unique: true,
     trim: true,
   },
@@ -69,6 +74,7 @@ const employeeSchema = new mongoose.Schema({
   },
   company: {
     type: String,
+    required: [true, 'Company name is required.'],
     trim: true,
   },
   joiningDate: {
@@ -93,6 +99,7 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     trim: true,
     enum: [
+      '', // Allow empty string
       'Corporate management', 'Human Resource', 'Creative Designing',
       'Finance & Accounts', 'Marketing Operations', 'Sales & Marketing', 'Tech & Development'
     ],

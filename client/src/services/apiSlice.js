@@ -1,8 +1,14 @@
 // src/services/apiSlice.js
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
  
+const getBaseUrl = () => {
+  // In production, the API is at a relative path from the same domain.
+  // In development, it's on a different port.
+  return import.meta.env.PROD ? '/api' : 'http://localhost:2000/api';
+};
+
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  baseUrl: getBaseUrl(),
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) {
