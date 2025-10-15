@@ -1786,138 +1786,136 @@ const ManagerDashboard = () => {
     };
 
     return (
-      <CurrentUserProvider>
-      <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 font-manrope">
-          <style>
-            {`
-              @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-              .font-manrope {
-                font-family: 'Manrope', sans-serif;
-              }
-            `}
-          </style>
-          {/* Mobile Topbar */}
-        <header className="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-40">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-            <h1 className="text-lg font-bold text-blue-800">Work Radar</h1>
-            <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
-          </header>
-          <div 
-          className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
-            onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
-            onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
-          >
-            {/* Sidebar */}
-            <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
-              <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
-              <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
-              {isSidebarExpanded && (
-                <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
-              )}
-            </div><nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-              {navItems.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors duration-200 text-left relative ${!isSidebarExpanded && 'justify-center'} ${ 
-                    activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700' 
-                  }`}
-                >
-                  <item.icon className="h-6 w-6" />
-                  {isSidebarExpanded && <span className="font-semibold text-sm">{item.label}</span>}
-                  {activeView.component === item.id && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
-                  )}
-                </button>
-              ))}
-            </nav>
-            <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
+    <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 font-manrope">
+        <style>
+          {`
+            @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+            .font-manrope {
+              font-family: 'Manrope', sans-serif;
+            }
+          `}
+        </style>
+        {/* Mobile Topbar */}
+      <header className="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 shadow-sm fixed top-0 left-0 right-0 z-40">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 focus:outline-none">
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold text-blue-800">Work Radar</h1>
+          <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
+        </header>
+        <div 
+        className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
+          onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
+          onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
+        >
+          {/* Sidebar */}
+          <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
+            <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
+            <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
+            {isSidebarExpanded && (
+              <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
+            )}
+          </div><nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            {navItems.map(item => (
               <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
-                title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+                key={item.id}
+                onClick={() => { handleNavigation(item.id); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors duration-200 text-left relative ${!isSidebarExpanded && 'justify-center'} ${ 
+                  activeView.component === item.id ? 'bg-blue-600 text-white shadow' : 'text-gray-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700' 
+                }`}
               >
-                <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
+                <item.icon className="h-6 w-6" />
+                {isSidebarExpanded && <span className="font-semibold text-sm">{item.label}</span>}
+                {activeView.component === item.id && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-blue-500 rounded-r-lg"></span>
+                )}
               </button>
-            </div>            </aside>
-          </div>
-          {/* Overlay for mobile sidebar */}
-          {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-          <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-            <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-30 relative">
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">{navItems.find(i => i.id === activeView.component)?.label}</h1>
-              <div className="flex items-center gap-4">
-                <ThemeToggle />
-                <button onClick={handleRefresh} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Data">
-                  <ArrowPathIcon className="h-6 w-6" />
-                </button>
-                <div className="relative" ref={notificationRef}>
-                  <button onClick={handleBellClick} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 relative">
-                    <BellIcon className="h-6 w-6" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
-                    )}
-                  </button>
-                  {isNotificationOpen && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
-                      <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
-                      <div className="max-h-80 overflow-y-auto">
-                        {notifications.length > 0 ? (
-                          notifications.map(n => (
-                            <div 
-                              key={n._id}
-                              onClick={() => handleNotificationClick(n)}
-                              className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                            >
-                              <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
-                              <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
-                        )}
-                      </div>
-                      <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
-                        <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-                <div className="relative" ref={profileRef}>
-                  <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                <img
-                  src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
-                  alt="User"
-                  className="h-9 w-9 rounded-full object-cover"
-                />
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Manager'}</div>
-                  <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Manager'}</div>
-                </div>
-                <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
-                      <button onClick={() => { handleNavigation('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
-                        <UserCircleIcon className="h-5 w-5" />
-                        My Profile
-                      </button>
-                      <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-900">{renderActiveComponent()}</main>
-          </div>
+            ))}
+          </nav>
+          <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
+            </button>
+          </div>            </aside>
         </div>
-      </CurrentUserProvider>
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+          <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-30 relative">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">{navItems.find(i => i.id === activeView.component)?.label}</h1>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <button onClick={handleRefresh} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Data">
+                <ArrowPathIcon className="h-6 w-6" />
+              </button>
+              <div className="relative" ref={notificationRef}>
+                <button onClick={handleBellClick} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 relative">
+                  <BellIcon className="h-6 w-6" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                  )}
+                </button>
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
+                    <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map(n => (
+                          <div 
+                            key={n._id}
+                            onClick={() => handleNotificationClick(n)}
+                            className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                          >
+                            <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
+                            <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
+                      )}
+                    </div>
+                    <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
+                      <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
+              <div className="relative" ref={profileRef}>
+                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+              <img
+                src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
+                alt="User"
+                className="h-9 w-9 rounded-full object-cover"
+              />
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Manager'}</div>
+                <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Manager'}</div>
+              </div>
+              <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
+                    <button onClick={() => { handleNavigation('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                      <UserCircleIcon className="h-5 w-5" />
+                      My Profile
+                    </button>
+                    <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-900">{renderActiveComponent()}</main>
+        </div>
+      </div>
     );
   }
 

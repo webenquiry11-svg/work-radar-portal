@@ -11,10 +11,7 @@ import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
-import * as XLSX from 'xlsx';
-import AssignEmployee from './AssignEmployee';
 import Dashboard from './Dashboard';
-import CurrentUserProvider from '../app/CurrentUserProvider'; 
 import HolidayManagement from './HolidayManagement';
 import ViewAllTasks from './ViewAllTasks';
 import TaskOverview from './TaskOverview';
@@ -1208,23 +1205,21 @@ export default function AdminPageLayout() {
   };
 
   return (
-    <CurrentUserProvider>
-      <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-manrope dark:bg-slate-900">
-        <style>
-          {`
-            @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-            .font-manrope {
-              font-family: 'Manrope', sans-serif;
-            }
-          `}
-        </style>
-        <Sidebar activeComponent={activeView.component} setActiveComponent={handleNavigation} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-        {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-          <AppHeader pageTitle={pageTitles[activeView.component]} user={user} setActiveComponent={handleNavigation} onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-y-auto dark:bg-slate-900">{renderActiveComponent()}</main>
-        </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 font-manrope dark:bg-slate-900">
+      <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+          .font-manrope {
+            font-family: 'Manrope', sans-serif;
+          }
+        `}
+      </style>
+      <Sidebar activeComponent={activeView.component} setActiveComponent={handleNavigation} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <AppHeader pageTitle={pageTitles[activeView.component]} user={user} setActiveComponent={handleNavigation} onMenuClick={() => setSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto dark:bg-slate-900">{renderActiveComponent()}</main>
       </div>
-    </CurrentUserProvider>
+    </div>
   );
 }

@@ -9,7 +9,6 @@ import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, Informatio
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import PastReportsList from './PastReports';
-import CurrentUserProvider from '../app/CurrentUserProvider.jsx';
 import AttendanceCalendar from '../services/AttendanceCalendar';
 import TaskApprovals from '../Admin/TaskApprovals.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
