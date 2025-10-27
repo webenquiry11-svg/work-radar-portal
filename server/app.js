@@ -8,9 +8,14 @@ const path = require('path');
 dotenv.config();
 const app = express();
 
+const allowedOrigins = process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',') : [];
+
 // --- Middleware ---
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) callback(null, true);
+    else callback(new Error('Not allowed by CORS'));
+  },
 }));
 app.use(express.json());
 // Serve static files from the React build directory in production

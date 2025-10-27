@@ -9,7 +9,7 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import CurrentUserProvider from './app/CurrentUserProvider.jsx';
 
-const basename = '/workradar'; // <-- CHANGE THIS LINE
+const basename = import.meta.env.PROD ? '/workradar' : '/';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
