@@ -1,11 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config(); // This line is crucial and must be at the top
 const cors = require('cors');
 const connectDB = require('./db/connectDB.js');
 const webRoutes = require('./routes/web.js');
 const path = require('path');
-
-dotenv.config();
 const app = express();
 
 const allowedOrigins = process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',') : [];
