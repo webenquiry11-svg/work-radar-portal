@@ -2,7 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
  
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.PROD ? '/workradar/api' : 'http://localhost:2000/api',
+  baseUrl: '/workradar/api',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) {
