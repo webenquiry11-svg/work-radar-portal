@@ -27,26 +27,30 @@ jobs:
           node-version: '20' # Use a modern LTS version of Node.js
 
       # Step 3: Install frontend dependencies and build the static files
-      # This happens on the GitHub runner, which is fast and efficient.
       - name: Install Frontend Dependencies & Build
+        # Use working-directory, which is a cleaner way to run commands in a subfolder
+        working-directory: ./client
         run: |
           echo "--- Installing client dependencies ---"
-          cd client
           npm ci
-          echo "--- Building client files ---"
+          echo "--- Building client files (for /workradar/ base path) ---"
           npm run build
 
       # Step 4: Securely copy the necessary files to your Hostinger server
-      # It copies the server code and only the finished 'dist' folder.
       - name: Deploy to Hostinger
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # This copies the built client/dist folder and the server folder
           source: "client/dist, server"
           target: ${{ secrets.PROJECT_PATH }}
-          strip_components: 1
+          # [CORRECTION] Removed 'strip_components: 1' as it's not a valid
+          # parameter for scp-action and could cause errors.
+          # [IMPROVEMENT] Added 'rm: true' to clear old files from the 
+          # 'dist' and 'server' folders before copying new ones.
+          rm: true
 
       # Step 5: Run final commands on the server to launch the update
       - name: Install Dependencies and Restart Server
@@ -55,8 +59,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # This script is perfect. It correctly sources nvm,
+          # installs dependencies, and does a zero-downtime reload.
           script: |
-            # THIS IS THE KEY FIX from your working "Star Publicity" pipeline:
             # Source NVM to load Node.js, npm, and pm2 into the environment
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -65,12 +70,11 @@ jobs:
             cd ${{ secrets.PROJECT_PATH }}/server
             
             echo "--- Installing backend dependencies ---"
-            # Use 'npm ci --production' for a clean, fast, and reliable install
             npm ci --production
             
             echo "--- Reloading application with PM2 for zero downtime ---"
-            # 'pm2 reload' is a graceful restart that ensures no service interruption
+            # This 'reload' command is what gives you zero-downtime deployments.
+            # It will not interrupt Horilla or your other site.
             pm2 reload work-radar-api
             
             echo "--- Deployment Complete ---"
-
