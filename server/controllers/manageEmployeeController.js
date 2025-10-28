@@ -79,12 +79,14 @@ class ManageEmployeeController {
     if (req.file) {
       try {
         const employee = await Employee.findById(id);
-        if (employee && employee.profilePicture) {
+        // Only attempt to delete if there is a profile picture and it's a cloudinary URL
+        if (employee && employee.profilePicture && employee.profilePicture.includes('cloudinary.com')) {
           // Extract public_id from the Cloudinary URL
           const urlParts = employee.profilePicture.split('/');
-          const publicIdWithExtension = urlParts.slice(urlParts.indexOf('employee-profiles')).join('/');
-          const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
-          await cloudinary.uploader.destroy(publicId);
+          const cloudinaryVIndex = urlParts.findIndex(part => part.startsWith('v') && !isNaN(part.substring(1)));
+          const publicIdWithExtension = urlParts.slice(cloudinaryVIndex + 1).join('/');
+          const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.')) || publicIdWithExtension;
+          if (publicId) await cloudinary.uploader.destroy(publicId);
         }
       } catch (e) {
         console.error("Error deleting old profile picture from Cloudinary:", e);
