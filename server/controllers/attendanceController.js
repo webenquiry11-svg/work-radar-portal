@@ -27,9 +27,6 @@ class AttendanceController {
       const holidays = await Holiday.find({ date: { $gte: startDate, $lte: endDate } });
       const leaves = await Leave.find({ employee: employeeId, date: { $gte: startDate, $lte: endDate } });
 
-      // Check if the employee has any tasks assigned to them at all.
-      const taskCount = await Task.countDocuments({ assignedTo: employeeId });
-
       const reportDates = new Set(reports.map(r => r.reportDate.toISOString().split('T')[0]));
       const holidayDates = new Set(holidays.map(h => h.date.toISOString().split('T')[0]));
       const leaveDates = new Set(leaves.map(l => l.date.toISOString().split('T')[0]));
@@ -60,8 +57,16 @@ class AttendanceController {
             status = 'Present';
           } else if (d.getTime() < today.getTime()) {
             // It's a past working day with no report.
-            // If the user has no tasks assigned ever, mark as present. Otherwise, absent.
-            status = (taskCount === 0) ? 'Present' : 'Absent';
+            // Check if there were any active tasks for that day.
+            const dayStart = new Date(d);
+            const dayEnd = new Date(d);
+            dayEnd.setUTCHours(23, 59, 59, 999);
+            const activeTaskCount = await Task.countDocuments({
+              assignedTo: employeeId,
+              createdAt: { $lte: dayEnd }, // Task was created on or before this day
+              status: { $in: ['Pending', 'In Progress'] }
+            });
+            status = (activeTaskCount === 0) ? 'Present' : 'Absent';
           } else {
             // It's the current working day with no report yet.
             status = 'Pending';
