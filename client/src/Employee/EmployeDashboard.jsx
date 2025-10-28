@@ -1465,7 +1465,7 @@ const EmployeeDashboard = ({ employeeId }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
-
+  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
   const pageTitles = {
     dashboard: 'Dashboard',
     'my-report': "Today's Report",
@@ -1560,9 +1560,6 @@ const EmployeeDashboard = ({ employeeId }) => {
 
   const handleClearRead = async () => {
     try {
-      // Assuming a mutation `deleteReadNotifications` exists and is imported
-      const { useDeleteReadNotificationsMutation } = await import('../services/EmployeApi.js');
-      const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
       await deleteReadNotifications().unwrap();
       toast.success('Read notifications cleared.');
     } catch {
