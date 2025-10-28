@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useUpdateEmployeeMutation } from '../services/EmployeApi';
 import { setCredentials, useForgotPasswordMutation } from '../app/authSlice';
-import { CheckCircleIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, KeyIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 const InfoField = ({ label, value }) => (
   <div>
