@@ -18,6 +18,7 @@ import GooglePieChart from '../Admin/GooglePieChart.jsx';
 import HolidayManagement from '../Admin/HolidayManagement.jsx';
 import LeaveManagement from '../Admin/LeaveManagement.jsx';
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
+import AttendanceCalendar from '../services/AttendanceCalendar.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
 
