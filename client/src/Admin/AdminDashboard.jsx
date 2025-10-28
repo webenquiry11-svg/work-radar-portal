@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
-import volgaInfosysLogo from '../../assets/volgainfosys.png';
-import starPublicityLogo from '../../assets/fevicon.png';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
@@ -939,16 +937,6 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'announcements', icon: MegaphoneIcon, label: 'Announcements' },
   ];
 
-  const companyLogo = useMemo(() => {
-    if (user?.company === 'Volga Infosys') {
-      return volgaInfosysLogo;
-    }
-    if (user?.company === 'Star Publicity') {
-      return starPublicityLogo;
-    }
-    return starPublicityLogo;
-  }, [user?.company]);
-
   return (
     <div 
       className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
@@ -957,7 +945,6 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     >
       <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-slate-800/95 dark:border-slate-700">
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
-        <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
         {isExpanded && (
           <span className="text-lg font-bold text-blue-800 truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
         )}

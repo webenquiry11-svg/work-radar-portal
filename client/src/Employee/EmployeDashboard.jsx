@@ -1488,16 +1488,6 @@ const EmployeeDashboard = ({ employeeId }) => {
     return allEmployees.some(emp => emp.teamLead?._id === user._id);
   }, [user, allEmployees]);
 
-  const companyLogo = useMemo(() => {
-    if (user?.company === 'Volga Infosys') {
-      return volgaInfosysLogo;
-    }
-    if (user?.company === 'Star Publicity') {
-      return starPublicityLogo;
-    }
-    return starPublicityLogo;
-  }, [user?.company]);
-
   useEffect(() => {
     // If the active component is a team-only component and the user has no team,
     // default back to the dashboard.
@@ -1625,11 +1615,6 @@ const EmployeeDashboard = ({ employeeId }) => {
       </style>
       <aside className={`fixed z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
-          <img
-            src={companyLogo}
-            alt="Company Logo"
-            className="h-9 w-9"
-          />
           {!isSidebarCollapsed && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}

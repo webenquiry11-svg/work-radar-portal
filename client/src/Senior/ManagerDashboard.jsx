@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, ArrowLeftIcon, SparklesIcon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
-import volgaInfosysLogo from '../../assets/volgainfosys.png';
-import starPublicityLogo from '../../assets/fevicon.png';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
@@ -1639,16 +1637,6 @@ const ManagerDashboard = () => {
     };
   }, []);
 
-  const companyLogo = useMemo(() => {
-    if (user?.company === 'Volga Infosys') {
-      return volgaInfosysLogo;
-    }
-    if (user?.company === 'Star Publicity') {
-      return starPublicityLogo;
-    }
-    return starPublicityLogo;
-  }, [user?.company]);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -1810,7 +1798,6 @@ const ManagerDashboard = () => {
           {/* Sidebar */}
           <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
             <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
-            <img src={companyLogo} alt="Company Logo" className="h-9 w-9" />
             {isSidebarExpanded && (
               <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
             )}
