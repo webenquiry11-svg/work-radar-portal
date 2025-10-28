@@ -42,6 +42,9 @@ export const authApi = apiSlice.injectEndpoints({
     forgotPassword: builder.mutation({
       query: (credentials) => ({ url: 'auth/forgot-password', method: 'POST', body: credentials }),
     }),
+    resetPassword: builder.mutation({
+      query: ({ token, password }) => ({ url: `auth/reset-password/${token}`, method: 'POST', body: { password } }),
+    }),
   }),
 });
 export const { setCredentials, logOut } = authSlice.actions
@@ -50,4 +53,4 @@ export default authSlice.reducer;
 
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectCurrentToken = (state) => state.auth.token;
-export const { useForgotPasswordMutation } = authApi;
+export const { useForgotPasswordMutation, useResetPasswordMutation } = authApi;

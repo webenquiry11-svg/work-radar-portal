@@ -110,8 +110,8 @@ const AdminProfile = ({ user }) => {
             <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors w-full sm:w-auto">
               {isEditMode ? 'Cancel' : 'Edit Profile'}
             </button>
-            <button onClick={() => {}} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors w-full sm:w-auto inline-flex items-center justify-center gap-2">
-              <KeyIcon className="h-4 w-4" /> Request to Change Password
+            <button onClick={handleRequestPasswordReset} disabled={isSendingReset} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:bg-red-300">
+              {isSendingReset ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <KeyIcon className="h-4 w-4" />} Request to Change Password
             </button>
           </div>
         </div>
