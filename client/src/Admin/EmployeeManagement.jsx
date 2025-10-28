@@ -298,7 +298,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
-    if (!formData.fullName.trim() || !formData.email.trim() || !formData.role.trim() || !formData.employeeId.trim() || !formData.company.trim() || !formData.department) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.role.trim() || !formData.employeeId.trim() || !formData.company.trim() || !formData.department) {
       setFormError('Please fill out all required fields: Full Name, Email, Role, Employee ID, Company, and Department.');
       return;
     }
@@ -318,14 +318,14 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
     }
 
     const employeeFormData = new FormData();
-    employeeFormData.append('name', formData.fullName);
+    employeeFormData.append('name', formData.name);
     employeeFormData.append('email', formData.email);
     employeeFormData.append('role', formData.role);
     employeeFormData.append('employeeId', formData.employeeId);
     if (formData.password) employeeFormData.append('password', formData.password);
     if (formData.profilePicture) employeeFormData.append('profilePicture', formData.profilePicture);
     Object.keys(formData).forEach(key => {
-        if (!['fullName', 'email', 'role', 'employeeId', 'password', 'profilePicture'].includes(key) && formData[key]) {
+        if (!['name', 'email', 'role', 'employeeId', 'password', 'profilePicture'].includes(key) && formData[key]) {
             employeeFormData.append(key, formData[key]);
         }
     });
@@ -345,8 +345,8 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4 overflow-y-auto text-slate-700 dark:text-slate-300" style={{maxHeight: 'calc(90vh - 140px)'}}>
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-              <input type="text" name="fullName" id="fullName" value={formData.fullName} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+              <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
