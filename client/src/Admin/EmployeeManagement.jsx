@@ -177,11 +177,11 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Manage Permissions for {employee.name}</h3>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto">
           <PermissionToggle label="Can Edit Own Profile" description="Allows the user to edit their personal information." enabled={permissions.canEditProfile} onToggle={() => handleToggle('canEditProfile')} />
           <PermissionToggle label="Can View Team" description="Allows the user to view information about their assigned team members." enabled={permissions.canViewTeam} onToggle={() => handleToggle('canViewTeam')} />
           <PermissionToggle label="Can Edit Assigned Tasks" description="Allows the user to edit tasks they have assigned to others." enabled={permissions.canUpdateTask} onToggle={() => handleToggle('canUpdateTask')} />
