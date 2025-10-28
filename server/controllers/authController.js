@@ -2,7 +2,6 @@ const Employee = require('../models/employee.js');
 const generateToken = require('../generateToken.js');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcryptjs');
 
 class AuthController {
   static login = async (req, res) => {
