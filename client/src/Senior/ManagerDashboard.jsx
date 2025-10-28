@@ -6,8 +6,8 @@ import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, 
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
-import { apiSlice } from '../services/apiSlice';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation as useDeleteReadNotificationsMutation2 } from '../services/EmployeApi';
+import { apiSlice } from '../services/apiSlice'; 
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
 import toast from 'react-hot-toast'; 
 import PastReportsList from '../Employee/PastReports';
 import { useGetAllMyReportsQuery } from '../services/EmployeApi';
@@ -1620,7 +1620,7 @@ const ManagerDashboard = () => {
   }, [user, allEmployees]);
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
-  const [deleteReadNotifications] = useDeleteReadNotificationsMutation2();
+  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
 
   useEffect(() => {
     const styleId = 'slider-thumb-styles';
