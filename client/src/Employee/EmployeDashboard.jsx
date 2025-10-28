@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
 import { apiSlice } from '../services/apiSlice';
