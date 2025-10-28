@@ -1618,7 +1618,7 @@ const EmployeeDashboard = ({ employeeId }) => {
             </span>
           )}
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button onClick={() => { setActiveComponent('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${isSidebarCollapsed ? 'justify-center' : ''} ${activeComponent === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}>
             <HomeIcon className="h-6 w-6" /> 
             {!isSidebarCollapsed && <span className="font-semibold">Dashboard</span>}
