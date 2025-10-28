@@ -3,6 +3,7 @@ import {
   HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
+import starPublicityLogo from '../assets/fevicon.png';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
@@ -10,6 +11,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
+import AssignEmployee from './AssignEmployee';
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import Dashboard from './Dashboard';
 import HolidayManagement from './HolidayManagement';
@@ -942,9 +944,9 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
       return volgaInfosysLogo;
     }
     if (user?.company === 'Star Publicity') {
-      return '/assets/fevicon.png';
+      return starPublicityLogo;
     }
-    return '/assets/fevicon.png';
+    return starPublicityLogo;
   }, [user?.company]);
 
   return (
