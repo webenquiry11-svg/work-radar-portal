@@ -23,8 +23,6 @@ router.post('/setup/create-admin', upload.single('profilePicture'), SetupControl
 // Public route
 router.post('/login', AuthController.login);
 router.get('/auth/me', protect, AuthController.getMe);
-router.post('/auth/forgot-password', protect, AuthController.forgotPassword);
-router.put('/auth/reset-password/:token', AuthController.resetPassword);
 
 // Employee Management Routes
 router.post('/employees', protect, upload.single('profilePicture'), ManageEmployeeController.addEmployee);

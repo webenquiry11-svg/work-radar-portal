@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useUpdateEmployeeMutation } from '../services/EmployeApi';
-import { setCredentials, useForgotPasswordMutation } from '../app/authSlice';
-import { CheckCircleIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { setCredentials } from '../app/authSlice';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const InfoField = ({ label, value }) => (
   <div>
@@ -30,7 +30,6 @@ const AdminProfile = ({ user }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
   const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
-  const [forgotPassword, { isLoading: isSendingReset }] = useForgotPasswordMutation();
   const token = useSelector(state => state.auth.token);
 
   // Initialize state directly from the user prop.
@@ -80,16 +79,6 @@ const AdminProfile = ({ user }) => {
     }
   };
 
-  const handleRequestPasswordReset = async () => {
-    const toastId = toast.loading('Sending password reset email...');
-    try {
-      await forgotPassword({ email: user.email }).unwrap();
-      toast.success('Password reset email sent successfully!', { id: toastId });
-    } catch (err) {
-      toast.error(err.data?.message || 'Failed to send reset email.', { id: toastId });
-    }
-  };
-
   return (
     <div className="p-8">
       <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl p-8">
@@ -106,14 +95,9 @@ const AdminProfile = ({ user }) => {
               <p className="text-sm text-gray-500 font-mono mt-1">{user.employeeId}</p>
             </div>
           </div>
-          <div className="flex flex-col gap-2 items-end">
-            <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors w-full sm:w-auto">
-              {isEditMode ? 'Cancel' : 'Edit Profile'}
-            </button>
-            <button onClick={handleRequestPasswordReset} disabled={isSendingReset} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors disabled:bg-red-300 w-full sm:w-auto inline-flex items-center justify-center gap-2">
-              <KeyIcon className="h-4 w-4" /> {isSendingReset ? 'Sending...' : 'Request Password Reset'}
-            </button>
-          </div>
+          <button onClick={() => setIsEditMode(!isEditMode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+            {isEditMode ? 'Cancel' : 'Edit Profile'}
+          </button>
         </div>
 
         {isEditMode ? (
