@@ -109,6 +109,10 @@ class ManageEmployeeController {
       res.status(200).json({ message: 'Employee updated successfully', employee: updatedEmployee });
     } catch (error) {
       console.error('Error updating employee:', error);
+      if (error.code === 11000) { // MongoDB duplicate key error code
+        const field = Object.keys(error.keyValue)[0];
+        return res.status(409).json({ message: `An employee with this ${field} already exists.` });
+      }
       res.status(500).json({ message: 'Server error while updating employee.' });
     }
   };
