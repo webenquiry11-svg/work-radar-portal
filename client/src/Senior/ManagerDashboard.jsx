@@ -523,14 +523,14 @@ const TeamInformation = ({ seniorId }) => {
 
     const getAllSubordinates = (managerId, employees) => {
       const subordinates = [];
-      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
+      const queue = employees.filter(emp => emp.assignmentInfo?.teamLead === managerId);
       const visited = new Set(queue.map(e => e._id));
 
       while (queue.length > 0) {
         const currentEmployee = queue.shift();
         subordinates.push(currentEmployee);
 
-        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        const directReports = employees.filter(emp => emp.assignmentInfo?.teamLead === currentEmployee._id);
         for (const report of directReports) {
           if (!visited.has(report._id)) {
             visited.add(report._id);
