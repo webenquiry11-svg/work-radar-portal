@@ -1493,9 +1493,9 @@ const EmployeeDashboard = ({ employeeId }) => {
       return volgaInfosysLogo;
     }
     if (user?.company === 'Star Publicity') {
-      return '/assets/fevicon.png';
+      return starPublicityLogo;
     }
-    return '/assets/fevicon.png';
+    return starPublicityLogo;
   }, [user?.company]);
 
   useEffect(() => {

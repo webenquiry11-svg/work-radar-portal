@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, ArrowLeftIcon, SparklesIcon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
-import volgaInfosysLogo from '../assets/volgainfosys.png';
+import volgaInfosysLogo from '../../assets/volgainfosys.png';
+import starPublicityLogo from '../../assets/fevicon.png';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
@@ -1643,9 +1644,9 @@ const ManagerDashboard = () => {
       return volgaInfosysLogo;
     }
     if (user?.company === 'Star Publicity') {
-      return '/assets/fevicon.png';
+      return starPublicityLogo;
     }
-    return '/assets/fevicon.png';
+    return starPublicityLogo;
   }, [user?.company]);
 
   useEffect(() => {
