@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useGetEmployeesQuery, useCreateTaskMutation } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useCreateTaskMutation, useCreateMultipleTasksMutation } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import {
   MagnifyingGlassIcon,
@@ -168,12 +168,12 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 
 const AssignTask = () => {
   const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
-  const [createTask, { isLoading: isAssigning }] = useCreateTaskMutation();
+  const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const managers = useMemo(() => {
-    return employees.filter(emp => emp.dashboardAccess === 'Manager Dashboard');
+    return employees.filter(emp => emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard');
   }, [employees]);
 
   const filteredEmployees = useMemo(() => {
@@ -185,9 +185,7 @@ const AssignTask = () => {
 
   const handleAssignTask = async (tasks) => {
     try {
-      for (const task of tasks) {
-        await createTask(task).unwrap();
-      }
+      await createMultipleTasks({ tasks }).unwrap();
       toast.success(`${tasks.length} task(s) assigned to ${selectedEmployee.name} successfully!`);
       setSelectedEmployee(null);
     } catch (err) {

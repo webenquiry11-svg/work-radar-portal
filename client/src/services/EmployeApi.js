@@ -274,6 +274,15 @@ export const employeApi = apiSlice.injectEndpoints({
       invalidatesTags: ['Task'],
     }),
 
+    createMultipleTasks: builder.mutation({
+      query: (body) => ({
+        url: '/tasks/multiple',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Task'],
+    }),
+
     getMyTasks: builder.query({
       query: () => '/tasks/my-tasks',
       providesTags: ['Task'],
@@ -437,6 +446,7 @@ export const {
   useGetMeQuery,
   useCreateTaskMutation,
   useGetMyTasksQuery,
+  useCreateMultipleTasksMutation,
   useGetAllTasksQuery,
   useUpdateTaskMutation,
   useApproveTaskMutation,

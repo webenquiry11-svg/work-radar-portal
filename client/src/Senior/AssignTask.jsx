@@ -39,33 +39,93 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
   const removeTask = (index) => setTasks(tasks.filter((_, i) => i !== index));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Assign Task to {employee.name}</h3>
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-slide-in-right">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <ClipboardDocumentListIcon className="h-6 w-6 text-blue-600" />
+            <span className="font-bold text-lg text-slate-800">Assign Task</span>
+          </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="divide-y divide-slate-200">
-          <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+        <div className="px-6 pt-4 pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            {employee.profilePicture ? (
+              <img src={employee.profilePicture} alt={employee.name} className="h-10 w-10 rounded-full border border-blue-200" />
+            ) : (
+              <UserCircleIcon className="h-10 w-10 text-blue-200" />
+            )}
+            <div>
+              <div className="font-semibold text-slate-800">{employee.name}</div>
+              <div className="text-xs text-slate-500">{employee.role} &middot; {employee.department || 'N/A'}</div>
+              <div className="text-xs text-slate-400">{employee.employeeId}</div>
+            </div>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 px-6 py-4 space-y-6">
             {tasks.map((task, index) => (
-              <div key={task.id} className="p-4 border rounded-xl bg-slate-50/50 relative space-y-3">
+              <div key={task.id} className="relative rounded-xl bg-slate-50 border border-slate-200 shadow-sm p-4 space-y-3">
                 {tasks.length > 1 && (
                   <button type="button" onClick={() => removeTask(index)} className="absolute -top-2 -right-2 p-1.5 bg-white rounded-full text-slate-400 hover:text-red-600 hover:bg-red-100 border shadow-sm">
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 )}
-                <input type="text" name="title" required value={task.title} onChange={(e) => handleChange(index, e)} placeholder="Task Title" className="w-full text-sm border-slate-300 rounded-lg p-2" />
-                <textarea name="description" value={task.description} onChange={(e) => handleChange(index, e)} placeholder="Description (optional)" rows="2" className="w-full text-sm border-slate-300 rounded-lg p-2"></textarea>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div><label className="text-xs text-slate-500">Start Date</label><input type="date" name="startDate" value={task.startDate} onChange={(e) => handleChange(index, e)} className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1" /></div>
-                  <div><label className="text-xs text-slate-500">Due Date</label><input type="date" name="dueDate" value={task.dueDate} onChange={(e) => handleChange(index, e)} className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1" /></div>
-                  <div>
-                    <label className="text-xs text-slate-500">Priority</label>
-                    <select name="priority" value={task.priority} onChange={(e) => handleChange(index, e)} className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1">
-                      <option>Low</option><option>Medium</option><option>High</option>
-                    </select>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    value={task.title}
+                    onChange={(e) => handleChange(index, e)}
+                    placeholder="Task Title"
+                    className="w-full text-sm border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <textarea
+                    name="description"
+                    value={task.description}
+                    onChange={(e) => handleChange(index, e)}
+                    placeholder="Description (optional)"
+                    rows="2"
+                    className="w-full text-sm border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-200"
+                  ></textarea>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-500">Start Date</label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={task.startDate}
+                        onChange={(e) => handleChange(index, e)}
+                        className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">Due Date</label>
+                      <input
+                        type="date"
+                        name="dueDate"
+                        value={task.dueDate}
+                        onChange={(e) => handleChange(index, e)}
+                        className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">Priority</label>
+                      <select
+                        name="priority"
+                        value={task.priority}
+                        onChange={(e) => handleChange(index, e)}
+                        className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1"
+                      >
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
