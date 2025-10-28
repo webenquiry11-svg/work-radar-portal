@@ -81,7 +81,7 @@ class ManageEmployeeController {
         if (employee && employee.profilePicture) {
           // Extract public_id from the Cloudinary URL
           const urlParts = employee.profilePicture.split('/');
-          const publicIdWithExtension = urlParts.slice(urlParts.indexOf('Report-Management')).join('/');
+          const publicIdWithExtension = urlParts.slice(urlParts.indexOf('employee-profiles')).join('/');
           const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
           await cloudinary.uploader.destroy(publicId);
         }
