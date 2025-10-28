@@ -272,9 +272,10 @@ class ManageEmployeeController {
             _id: 1, name: 1, email: 1, role: 1, employeeId: 1, 
             profilePicture: 1, address: 1, gender: 1, country: 1, city: 1, qualification: 1, dashboardAccess: 1, department: 1, experience: 1, workType: 1, company: 1, joiningDate: 1, workLocation: 1, shift: 1, 
             canEditProfile: 1, canViewTeam: 1, canUpdateTask: 1, canApproveTask: 1, canAssignTask: 1, canDeleteTask: 1, canViewAnalytics: 1,
-            // Use the department from assignment if available, otherwise fall back to the one on the employee record
-            department: { $ifNull: [ '$assignmentInfo.department', '$department' ] },
-            teamLead: { $arrayElemAt: ['$teamLeadInfo', 0] }
+            assignmentInfo: 1, // Include the full assignmentInfo object
+            // Optionally, you can still have a top-level 'department' and 'teamLead' for convenience if needed elsewhere
+            department: { $ifNull: ['$assignmentInfo.department', '$department'] }, 
+            teamLead: { $arrayElemAt: ['$teamLeadInfo', 0] } // This will be the populated teamLead object
           }
         },
         // Stage 6: Sort by creation date
