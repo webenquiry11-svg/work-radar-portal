@@ -134,8 +134,6 @@ const employeeSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
 }, { timestamps: true });
 
 // Hash the password before saving the employee

@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { apiSlice } from '../services/apiSlice';
  
 // Attempt to load user from localStorage
 const storedAuthData = localStorage.getItem('user');
@@ -27,22 +26,6 @@ const authSlice = createSlice({
       localStorage.removeItem('user');
     }
   },
-  extraReducers: (builder) => {
-    builder.addMatcher(
-      authApi.endpoints.forgotPassword.matchFulfilled,
-      (state, { payload }) => {
-        // You can optionally handle state changes here upon success
-      }
-    )
-  }
-});
-
-export const authApi = apiSlice.injectEndpoints({
-  endpoints: (builder) => ({
-    forgotPassword: builder.mutation({
-      query: (credentials) => ({ url: 'auth/forgot-password', method: 'POST', body: credentials }),
-    }),
-  }),
 });
 export const { setCredentials, logOut } = authSlice.actions
 
@@ -50,4 +33,3 @@ export default authSlice.reducer;
 
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectCurrentToken = (state) => state.auth.token;
-export const { useForgotPasswordMutation } = authApi;
