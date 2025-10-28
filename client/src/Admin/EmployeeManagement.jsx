@@ -231,7 +231,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isDelet
 
 const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }) => {
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     role: '',
     employeeId: '',
@@ -258,7 +258,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
   React.useEffect(() => {
     if (isEditMode) {
       setFormData({
-        fullName: employeeToEdit.name || '',
+        name: employeeToEdit.name || '',
         email: employeeToEdit.email || '',
         role: employeeToEdit.role || '',
         employeeId: employeeToEdit.employeeId || '',
@@ -280,7 +280,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
       });
     } else {
       // Reset for "Add" mode
-      setFormData({ fullName: '', email: '', role: '', employeeId: '', password: '', profilePicture: null, address: '', gender: '', country: '', city: '', qualification: '', experience: '', workType: 'Full-time', company: '', joiningDate: '', workLocation: '', shift: 'Day', dashboardAccess: 'Employee Dashboard', department: '' });
+      setFormData({ name: '', email: '', role: '', employeeId: '', password: '', profilePicture: null, address: '', gender: '', country: '', city: '', qualification: '', experience: '', workType: 'Full-time', company: '', joiningDate: '', workLocation: '', shift: 'Day', dashboardAccess: 'Employee Dashboard', department: '' });
     }
   }, [employeeToEdit, isOpen]); // Rerun when the user to edit changes or modal opens
 
@@ -344,8 +344,8 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
         </div>
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4 overflow-y-auto text-slate-700 dark:text-slate-300" style={{maxHeight: 'calc(90vh - 140px)'}}>
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+            <div >
+              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label >
               <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
