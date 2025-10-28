@@ -9,6 +9,7 @@ import EmployeeDashboard from "./Employee/EmployeDashboard";
 import ManagerDashboard from "./Senior/ManagerDashboard"; 
 import { useCheckAdminSetupQuery } from "./services/EmployeApi";
 import AdminSetup from "./Form/AdminSetup";
+import ResetPassword from "./Form/ResetPassword";
 import InactivityDetector from "./app/InactivityDetector";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
       {/* CurrentUserProvider is now in main.jsx */}
       <Toaster position="top-right" />
       <Routes>
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to={
           user.dashboardAccess === 'Admin Dashboard' ? '/admin-dashboard' :
           user.dashboardAccess === 'Manager Dashboard' ? '/manager-dashboard' :
