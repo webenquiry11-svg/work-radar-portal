@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation as useDeleteReadNotificationsMutation2 } from '../services/EmployeApi';
 import toast from 'react-hot-toast'; 
 import PastReportsList from '../Employee/PastReports';
 import { useGetAllMyReportsQuery } from '../services/EmployeApi';
@@ -1608,7 +1608,7 @@ const ManagerDashboard = () => {
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const user = useSelector(selectCurrentUser);
+  const user = useSelector(selectCurrentUser); 
   const { data: allEmployees = [] } = useGetEmployeesQuery();
   const isHrHead = user?.department === 'Human Resource' && user?.role === 'HR Head';
   const hasTeam = useMemo(() => {
@@ -1620,7 +1620,7 @@ const ManagerDashboard = () => {
   }, [user, allEmployees]);
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
-  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+  const [deleteReadNotifications] = useDeleteReadNotificationsMutation2();
 
   useEffect(() => {
     const styleId = 'slider-thumb-styles';
