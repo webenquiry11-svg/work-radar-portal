@@ -457,7 +457,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
                 </select>
               </div>
             </div>
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
+            {formError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded-md mt-4">{formError}</p>}
           </div>
           <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3">
             <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">
@@ -597,6 +597,7 @@ export default function EmployeeManagement() {
         handleCloseModal();
         toast.success('Employee updated successfully!');
       } catch (err) {
+        console.error('Failed to update the employee: ', err); // Log error for debugging
         console.error('Failed to update the employee: ', err);
         toast.error(err.data?.message || 'Failed to update employee.');
       }

@@ -5,6 +5,7 @@ const { cloudinary } = require('../config/cloudinary.js');
 const Task = require('../models/task.js');
 const EmployeeOfMonth = require('../models/employeeOfMonth.js');
 const Announcement = require('../models/announcement.js');
+const bcrypt = require('bcryptjs');
 const ScoringSettings = require('../models/scoringSettings.js');
 
 class ManageEmployeeController {
@@ -93,6 +94,11 @@ class ManageEmployeeController {
 
     if (req.file) {
       updateData.profilePicture = req.file.path;
+    }
+
+    // If a new password is provided, hash it before updating.
+    if (req.body.password) {
+      updateData.password = await bcrypt.hash(req.body.password, 10);
     }
 
     try {
