@@ -1,6 +1,7 @@
 const Employee = require('../models/employee.js');
 const generateToken = require('../generateToken.js');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail.js');
 
 class AuthController {
   static login = async (req, res) => {
@@ -43,12 +44,18 @@ class AuthController {
       // Create a short-lived reset token
       const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-      // In a real app, you would email this link to the user
-      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
-      console.log('Password Reset Link:', resetUrl); // For now, we log it to the console
+      // Construct the reset URL pointing to your frontend application
+      const resetUrl = `${process.env.FRONTEND_URLS.split(',')[0]}/reset-password/${resetToken}`;
+      
+      const message = `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\nPlease click on the following link, or paste it into your browser to complete the process:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email and your password will remain unchanged.\nThis link is valid for 15 minutes.`;
 
-      // Here you would use a service like Nodemailer or SendGrid to send the email
-      // await sendEmail({ to: user.email, subject: 'Password Reset', text: `Reset your password here: ${resetUrl}` });
+      await sendEmail({
+        email: user.email,
+        subject: 'Your Work Radar Password Reset Token',
+        message,
+      });
+
+      console.log(`Password Reset Link Sent to: ${user.email}`);
 
       res.status(200).json({ message: 'If an account with that email exists, a reset link has been sent.' });
     } catch (error) {

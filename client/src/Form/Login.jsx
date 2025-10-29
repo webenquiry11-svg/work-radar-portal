@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 import { ArrowPathIcon, UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, ArrowRightOnRectangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -252,6 +253,11 @@ const Login = () => {
                 {!isLoading && <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:translate-x-1" />}
                 <span>{isLoading ? "Signing In..." : "Sign In"}</span>
               </button>
+            </div>
+            <div className="text-center">
+              <Link to="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                Forgot your password?
+              </Link>
             </div>
           </form>
           <div className="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
