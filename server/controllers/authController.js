@@ -1,6 +1,7 @@
 const Employee = require('../models/employee.js');
 const generateToken = require('../generateToken.js');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto'); // Import crypto module
 const sendEmail = require('./sendEmail.js');
 
 class AuthController {
@@ -41,10 +42,16 @@ class AuthController {
         return res.status(200).json({ message: 'If an account with that email exists, a reset link has been sent.' });
       }
 
-      // Create a short-lived reset token
-      const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+      // Generate a random reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+
+      // Hash the token and save it to the user document
+      user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.passwordResetExpires = Date.now() + 15 * 60 * 1000; // Token valid for 15 minutes
+      await user.save({ validateBeforeSave: false }); // Save without re-validating password
 
       // Construct the reset URL pointing to your frontend application
+      // Use the UNHASHED token for the URL
       const resetUrl = `${process.env.FRONTEND_URLS.split(',')[0]}/workradar/reset-password/${resetToken}`;
       
       const message = `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\nPlease click on the following link, or paste it into your browser to complete the process:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email and your password will remain unchanged.\nThis link is valid for 15 minutes.`;
@@ -78,12 +85,21 @@ class AuthController {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await Employee.findById(decoded.id);
+      // Hash the incoming token to compare with the stored hashed token
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+      const user = await Employee.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() }, // Check if token is not expired
+      });
+
       if (!user) {
         return res.status(400).json({ message: 'Invalid token or user does not exist.' });
       }
+
       user.password = password; // The 'save' pre-hook will hash it
+      user.passwordResetToken = undefined; // Invalidate the token
+      user.passwordResetExpires = undefined; // Clear expiration
       await user.save();
       res.status(200).json({ message: 'Password reset successfully.' });
     } catch (error) {
