@@ -45,7 +45,7 @@ class AuthController {
       const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
       // Construct the reset URL pointing to your frontend application
-      const resetUrl = `${process.env.FRONTEND_URLS.split(',')[0]}/reset-password/${resetToken}`;
+      const resetUrl = `${process.env.FRONTEND_URLS.split(',')[0]}/workradar/reset-password/${resetToken}`;
       
       const message = `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\nPlease click on the following link, or paste it into your browser to complete the process:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email and your password will remain unchanged.\nThis link is valid for 15 minutes.`;
 
