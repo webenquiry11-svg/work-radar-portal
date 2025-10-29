@@ -1588,6 +1588,7 @@ const ManagerDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
 
+
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
 
   useEffect(() => {
@@ -1696,11 +1697,15 @@ const ManagerDashboard = () => {
     if (user?.role === 'Admin' || user?.canViewTeam) {
       items.push({ id: 'view-team-tasks', icon: EyeIcon, label: 'View Team Tasks' });
     }
-    if (isHrHead) {
+    const isHr = isHrHead || user?.role === 'HR Executive';
+    if (isHr) {
       items.push({ id: 'holidays', icon: BuildingLibraryIcon, label: 'Holiday Management' });
     }
-    if (isHrHead) {
+    if (isHr) {
       items.push({ id: 'leave-management', icon: CalendarIcon, label: 'Leave Management' });
+    }
+    if (isHr) {
+      items.push({ id: 'all-attendance', icon: CalendarDaysIcon, label: 'All Attendance' });
     }
     return items;
   }, [user, isHrHead, hasTeam]);
