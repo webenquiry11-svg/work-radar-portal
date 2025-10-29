@@ -1,7 +1,7 @@
 const Employee = require('../models/employee.js');
 const generateToken = require('../generateToken.js');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail.js');
+const sendEmail = require('./sendEmail.js');
 
 class AuthController {
   static login = async (req, res) => {

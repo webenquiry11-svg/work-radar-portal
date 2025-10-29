@@ -7,7 +7,7 @@ const sendEmail = async (options) => {
     port: 587,
     auth: {
       user: 'webenquiry11@gmail.com',
-      pass:  'jagrnaovvpvyvdqa',
+      pass: 'jagrnaovvpvyvdqa',
     },
   });
 
