@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import Login from "./Form/Login";
 import { selectCurrentUser } from "./app/authSlice";
 import EmployeeDashboard from "./Employee/EmployeDashboard";
+import ForgotPassword from "./Form/ForgotPassword.jsx";
 import ResetPassword from "./Form/ResetPassword.jsx";
 import ManagerDashboard from "./Senior/ManagerDashboard"; 
 import { useCheckAdminSetupQuery } from "./services/EmployeApi";
