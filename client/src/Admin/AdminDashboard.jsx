@@ -942,10 +942,10 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
       onMouseEnter={() => isCollapsed && setIsHovering(true)}
       onMouseLeave={() => isCollapsed && setIsHovering(false)}
     >
-      <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-slate-800/95 dark:border-slate-700">
+      <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-black/95 dark:border-slate-700">
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
         {isExpanded && (
-          <span className="text-lg font-bold text-blue-800 truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
+          <span className="text-lg font-bold text-blue-800 dark:text-white truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
         )}
       </div>
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -956,7 +956,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
             className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-left relative ${!isExpanded && 'justify-center'} ${
               activeComponent === item.id
                 ? 'bg-indigo-600 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-700'
+                : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 dark:text-white dark:hover:bg-slate-700'
             }`}
           >
             <item.icon className="h-6 w-6 flex-shrink-0" />
@@ -970,7 +970,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
       <div className="p-4 mt-auto border-t border-gray-200 dark:border-slate-700">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-slate-700"
           title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           <ChevronDoubleLeftIcon className={`h-6 w-6 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
@@ -1058,23 +1058,23 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 md:relative z-30 h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700/50 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow dark:bg-slate-800/80">
+    <header className="fixed top-0 left-0 right-0 md:relative z-30 h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700/50 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow dark:bg-black/80">
       <div className="flex items-center gap-2">
-        <button onClick={onMenuClick} className="md:hidden text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700">
+        <button onClick={onMenuClick} className="md:hidden text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700">
           <Bars3Icon className="h-6 w-6" />
         </button>
-        <h1 className="text-lg sm:text-xl font-semibold text-indigo-900 drop-shadow dark:text-slate-200 truncate">{pageTitle}</h1>
+        <h1 className="text-lg sm:text-xl font-semibold text-indigo-900 drop-shadow dark:text-white truncate">{pageTitle}</h1>
       </div>
       <div className="flex items-center gap-4">
         <ThemeToggle />
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-        <button onClick={handleRefresh} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700" title="Refresh Data">
+        <button onClick={handleRefresh} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700" title="Refresh Data">
           <span className="sr-only">Refresh data</span>
           <ArrowPathIcon className="h-6 w-6" />
         </button>
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
         <div className="relative" ref={notificationRef}>
-          <button onClick={handleBellClick} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-slate-400 dark:hover:bg-slate-700 relative group">
+          <button onClick={handleBellClick} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700 relative group">
             <span className="sr-only">View notifications</span>
             <BellIcon className="h-6 w-6" />
             {unreadCount > 0 && (
@@ -1082,23 +1082,23 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
             )}
           </button>
           {isNotificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 z-60">
-            <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-black rounded-md shadow-lg border border-gray-200 dark:border-slate-700 z-60">
+            <div className="p-3 font-semibold text-sm border-b dark:border-slate-700 text-slate-800 dark:text-white">Notifications</div>
             <div className="max-h-80 overflow-y-auto">
               {notifications.length > 0 ? notifications.map(n => (
                 <div 
                   key={n._id} 
                   onClick={() => handleNotificationClick(n)}
-                  className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                  className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                 >
-                  <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
+                  <p className="text-slate-700 dark:text-white">{n.message}</p>
                   <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
               )) : (
-                <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
+                <p className="p-4 text-center text-sm text-gray-500 dark:text-white">No notifications</p>
               )}
             </div>
-            <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
+            <div className="p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black text-center">
               <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
             </div>
           </div>
@@ -1106,21 +1106,21 @@ const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
         </div>
         <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
         <div className="relative" ref={profileRef}>
-          <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+          <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
             <img
               src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
               alt="Admin"
               className="h-9 w-9 rounded-full object-cover"
             />
             <div className="text-left hidden sm:block">
-              <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Admin'}</div>
-              <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Administrator'}</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || 'Admin'}</div>
+              <div className="text-xs text-gray-500 dark:text-slate-300">{user?.role || 'Administrator'}</div>
             </div>
-            <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+            <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-white transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
           </button>
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
-              <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
+              <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800">
                 <UserCircleIcon className="h-5 w-5" />
                 My Profile
               </button>
