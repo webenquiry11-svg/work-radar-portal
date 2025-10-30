@@ -72,10 +72,10 @@ const Dashboard = ({ onNavigate }) => {
 
   // --- Redesigned Attractive Admin Dashboard ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:bg-black font-manrope relative overflow-hidden dark:text-white">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
-        <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
+      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white dark:text-black rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
+        <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 dark:bg-black/10 rounded-full blur-2xl"></div>
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-2xl"></div>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
@@ -96,32 +96,32 @@ const Dashboard = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-20 z-20 relative">
         <div
           onClick={() => onNavigate && onNavigate('employees')}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
+          className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{dashboardData.totalEmployees}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Total Employees</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-white">Total Employees</p>
         </div>
         <div
           onClick={() => onNavigate && onNavigate('view-tasks')}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
+          className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
           <p className="text-2xl font-bold text-purple-700">{dashboardData.totalTasks}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Total Tasks</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-white">Total Tasks</p>
         </div>
         <div
           onClick={() => onNavigate && onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
+          className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <ClockIcon className="h-10 w-10 text-amber-500 mb-2" />
           <p className="text-2xl font-bold text-amber-700">{dashboardData.tasksPendingVerification}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-white">Pending Approvals</p>
         </div>
         {announcement ? (
           <div
             onClick={() => onNavigate && onNavigate('announcements')}
-            className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
+            className="bg-indigo-600 text-white dark:text-black rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
           >
             <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
             <div className="relative z-10">
@@ -130,49 +130,45 @@ const Dashboard = ({ onNavigate }) => {
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
               <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
+              <p className="text-sm text-indigo-200 dark:text-indigo-300 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
+          <div className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
             <CheckBadgeIcon className="h-10 w-10 text-green-500 mb-2" />
             <p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.tasksCompletedThisMonth}</p>
-            <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed This Month</p>
+            <p className="text-sm font-semibold text-gray-500 dark:text-white">Completed This Month</p>
           </div>
         )}
       </div>
 
       {/* Charts Section */}
       <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10 px-4 mt-16 mb-16">
-        <div className="lg:col-span-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl border border-blue-100 dark:border-slate-700 shadow-2xl p-8 flex flex-col items-center justify-center hover:shadow-3xl transition-shadow duration-300 relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white/80 dark:bg-black/80 backdrop-blur-lg rounded-2xl border border-blue-100 dark:border-slate-700 shadow-2xl p-8 flex flex-col items-center justify-center hover:shadow-3xl transition-shadow duration-300 relative overflow-hidden dark:text-white">
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-blue-200 opacity-20 rounded-full blur-2xl"></div>
           <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4 tracking-tight z-10">Overall Task Status</h3>
           {dashboardData.totalTasks > 0 ? (
             <div className="relative w-full h-[500px]">
               <GooglePieChart data={dashboardData.taskChartData} title="" colors={TASK_COLORS} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <p className="text-5xl font-bold text-slate-800 dark:text-slate-200">{dashboardData.totalTasks}</p>
-                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Tasks</p>
+                <p className="text-5xl font-bold text-slate-800 dark:text-white">{dashboardData.totalTasks}</p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-white">Total Tasks</p>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">No task data available.</div>
+            <div className="flex items-center justify-center h-full text-slate-500 dark:text-white">No task data available.</div>
           )}
         </div>
 
         {dashboardData.topCandidate ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border border-slate-200 dark:border-slate-700">
             <TrophyIcon className="h-12 w-12 text-amber-400" />
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-2">Top Performer This Month</h3>
-            <img
-              src={dashboardData.topCandidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${dashboardData.topCandidate.employee.name}&background=random`}
-              alt={dashboardData.topCandidate.employee.name}
-              className="h-20 w-20 rounded-full object-cover border-4 border-amber-200 my-4"
-            />
-            <p className="font-bold text-slate-800 dark:text-slate-200">{dashboardData.topCandidate.employee.name}</p>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Earliness: <span className="font-bold text-lg text-green-600">{(dashboardData.topCandidate.averageEarliness / (1000 * 60 * 60)).toFixed(1)}h</span></p>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mt-2">Top Performer This Month</h3>
+            <img src={dashboardData.topCandidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${dashboardData.topCandidate.employee.name}&background=random`} alt={dashboardData.topCandidate.employee.name} className="h-20 w-20 rounded-full object-cover border-4 border-amber-200 my-4" />
+            <p className="font-bold text-slate-800 dark:text-white">{dashboardData.topCandidate.employee.name}</p>
+            <div className="flex items-center gap-4 mt-1 dark:text-white">
+              <p className="text-sm text-slate-500">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
+              <p className="text-sm text-slate-500">Avg. Earliness: <span className="font-bold text-lg text-green-600">{(dashboardData.topCandidate.averageEarliness / (1000 * 60 * 60)).toFixed(1)}h</span></p>
             </div>
 
             <div className="mt-3">
@@ -180,16 +176,16 @@ const Dashboard = ({ onNavigate }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center justify-center border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center justify-center border border-slate-200 dark:border-slate-700">
             <TrophyIcon className="h-12 w-12 text-slate-300" />
             <h3 className="text-lg font-bold text-slate-500 mt-2">Top Performer</h3>
-            <p className="text-sm text-slate-400 mt-2">No candidate data for this month yet.</p>
+            <p className="text-sm text-slate-400 dark:text-white mt-2">No candidate data for this month yet.</p>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="text-center py-10 mt-8 text-blue-300 dark:text-slate-600 text-xs">
+      <div className="text-center py-10 mt-8 text-blue-300 dark:text-white text-xs">
         &copy; {new Date().getFullYear()} Work Radar
       </div>
     </div>
