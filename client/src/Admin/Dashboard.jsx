@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery } from '../services/EmployeApi';
 import GooglePieChart from './GooglePieChart.jsx';
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
@@ -119,11 +119,28 @@ const Dashboard = ({ onNavigate }) => {
           <p className="text-2xl font-bold text-amber-700">{dashboardData.tasksPendingVerification}</p>
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
-          <CheckBadgeIcon className="h-10 w-10 text-green-500 mb-2" />
-          <p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.tasksCompletedThisMonth}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed This Month</p>
-        </div>
+        {dashboardData.announcement ? (
+          <div
+            onClick={() => onNavigate && onNavigate('announcements')}
+            className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
+          >
+            <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
+                <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
+              </div>
+              <p className="text-xl font-bold mt-2 break-words">{dashboardData.announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 break-words">{dashboardData.announcement.content}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
+            <CheckBadgeIcon className="h-10 w-10 text-green-500 mb-2" />
+            <p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.tasksCompletedThisMonth}</p>
+            <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed This Month</p>
+          </div>
+        )}
       </div>
 
       {/* Charts Section */}
