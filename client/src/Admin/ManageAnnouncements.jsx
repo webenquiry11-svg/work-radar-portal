@@ -101,10 +101,12 @@ const ManageAnnouncements = () => {
                     </div>
                   </div>
                   <p className="text-sm text-slate-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
-                  <div className="text-xs text-slate-400 mt-3 pt-2 border-t border-slate-200 flex justify-between">
-                    <span>Starts: {new Date(ann.startDate).toLocaleDateString()}</span>
-                    <span>Ends: {new Date(ann.endDate).toLocaleDateString()}</span>
-                  </div>
+                  {(ann.startDate && ann.endDate) && (
+                    <div className="text-xs text-slate-400 mt-3 pt-2 border-t border-slate-200 flex justify-between">
+                      <span>Starts: {new Date(ann.startDate).toLocaleDateString()}</span>
+                      <span>Ends: {new Date(ann.endDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
