@@ -19,6 +19,7 @@ import HolidayManagement from '../Admin/HolidayManagement.jsx';
 import LeaveManagement from '../Admin/LeaveManagement.jsx';
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
 import AttendanceCalendar from '../services/AttendanceCalendar.jsx';
+import AllEmployeeAttendance from '../Admin/AllEmployeeAttendance.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
 
@@ -1774,6 +1775,7 @@ const ManagerDashboard = () => {
         case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} {...activeView.props} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'holidays': return isHr ? <HolidayManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
         case 'leave-management': return isHr ? <LeaveManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        case 'all-attendance': return isHr ? <AllEmployeeAttendance /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
         default: return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
       }
     };
