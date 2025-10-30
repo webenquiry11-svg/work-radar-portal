@@ -820,7 +820,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
@@ -828,14 +828,14 @@ const Analytics = () => {
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative">
-            <select 
+            <select
               onChange={(e) => {
                 const manager = managers.find(m => m._id === e.target.value);
                 setSelectedManager(manager); 
                 setSelectedEmployee(null); // Reset employee when manager changes
                 setView('team_stats'); // Default to team view when manager changes
               }} 
-              className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
+              className="w-full sm:w-64 text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-white pr-8"
               value={selectedManager?._id || ''}
             >
               <option value="">-- Select a Manager --</option>
@@ -843,7 +843,7 @@ const Analytics = () => {
                 <option key={manager._id} value={manager._id}>{manager.name}</option>
               ))}
             </select>
-            <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+            <ChevronDownIcon className="h-5 w-5 text-slate-400 dark:text-slate-300 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
           </div>
           {selectedManager && (
             <div className="relative">
@@ -852,13 +852,13 @@ const Analytics = () => {
                   const employee = allEmployees.find(emp => emp._id === e.target.value);
                   setSelectedEmployee(employee);
                 }}
-                className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8"
+                className="w-full sm:w-64 text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-white pr-8"
                 value={selectedEmployee?._id || ''}
               >
                 <option value="">-- Select an Employee (Optional) --</option>
                 {allEmployees.filter(e => teamMemberIds.has(e._id) || e._id === selectedManager._id).map(emp => <option key={emp._id} value={emp._id}>{emp.name}</option>)}
               </select>
-              <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+              <ChevronDownIcon className="h-5 w-5 text-slate-400 dark:text-slate-300 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -866,13 +866,13 @@ const Analytics = () => {
               type="date" 
               value={dateRange.startDate}
               onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
-              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-white"
             />
             <input 
               type="date" 
               value={dateRange.endDate}
               onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
-              className="text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-white"
             />
           </div>
         </div>
@@ -881,25 +881,25 @@ const Analytics = () => {
       {selectedManager ? (
         <>
           <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-1 mb-8 w-fit mx-auto sm:mx-0">
-            <button onClick={() => setView('manager_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'manager_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Manager Stats</button>
-            <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
+            <button onClick={() => setView('manager_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'manager_stats' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}>Manager Stats</button>
+            <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}>Team Stats</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
-            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} />
-            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
-            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
+            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} /> {/* These StatCards are defined below */}
+            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} /> {/* These StatCards are defined below */}
+            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} /> {/* These StatCards are defined below */}
+            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} /> {/* These StatCards are defined below */}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Task Status Overview</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 dark:text-white">
+            <div className="lg:col-span-2 bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Task Status Overview</h3>
               {chartData.length > 0 ? (
                 <div className="w-full h-[400px]"><GooglePieChart data={chartData} title="Grade Distribution" colors={GRADE_COLORS} /></div>
               ) : <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this team.</div>}
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">How Grades Are Calculated</h3>
-              <ul className="space-y-3 text-sm text-slate-600">
+            <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">How Grades Are Calculated</h3>
+              <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Average:</strong><span>Calculated from the final progress percentage of all approved or rejected tasks.</span></li>
                 <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Total Tasks:</strong><span>Includes all tasks assigned to the selected view, regardless of status.</span></li>
                 <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">In Progress:</strong><span>Tasks currently being worked on by employees.</span></li>
@@ -907,7 +907,7 @@ const Analytics = () => {
             </div>
           </div>
         </>
-      ) : (
+      ) : ( 
         <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
           <p className="font-semibold">Please select a manager to view their analytics.</p>
         </div>
