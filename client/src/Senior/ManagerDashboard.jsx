@@ -1802,7 +1802,7 @@ const ManagerDashboard = () => {
         </header>
         <div 
         className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
-        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)} 
+        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
           onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
         >
           {/* Sidebar */}
