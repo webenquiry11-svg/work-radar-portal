@@ -661,13 +661,15 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
+    const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id) && task.progress < 100);
     let teamUpcomingDueDate = null;
     let teamUpcomingTaskTitle = '';
     const taskStats = { completed: 0, inProgress: 0, pending: 0, pendingVerification: 0 };
 
-    teamTasks.forEach(task => {
-      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= today) {
+    const allTeamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
+
+    allTeamTasks.forEach(task => {
+      if (task.progress < 100 && task.dueDate && new Date(task.dueDate) >= today) {
         const dueDate = new Date(task.dueDate);
         if (!teamUpcomingDueDate || dueDate < teamUpcomingDueDate) {
           teamUpcomingDueDate = dueDate;
@@ -680,7 +682,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
       else if (task.status === 'Pending') taskStats.pending++;
     });
 
-    const myTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
+    const myTasks = allTasks.filter(task => task.assignedTo?._id === user._id && task.progress < 100);
     let myUpcomingDueDate = null;
     let myUpcomingTaskTitle = '';
     myTasks.forEach(task => {
@@ -697,7 +699,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
 
     return {
       teamMemberCount: teamMemberIds.size,
-      totalTeamTasks: teamTasks.length,
+      totalTeamTasks: allTeamTasks.length,
       pendingApprovalsCount: pendingApprovals.length, 
       pendingApprovalTasks: pendingApprovals.slice(0, 5),
       teamUpcomingDueDate,
