@@ -1801,7 +1801,7 @@ const ManagerDashboard = () => {
           <BellIcon className="h-6 w-6 text-gray-500 dark:text-slate-400" />
         </header>
         <div 
-        className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
+        className={`fixed top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
         onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
           onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
         >
