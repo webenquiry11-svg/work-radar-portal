@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import LeaveManagementModal from './LeaveManagementModal';
 
 const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => (
-  <div className="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
+  <div className="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 dark:from-slate-900 dark:to-black rounded-2xl shadow-xl border border-blue-100 dark:border-slate-800 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
     <div className="relative">
       <img
         src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
@@ -17,24 +17,24 @@ const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }
       />
       <span className="absolute bottom-0 right-0 bg-green-400 border-2 border-white h-4 w-4 rounded-full"></span>
     </div>
-    <h3 className="mt-4 text-lg font-bold text-blue-900 dark:text-slate-200">{user.name}</h3>
+    <h3 className="mt-4 text-lg font-bold text-blue-900 dark:text-white">{user.name}</h3>
     <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{user.role}</p>
-    <p className="text-xs text-gray-500 dark:text-slate-400">{user.department || 'N/A'}</p>
-    <p className="text-xs text-gray-400 dark:text-slate-500 truncate w-full text-center">{user.email}</p>
+    <p className="text-xs text-gray-500 dark:text-slate-300">{user.department || 'N/A'}</p>
+    <p className="text-xs text-gray-400 dark:text-slate-400 truncate w-full text-center">{user.email}</p>
     <div className="flex gap-2 mt-4">
-      <button onClick={() => onView(user)} className="p-2 rounded-full bg-blue-100 hover:bg-blue-200" title="View">
+      <button onClick={() => onView(user)} className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-slate-800 dark:hover:bg-slate-700" title="View">
         <EyeIcon className="h-5 w-5 text-blue-600" />
       </button>
-      <button onClick={() => onPermissions(user)} className="p-2 rounded-full bg-indigo-100 hover:bg-indigo-200" title="Permissions">
+      <button onClick={() => onPermissions(user)} className="p-2 rounded-full bg-indigo-100 hover:bg-indigo-200 dark:bg-slate-800 dark:hover:bg-slate-700" title="Permissions">
         <KeyIcon className="h-5 w-5 text-indigo-600" />
       </button>
-      <button onClick={() => onLeave(user)} className="p-2 rounded-full bg-green-100 hover:bg-green-200" title="Leave">
+      <button onClick={() => onLeave(user)} className="p-2 rounded-full bg-green-100 hover:bg-green-200 dark:bg-slate-800 dark:hover:bg-slate-700" title="Leave">
         <CalendarIcon className="h-5 w-5 text-green-600" />
       </button>
-      <button onClick={() => onEdit(user)} className="p-2 rounded-full bg-amber-100 hover:bg-amber-200" title="Edit">
+      <button onClick={() => onEdit(user)} className="p-2 rounded-full bg-amber-100 hover:bg-amber-200 dark:bg-slate-800 dark:hover:bg-slate-700" title="Edit">
         <PencilIcon className="h-5 w-5 text-amber-600" />
       </button>
-      <button onClick={() => onDelete(user)} className="p-2 rounded-full bg-red-100 hover:bg-red-200" title="Delete">
+      <button onClick={() => onDelete(user)} className="p-2 rounded-full bg-red-100 hover:bg-red-200 dark:bg-slate-800 dark:hover:bg-slate-700" title="Delete">
         <TrashIcon className="h-5 w-5 text-red-600" />
       </button>
     </div>
@@ -66,22 +66,22 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-black rounded-2xl shadow-xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Employee Details</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Employee Details</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
         <div className="p-6 overflow-y-auto">
-          <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b border-slate-200 dark:border-slate-700">
             <img
               src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
               alt={employee.name}
               className="h-28 w-28 rounded-full object-cover border-4 border-blue-200 shadow-md"
             />
             <div>
-              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200">{employee.name}</h2>
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{employee.name}</h2>
               <p className="text-md text-blue-600 dark:text-blue-400 font-semibold">{employee.role}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">{employee.employeeId}</p>
             </div>
@@ -89,7 +89,7 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
           {eomHistory.length > 0 && (
             <div className="mb-6">
               <h4 className="text-md font-semibold text-slate-700 mb-3">Hall of Fame</h4>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 dark:text-white">
                 {eomHistory.map((win) => (
                   <div key={win._id} className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M8 1.75a.75.75 0 0 1 .692.462l1.41 3.393 3.663.293a.75.75 0 0 1 .428 1.317l-2.79 2.39.853 3.575a.75.75 0 0 1-1.12.814L8 11.97l-3.126 1.92a.75.75 0 0 1-1.12-.814l.852-3.574-2.79-2.39a.75.75 0 0 1 .427-1.318l3.663-.293L7.308 2.212A.75.75 0 0 1 8 1.75Z" clipRule="evenodd" /></svg>
@@ -99,7 +99,7 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 dark:text-white">
             <InfoField label="Email" value={employee.email} /> 
             <InfoField label="Department" value={employee.department} />
             <InfoField label="Reports To" value={employee.teamLead?.name} />
@@ -117,7 +117,7 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
             <InfoField label="Shift" value={employee.shift} />
           </div>
         </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-2xl flex justify-end">
+        <div className="p-4 bg-slate-50 dark:bg-black rounded-b-2xl flex justify-end">
           <button type="button" onClick={onClose} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
         </div>
       </div>
@@ -177,9 +177,9 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Manage Permissions for {employee.name}</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Manage Permissions for {employee.name}</h3>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto">
           <PermissionToggle label="Can Edit Own Profile" description="Allows the user to edit their personal information." enabled={permissions.canEditProfile} onToggle={() => handleToggle('canEditProfile')} />
@@ -190,7 +190,7 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
           <PermissionToggle label="Can Delete Tasks" description="Allows the user to delete tasks. Use with caution." enabled={permissions.canDeleteTask} onToggle={() => handleToggle('canDeleteTask')} />
           <PermissionToggle label="Can View Analytics" description="Allows the user to view the performance analytics page." enabled={permissions.canViewAnalytics} onToggle={() => handleToggle('canViewAnalytics')} />
         </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3">
+        <div className="p-4 bg-slate-50 dark:bg-black rounded-b-lg flex justify-end gap-3">
           <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
           <button type="button" onClick={handleSave} disabled={isSaving} className="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-blue-300">
             {isSaving && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
@@ -207,15 +207,15 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isDelet
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
+      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-sm">
         <div className="p-6 text-center">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{title}</h3>
           <div className="mx-auto bg-red-100 dark:bg-red-500/10 rounded-full h-12 w-12 flex items-center justify-center my-4">
             <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
+          <p className="text-sm text-slate-500 dark:text-white">{message}</p>
         </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-center gap-3">
+        <div className="p-4 bg-slate-50 dark:bg-black rounded-b-lg flex justify-center gap-3">
           <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">
             Cancel
           </button>
@@ -335,51 +335,51 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-3xl h-[90vh] flex flex-col">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{isEditMode ? 'Edit Employee' : 'Add New Employee'}</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{isEditMode ? 'Edit Employee' : 'Add New Employee'}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-4 overflow-y-auto text-slate-700 dark:text-slate-300" style={{maxHeight: 'calc(90vh - 140px)'}}>
+          <div className="p-6 space-y-4 overflow-y-auto text-slate-700 dark:text-white" style={{maxHeight: 'calc(90vh - 140px)'}}>
             <div >
-              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label >
-              <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+              <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label >
+              <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+              <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                <input type="text" name="role" id="role" value={formData.role} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="role" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
+                <input type="text" name="role" id="role" value={formData.role} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
-                <input type="text" name="employeeId" id="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Employee ID</label>
+                <input type="text" name="employeeId" id="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">Password {isEditMode && <span className="text-slate-400 font-normal">(Leave blank to keep unchanged)</span>}</label>
-              <input type="password" name="password" id="password" value={formData.password} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password {isEditMode && <span className="text-slate-400 font-normal">(Leave blank to keep unchanged)</span>}</label>
+              <input type="password" name="password" id="password" value={formData.password} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="profilePicture" className="block text-sm font-medium text-slate-700 mb-1">Profile Picture</label>
-                <input type="file" name="profilePicture" id="profilePicture" onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="profilePicture" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Profile Picture</label>
+                <input type="file" name="profilePicture" id="profilePicture" onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="address" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <label htmlFor="gender" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gender</label>
+                <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -387,65 +387,65 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
                 </select>
               </div>
               <div>
-                <label htmlFor="country" className="block text-sm font-medium text-slate-700 mb-1">Country</label>
-                <input type="text" name="country" id="country" value={formData.country} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="country" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Country</label>
+                <input type="text" name="country" id="country" value={formData.country} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="city" className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                <input type="text" name="city" id="city" value={formData.city} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="city" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label>
+                <input type="text" name="city" id="city" value={formData.city} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="qualification" className="block text-sm font-medium text-slate-700 mb-1">Qualification</label>
-                <input type="text" name="qualification" id="qualification" value={formData.qualification} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="qualification" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Qualification</label>
+                <input type="text" name="qualification" id="qualification" value={formData.qualification} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="experience" className="block text-sm font-medium text-slate-700 mb-1">Experience</label>
-                <input type="text" name="experience" id="experience" value={formData.experience} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="experience" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Experience</label>
+                <input type="text" name="experience" id="experience" value={formData.experience} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="workType" className="block text-sm font-medium text-slate-700 mb-1">Work-Type</label>
-                <select name="workType" id="workType" value={formData.workType} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <label htmlFor="workType" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Work-Type</label>
+                <select name="workType" id="workType" value={formData.workType} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
                   <option value="Internship">Internship</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="company" className="block text-sm font-medium text-slate-700 mb-1">Company</label>
-                <input type="text" name="company" id="company" value={formData.company} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="company" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Company</label>
+                <input type="text" name="company" id="company" value={formData.company} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="joiningDate" className="block text-sm font-medium text-slate-700 mb-1">Joining Date</label>
-                <input type="date" name="joiningDate" id="joiningDate" value={formData.joiningDate} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="joiningDate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Joining Date</label>
+                <input type="date" name="joiningDate" id="joiningDate" value={formData.joiningDate} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="workLocation" className="block text-sm font-medium text-slate-700 mb-1">Work Location</label>
-                <input type="text" name="workLocation" id="workLocation" value={formData.workLocation} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="workLocation" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Work Location</label>
+                <input type="text" name="workLocation" id="workLocation" value={formData.workLocation} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="shift" className="block text-sm font-medium text-slate-700 mb-1">Shift Information</label>
-                <select name="shift" id="shift" value={formData.shift} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <label htmlFor="shift" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Shift Information</label>
+                <select name="shift" id="shift" value={formData.shift} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
                   <option value="Day">Day</option>
                   <option value="Night">Night</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="dashboardAccess" className="block text-sm font-medium text-slate-700 mb-1">Dashboard Access</label>
-                <select name="dashboardAccess" id="dashboardAccess" value={formData.dashboardAccess} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <label htmlFor="dashboardAccess" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dashboard Access</label>
+                <select name="dashboardAccess" id="dashboardAccess" value={formData.dashboardAccess} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
                   <option value="Employee Dashboard">Employee Dashboard</option>
                   <option value="Manager Dashboard">Manager Dashboard</option>
                   <option value="Admin Dashboard">Admin Dashboard</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                <select name="department" id="department" value={formData.department} onChange={handleChange} className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select name="department" id="department" value={formData.department} onChange={handleChange} className="w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
                   <option value="">Select Department</option>
                   <option value="Corporate management">Corporate management</option>
                   <option value="Human Resource">Human Resource</option>
@@ -459,7 +459,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
             </div>
             {formError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded-md mt-4">{formError}</p>}
           </div>
-          <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3">
+          <div className="p-6 bg-slate-50 dark:bg-black rounded-b-lg flex justify-end gap-3">
             <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">
               Cancel
             </button>
@@ -650,12 +650,12 @@ export default function EmployeeManagement() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-blue-100 dark:border-slate-700 shadow-xl h-full flex flex-col p-8">
+    <div className="p-4 sm:p-6 lg:p-8 h-full bg-slate-50/50 dark:bg-black/50">
+      <div className="bg-white dark:bg-black rounded-2xl border border-blue-100 dark:border-slate-700 shadow-xl h-full flex flex-col p-8">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
           <div>
-            <h2 className="text-3xl font-extrabold text-blue-900 dark:text-slate-200 tracking-tight mb-1">Employee Management</h2>
-            <p className="text-blue-500 dark:text-slate-400 text-sm">Browse, search, and manage your team in a visually engaging way.</p>
+            <h2 className="text-3xl font-extrabold text-blue-900 dark:text-white tracking-tight mb-1">Employee Management</h2>
+            <p className="text-blue-500 dark:text-white text-sm">Browse, search, and manage your team in a visually engaging way.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -665,7 +665,7 @@ export default function EmployeeManagement() {
                 placeholder="Search employees..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full sm:w-64 text-sm border border-blue-200 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-blue-50 dark:bg-slate-700 dark:text-white"
+                className="pl-10 pr-4 py-2 w-full sm:w-64 text-sm border border-blue-200 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-blue-50 dark:bg-slate-900 dark:text-white"
               />
             </div>
             <button 

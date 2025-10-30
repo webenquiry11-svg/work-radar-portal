@@ -50,14 +50,14 @@ const ManageAnnouncements = () => {
               placeholder="Announcement Title"
               value={newAnnouncement.title}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2"
+              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg p-2"
             />
             <textarea
               placeholder="Announcement Content..."
               rows="5"
               value={newAnnouncement.content}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2"
+              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg p-2"
             />
             <button type="submit" disabled={isCreating} className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm disabled:bg-blue-400">
               {isCreating ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <PlusIcon className="h-5 w-5 mr-2" />}
@@ -81,7 +81,7 @@ const ManageAnnouncements = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {ann.isActive && (
-                        <span className="text-xs font-bold text-green-700 bg-green-200 px-2 py-1 rounded-full">Active</span>
+                        <span className="text-xs font-bold text-green-700 bg-green-200 dark:bg-green-900/50 dark:text-green-300 px-2 py-1 rounded-full">Active</span>
                       )}
                       <button onClick={() => handleDelete(ann._id)} disabled={isDeleting} className="p-1.5 text-red-500 hover:bg-red-100 rounded-full">
                         <TrashIcon className="h-4 w-4" />

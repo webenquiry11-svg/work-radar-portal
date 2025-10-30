@@ -172,7 +172,7 @@ const Dashboard = ({ onNavigate }) => {
             </div>
 
             <div className="mt-3">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">{dashboardData.topCandidate.totalTasks} tasks this month</span>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">{dashboardData.topCandidate.totalTasks} tasks this month</span>
             </div>
           </div>
         ) : (

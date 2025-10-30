@@ -22,7 +22,7 @@ const EmployeeRow = ({ user, onLeave }) => (
     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
       <button
         onClick={() => onLeave(user)}
-        className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-2 px-4 rounded-lg transition-colors"
+        className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/50 dark:hover:bg-blue-900 dark:text-blue-300 font-semibold py-2 px-4 rounded-lg transition-colors"
       >
         <CalendarIcon className="h-4 w-4" />
         Manage Leave
@@ -91,7 +91,7 @@ const LeaveManagement = () => {
                 <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-black divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="bg-white dark:bg-black divide-y divide-slate-200 dark:divide-slate-700">
               {filteredUsers.map(user => (
                 <EmployeeRow key={user._id} user={user} onLeave={handleOpenLeaveModal} />
               ))}

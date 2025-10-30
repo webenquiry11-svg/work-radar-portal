@@ -227,7 +227,7 @@ const AssignTask = ({ teamLeadId }) => {
                   <img
                     src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
                     alt={employee.name}
-                    className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 mb-3"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 mb-3"
                   />
                   <div className="text-center">
                     <div className="font-bold text-slate-900 text-lg">{employee.name}</div>

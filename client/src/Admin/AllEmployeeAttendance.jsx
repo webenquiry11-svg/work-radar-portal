@@ -80,7 +80,7 @@ const AllEmployeeAttendance = () => {
               <AttendanceCalendar employeeId={selectedEmployee._id} />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-white bg-white dark:bg-black rounded-2xl border-2 border-dashed p-8">
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-white bg-white dark:bg-black rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-8">
               <UserGroupIcon className="h-16 w-16 text-slate-400 mb-4" />
               <p className="font-semibold">No Employees Found</p>
               <p className="text-sm">There are no employees to display.</p>
