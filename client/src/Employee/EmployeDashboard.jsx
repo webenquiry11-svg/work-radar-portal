@@ -585,13 +585,10 @@ const MyTasks = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // A task is overdue if its due date has passed AND it's still pending or in progress.
-    // Tasks 'Pending Verification' are NOT considered overdue.
-    const overdue = dateFilteredTasks.filter(t => 
-      ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today
-    );
+    // A task is overdue only if its due date has passed AND its progress is less than 100%.
+    const overdue = dateFilteredTasks.filter(t => t.progress < 100 && t.dueDate && new Date(t.dueDate) < today);
 
-    // Active tasks are those not yet graded and not overdue.
+    // Active tasks are those not yet graded (Completed/Not Completed) and not in the overdue list.
     const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && !overdue.some(ot => ot._id === t._id));
     const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
 

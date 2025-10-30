@@ -54,18 +54,20 @@ const TaskOverview = () => {
       { name: 'Not Completed', value: statusCounts['Not Completed'] },
     ];
 
-    const activeTasks = allTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status));
-
     return {
       chartData,
-      highPriorityTasks: activeTasks.filter(
+      highPriorityTasks: allTasks.filter(
         (t) =>
+          !['Completed', 'Not Completed'].includes(t.status) &&
           t.priority === 'High' &&
           t.dueDate &&
           new Date(t.dueDate) >= firstDayOfWeek && new Date(t.dueDate) <= endOfWeek,
       ),
       overdueTasks: activeTasks.filter(
         t => t.dueDate && new Date(t.dueDate) < todayStart && new Date(t.dueDate) >= firstDayOfWeek
+      ),
+      overdueTasks: allTasks.filter(
+        t => ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < todayStart
       ),
       totalTasks: allTasks.length,
     };
