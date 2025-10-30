@@ -1800,7 +1800,7 @@ const ManagerDashboard = () => {
         </header>
         <div 
         className={`fixed md:relative top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarExpanded ? 'w-64' : 'w-24'}`}
-        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)}
+        onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovering(true)} 
           onMouseLeave={() => isSidebarCollapsed && setIsSidebarHovering(false)}
         >
           {/* Sidebar */}
@@ -1838,7 +1838,7 @@ const ManagerDashboard = () => {
         </div>
         {/* Overlay for mobile sidebar */}
         {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <div className={`flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-24'}`}>
           <header className="hidden md:flex h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 items-center justify-between px-6 shadow-sm z-30 relative">
             <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-slate-200 truncate">{navItems.find(i => i.id === activeView.component)?.label}</h1>
             <div className="flex items-center gap-4">
