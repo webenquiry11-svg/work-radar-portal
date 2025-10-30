@@ -328,12 +328,12 @@ const TeamReports = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full">
+    <div className="p-4 sm:p-6 lg:p-8 h-full bg-slate-50/50 dark:bg-black/50">
       {!selectedEmployee ? (
         <>
-          <div className="mb-8">
-            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1>
-            <p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p>
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Team Reports</h1>
+            <p className="text-slate-500 dark:text-white mt-2">Select an employee to view their submitted reports.</p>
           </div>
           <div className="mb-6">
             <input
@@ -341,11 +341,11 @@ const TeamReports = () => {
               placeholder="Search employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white"
+              className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-white"
             />
           </div>
           {isLoadingEmployees ? (
-            <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p>
+            <p className="p-4 text-slate-500 dark:text-white">Loading employees...</p>
           ) : isErrorEmployees ? (
             <p className="p-4 text-red-500">Failed to load employees.</p>
           ) : (
@@ -354,12 +354,12 @@ const TeamReports = () => {
                 <div
                   key={employee._id}
                   onClick={() => setSelectedEmployee(employee)}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                  className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
                 >
-                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
-                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
+                  <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
                   <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 font-mono">{employee.employeeId}</p>
                 </div>
               ))}
             </div>
@@ -369,12 +369,12 @@ const TeamReports = () => {
         <div>
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
-              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
-                <ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                <ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-white" />
               </button>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Reports for {selectedEmployee.name}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-300">Review all submitted reports for this employee.</p>
               </div>
             </div>
             <button
@@ -390,22 +390,21 @@ const TeamReports = () => {
           {isLoadingReports && <p>Loading reports...</p>}
           <div className="space-y-6">
             {reports?.length > 0 ? reports.map(report => (
-              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2">
+              <div key={report._id} className="bg-white dark:bg-black p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex flex-col sm:flex-row justify-between gap-2">
                   <span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    report.status === 'Submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
                   }`}>{report.status}</span>
                 </h3>
                 <div className="mb-4">{renderReportContent(report.content)}</div>
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 text-right">
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-right">
                   <button onClick={() => setDeletingReport(report)} className="inline-flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700"><TrashIcon className="h-4 w-4" /> Delete Report</button>
                 </div>
               </div>
             )) : (
-              <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>
+              <div className="text-center py-10 text-slate-400 dark:text-white">No reports found for this employee.</div>
             )}
-            {reports?.length === 0 && <p className="text-gray-500">No reports found for this employee.</p>}
           </div>
         </div>
       )}
