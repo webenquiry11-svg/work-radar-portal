@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import GooglePieChart from './GooglePieChart.jsx';
@@ -16,6 +16,38 @@ const formatDueDate = (dateString) => {
     return 'Today';
   }
   return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const Countdown = ({ toDate }) => {
+  const calculateTimeLeft = () => {
+    const difference = +new Date(toDate) - +new Date();
+    let timeLeft = {};
+
+    if (difference > 0) {
+      timeLeft = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      };
+    }
+    return timeLeft;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTimeLeft(calculateTimeLeft()), 1000 * 60); // Update every minute
+    return () => clearTimeout(timer);
+  });
+
+  if (!timeLeft.days && !timeLeft.hours) return <span className="text-yellow-300">Expires soon</span>;
+
+  return (
+    <span className="text-yellow-300">
+      {timeLeft.days > 0 && `${timeLeft.days}d `}
+      {timeLeft.hours > 0 && `${timeLeft.hours}h `}
+      left
+    </span>
+  );
 };
 
 const Dashboard = ({ onNavigate }) => {
@@ -121,7 +153,7 @@ const Dashboard = ({ onNavigate }) => {
         {announcement ? (
           <div
             onClick={() => onNavigate && onNavigate('announcements')}
-            className="bg-indigo-600 text-white dark:text-black rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
+              className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
           >
             <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
             <div className="relative z-10">
@@ -130,7 +162,12 @@ const Dashboard = ({ onNavigate }) => {
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
               <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 dark:text-indigo-300 mt-1 break-words">{announcement.content}</p>
+                <p className="text-sm text-indigo-200 mt-1 break-words line-clamp-2">{announcement.content}</p>
+                {announcement.endDate && (
+                  <p className="text-xs font-semibold mt-3">
+                    <Countdown toDate={announcement.endDate} />
+                  </p>
+                )}
             </div>
           </div>
         ) : (
