@@ -198,7 +198,7 @@ const AssignTask = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 lg:p-12 h-full flex flex-col bg-gradient-to-br from-slate-50 to-white dark:bg-black">
+    <div className="p-4 sm:p-8 lg:p-12 h-full flex flex-col bg-gradient-to-br from-slate-50 to-white dark:bg-black dark:text-white">
       <div className="mb-8 text-center">
         <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-lg mb-4">
           <ClipboardDocumentListIcon className="h-8 w-8 text-white" />
