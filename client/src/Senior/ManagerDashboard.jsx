@@ -1613,6 +1613,7 @@ const ManagerDashboard = () => {
   const user = useSelector(selectCurrentUser); 
   const { data: allEmployees = [] } = useGetEmployeesQuery();
   const isHrHead = user?.department === 'Human Resource' && user?.role === 'HR Head';
+  const isHr = isHrHead || user?.role === 'HR Executive';
   const hasTeam = useMemo(() => {
     if (!user?.canViewTeam || !allEmployees.length) {
       return false;
@@ -1697,7 +1698,6 @@ const ManagerDashboard = () => {
     if (user?.role === 'Admin' || user?.canViewTeam) {
       items.push({ id: 'view-team-tasks', icon: EyeIcon, label: 'View Team Tasks' });
     }
-    const isHr = isHrHead || user?.role === 'HR Executive';
     if (isHr) {
       items.push({ id: 'holidays', icon: BuildingLibraryIcon, label: 'Holiday Management' });
     }
@@ -1707,7 +1707,7 @@ const ManagerDashboard = () => {
     if (isHr) {
       items.push({ id: 'all-attendance', icon: CalendarDaysIcon, label: 'All Attendance' });
     }
-    return items;
+    return items; 
   }, [user, isHrHead, hasTeam]);
 
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
@@ -1772,8 +1772,8 @@ const ManagerDashboard = () => {
         case 'task-approvals': return user?.canViewTeam ? <TaskApprovals /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'assign-task': return user?.canViewTeam ? <AssignTask teamLeadId={user._id} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
         case 'view-team-tasks': return user?.canViewTeam ? <ViewTeamTasks teamLeadId={user._id} {...activeView.props} /> : <Dashboard user={user} onNavigate={handleNavigation} />;
-        case 'holidays': return isHrHead ? <HolidayManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
-        case 'leave-management': return isHrHead ? <LeaveManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        case 'holidays': return isHr ? <HolidayManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        case 'leave-management': return isHr ? <LeaveManagement /> : <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
         default: return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
       }
     };
