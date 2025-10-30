@@ -6,24 +6,19 @@ class AnnouncementController {
       const userCompany = req.user.company;
 
       // Prioritize finding a company-specific announcement
+      // An announcement is active if the current date is between its start and end dates.
       let announcement = await Announcement.findOne({
-        isActive: true,
         company: userCompany,
-        $or: [
-          { expiresAt: null },
-          { expiresAt: { $gt: new Date() } }
-        ]
+        startDate: { $lte: new Date() },
+        endDate: { $gte: new Date() }
       }).sort({ createdAt: -1 }).populate('relatedEmployee', 'name profilePicture');
 
       // If no company-specific announcement is found, look for a global one
       if (!announcement) {
         announcement = await Announcement.findOne({
-          isActive: true,
           company: null, // Global announcement
-          $or: [
-            { expiresAt: null },
-            { expiresAt: { $gt: new Date() } }
-          ]
+          startDate: { $lte: new Date() },
+          endDate: { $gte: new Date() }
         }).sort({ createdAt: -1 }).populate('relatedEmployee', 'name profilePicture');
       }
 
@@ -49,16 +44,21 @@ class AnnouncementController {
     if (req.user.role !== 'Admin') {
       return res.status(403).json({ message: 'Not authorized.' });
     }
-    const { title, content } = req.body;
-    if (!title || !content) {
-      return res.status(400).json({ message: 'Title and content are required.' });
+    const { title, content, startDate, endDate } = req.body;
+    if (!title || !content || !startDate || !endDate) {
+      return res.status(400).json({ message: 'All fields are required.' });
     }
 
     try {
-      // Deactivate all other announcements
-      await Announcement.updateMany({}, { isActive: false });
-
-      const newAnnouncement = new Announcement({ title, content, createdBy: req.user._id, isActive: true });
+      // The 'expiresAt' field will be used by MongoDB's TTL index to auto-delete the document.
+      const newAnnouncement = new Announcement({ 
+        title, 
+        content, 
+        startDate, 
+        endDate,
+        expiresAt: endDate, // Set expiresAt to the end date for auto-deletion
+        createdBy: req.user._id 
+      });
       await newAnnouncement.save();
       res.status(201).json(newAnnouncement);
     } catch (error) {

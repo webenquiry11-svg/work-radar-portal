@@ -7,8 +7,8 @@ const ManageAnnouncements = () => {
   const { data: announcements = [], isLoading } = useGetAllAnnouncementsQuery();
   const [createAnnouncement, { isLoading: isCreating }] = useCreateAnnouncementMutation();
   const [deleteAnnouncement, { isLoading: isDeleting }] = useDeleteAnnouncementMutation();
-
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '' });
+  const today = new Date().toISOString().split('T')[0];
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', startDate: today, endDate: '' });
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -18,8 +18,8 @@ const ManageAnnouncements = () => {
     }
     try {
       await createAnnouncement(newAnnouncement).unwrap();
-      toast.success('New announcement is now active!');
-      setNewAnnouncement({ title: '', content: '' });
+      toast.success('New announcement has been scheduled!');
+      setNewAnnouncement({ title: '', content: '', startDate: today, endDate: '' });
     } catch (err) {
       toast.error('Failed to create announcement.');
     }
@@ -43,7 +43,7 @@ const ManageAnnouncements = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 space-y-4">
+          <form onSubmit={handleCreate} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-800">Create New Announcement</h3>
             <input
               type="text"
@@ -51,14 +51,26 @@ const ManageAnnouncements = () => {
               value={newAnnouncement.title}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
               className="w-full text-sm border-slate-300 rounded-lg p-2"
+              required
             />
             <textarea
               placeholder="Announcement Content..."
               rows="5"
               value={newAnnouncement.content}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-              className="w-full text-sm border-slate-300 rounded-lg p-2"
+              className="w-full text-sm border-slate-300 rounded-lg p-2" 
+              required
             />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-slate-500">Start Date</label>
+                <input type="date" value={newAnnouncement.startDate} min={today} onChange={e => setNewAnnouncement({...newAnnouncement, startDate: e.target.value})} className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1" required />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">End Date</label>
+                <input type="date" value={newAnnouncement.endDate} min={newAnnouncement.startDate || today} onChange={e => setNewAnnouncement({...newAnnouncement, endDate: e.target.value})} className="w-full text-sm border-slate-300 rounded-lg p-2 mt-1" required />
+              </div>
+            </div>
             <button type="submit" disabled={isCreating} className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm disabled:bg-blue-400">
               {isCreating ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <PlusIcon className="h-5 w-5 mr-2" />}
               {isCreating ? 'Publishing...' : 'Publish New Announcement'}
@@ -67,7 +79,7 @@ const ManageAnnouncements = () => {
         </div>
 
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Announcement History</h3>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
               {isLoading ? <p>Loading...</p> : announcements.map(ann => (
@@ -75,7 +87,7 @@ const ManageAnnouncements = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-slate-800">{ann.title}</h4>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 mt-1">
                         By {ann.createdBy?.name || 'Admin'} on {new Date(ann.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -89,6 +101,10 @@ const ManageAnnouncements = () => {
                     </div>
                   </div>
                   <p className="text-sm text-slate-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                  <div className="text-xs text-slate-400 mt-3 pt-2 border-t border-slate-200 flex justify-between">
+                    <span>Starts: {new Date(ann.startDate).toLocaleDateString()}</span>
+                    <span>Ends: {new Date(ann.endDate).toLocaleDateString()}</span>
+                  </div>
                 </div>
               ))}
             </div>
