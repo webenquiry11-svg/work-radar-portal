@@ -78,6 +78,11 @@ const ManageAnnouncements = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         By {ann.createdBy?.name || 'Admin'} on {new Date(ann.createdAt).toLocaleDateString()}
                       </p>
+                      {(ann.startDate || ann.endDate) && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                          Visible: {ann.startDate ? new Date(ann.startDate).toLocaleDateString() : '...'} - {ann.endDate ? new Date(ann.endDate).toLocaleDateString() : '...'}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {ann.isActive && (

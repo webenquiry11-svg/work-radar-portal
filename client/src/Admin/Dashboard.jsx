@@ -153,7 +153,7 @@ const Dashboard = ({ onNavigate }) => {
         {announcement ? (
           <div
             onClick={() => onNavigate && onNavigate('announcements')}
-              className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
+            className="bg-indigo-600 text-white dark:text-black rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
           >
             <MegaphoneIcon className="absolute -right-4 -bottom-4 h-28 w-28 text-white/10" />
             <div className="relative z-10">
