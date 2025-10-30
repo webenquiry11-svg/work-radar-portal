@@ -1203,7 +1203,7 @@ const MyTasks = () => {
     today.setHours(0, 0, 0, 0);
 
     const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && (!t.dueDate || new Date(t.dueDate) >= today));
-    const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
+    const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status) || (t.progress === 100 && t.status !== 'Pending Verification'));
     const overdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && t.dueDate && new Date(t.dueDate) < today);
 
     const stats = {
