@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import { MegaphoneIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
