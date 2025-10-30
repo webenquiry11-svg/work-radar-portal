@@ -21,10 +21,10 @@ const GooglePieChart = ({ data, title, colors, is3D = true, pieHole }) => {
         pieHole: pieHole,
         backgroundColor: 'transparent',
         legend: {
-          textStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' }
+          textStyle: { color: isDarkMode ? '#FFFFFF' : '#334155' }
         },
         chartArea: { left: 10, top: 20, width: '90%', height: '90%' },
-        titleTextStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' },
+        titleTextStyle: { color: isDarkMode ? '#FFFFFF' : '#334155' },
         colors: colors ? data.map(item => colors[item.name]) : undefined,
       };
 

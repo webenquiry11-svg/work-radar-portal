@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useGetAllTasksQuery, useGetEmployeesQuery, useUpdateTaskMutation, useDeleteTaskMutation, useAddTaskCommentMutation } from '../services/EmployeApi';
-import { useSelector } from 'react-redux'; 
+import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import toast from 'react-hot-toast';
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -107,8 +107,8 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   if (!isOpen || !task) return null;
 
   const InfoField = ({ label, value, icon: Icon }) => (
-    <div className="flex items-start gap-3">
-      <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
+    <div className="flex items-start gap-3 dark:text-white">
+      <Icon className="h-5 w-5 text-slate-400 dark:text-slate-300 mt-0.5" />
       <div>
         <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
         <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
@@ -129,7 +129,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-40 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col dark:text-white">
+      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Task Details</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
@@ -141,7 +141,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
             <div className="md:col-span-2 space-y-4">
               <h4 className="font-bold text-xl text-blue-700 dark:text-blue-400">
                 {task.title} 
-                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
+                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400 dark:text-slate-300">(Task {taskNumber})</span>}
               </h4>
               <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
@@ -328,7 +328,7 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
   if (!selectedEmployee) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
-        <div className="mb-8 text-center">
+        <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">View Employee Tasks</h1>
           <p className="text-slate-500 dark:text-white mt-2">Select an employee to view their assigned tasks.</p>
         </div>
