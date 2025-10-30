@@ -65,12 +65,13 @@ const AttendanceCalendar = ({ employeeId }) => {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <style>{`
-        .attendance-calendar .react-calendar {
+        .attendance-calendar .react-calendar { 
           width: 100%; border: none; border-radius: 1rem;
           box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-          padding: 1.5rem; background: white;
+          padding: 1.5rem; background: white; 
         }
-        .attendance-calendar .react-calendar__tile {
+        .dark .attendance-calendar .react-calendar { background: #1E293B; }
+        .attendance-calendar .react-calendar__tile { 
           border-radius: 0.5rem; position: relative; height: 80px;
         }
         .attendance-calendar .react-calendar__navigation button {

@@ -37,27 +37,27 @@ const ManageAnnouncements = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Manage Announcements</h1>
-        <p className="text-slate-500 mt-2">Create and manage company-wide announcements. The latest one created will be active.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Manage Announcements</h1>
+        <p className="text-slate-500 dark:text-white mt-2">Create and manage company-wide announcements. The latest one created will be active.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 space-y-4">
-            <h3 className="text-lg font-bold text-slate-800">Create New Announcement</h3>
+          <form onSubmit={handleCreate} className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 space-y-4">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Create New Announcement</h3>
             <input
               type="text"
               placeholder="Announcement Title"
               value={newAnnouncement.title}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-              className="w-full text-sm border-slate-300 rounded-lg p-2"
+              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2"
             />
             <textarea
               placeholder="Announcement Content..."
               rows="5"
               value={newAnnouncement.content}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-              className="w-full text-sm border-slate-300 rounded-lg p-2"
+              className="w-full text-sm border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-2"
             />
             <button type="submit" disabled={isCreating} className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm disabled:bg-blue-400">
               {isCreating ? <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" /> : <PlusIcon className="h-5 w-5 mr-2" />}
@@ -67,15 +67,15 @@ const ManageAnnouncements = () => {
         </div>
 
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Announcement History</h3>
+          <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Announcement History</h3>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
               {isLoading ? <p>Loading...</p> : announcements.map(ann => (
-                <div key={ann._id} className={`p-4 rounded-lg border ${ann.isActive ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
+                <div key={ann._id} className={`p-4 rounded-lg border ${ann.isActive ? 'bg-blue-50 dark:bg-blue-900/50 border-blue-300 dark:border-blue-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-slate-800">{ann.title}</h4>
-                      <p className="text-xs text-slate-500">
+                      <h4 className="font-bold text-slate-800 dark:text-white">{ann.title}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         By {ann.createdBy?.name || 'Admin'} on {new Date(ann.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -88,7 +88,7 @@ const ManageAnnouncements = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 whitespace-pre-wrap">{ann.content}</p>
                 </div>
               ))}
             </div>

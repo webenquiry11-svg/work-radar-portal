@@ -79,12 +79,12 @@ const TaskOverview = () => {
   };
 
   const TaskListItem = ({ task, isOverdue }) => (
-    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 transition-colors">
+    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
       <div className="flex items-center gap-3">
         <img src={task.assignedTo?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo?.name || '?'}`} alt={task.assignedTo?.name} className="h-8 w-8 rounded-full object-cover" />
         <div>
-          <p className="font-semibold text-sm text-slate-800">{task.title}</p>
-          <p className="text-xs text-slate-500">To: {task.assignedTo?.name || 'N/A'}</p>
+          <p className="font-semibold text-sm text-slate-800 dark:text-white">{task.title}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">To: {task.assignedTo?.name || 'N/A'}</p>
         </div>
       </div>
       {isOverdue && task.dueDate && (
@@ -101,13 +101,13 @@ const TaskOverview = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Tasks Overview</h1>
-        <p className="text-slate-500 mt-2">Monitor the status of all tasks across the organization.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Tasks Overview</h1>
+        <p className="text-slate-500 dark:text-white mt-2">Monitor the status of all tasks across the organization.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-4 sm:p-8 mb-8">
+      <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-4 sm:p-8 mb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="relative h-[400px]">
             <div className="w-full h-full">
@@ -115,59 +115,59 @@ const TaskOverview = () => {
             </div>
             {overviewData.totalTasks > 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <p className="text-5xl font-bold text-slate-800">{overviewData.totalTasks}</p>
-                <p className="text-sm font-semibold text-slate-500">Total Tasks</p>
+                <p className="text-5xl font-bold text-slate-800 dark:text-white">{overviewData.totalTasks}</p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-white">Total Tasks</p>
               </div>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-lg">
+            <div className="bg-yellow-50 dark:bg-slate-900 border-l-4 border-yellow-400 p-5 rounded-lg">
               <ClockIcon className="h-7 w-7 text-yellow-500 mb-2" />
-              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Pending')?.value || 0}</p>
-              <p className="text-sm font-semibold text-slate-600">Pending</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{overviewData.chartData.find(d => d.name === 'Pending')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-white">Pending</p>
             </div>
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-5 rounded-lg">
+            <div className="bg-blue-50 dark:bg-slate-900 border-l-4 border-blue-400 p-5 rounded-lg">
               <PlayIcon className="h-7 w-7 text-blue-500 mb-2" />
-              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'In Progress')?.value || 0}</p>
-              <p className="text-sm font-semibold text-slate-600">In Progress</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{overviewData.chartData.find(d => d.name === 'In Progress')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-white">In Progress</p>
             </div>
-            <div className="bg-purple-50 border-l-4 border-purple-400 p-5 rounded-lg">
+            <div className="bg-purple-50 dark:bg-slate-900 border-l-4 border-purple-400 p-5 rounded-lg">
               <ExclamationTriangleIcon className="h-7 w-7 text-purple-500 mb-2" />
-              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Verification')?.value || 0}</p>
-              <p className="text-sm font-semibold text-slate-600">Verification</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{overviewData.chartData.find(d => d.name === 'Verification')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-white">Verification</p>
             </div>
-            <div className="bg-emerald-50 border-l-4 border-emerald-400 p-5 rounded-lg">
+            <div className="bg-emerald-50 dark:bg-slate-900 border-l-4 border-emerald-400 p-5 rounded-lg">
               <CheckCircleIcon className="h-7 w-7 text-emerald-500 mb-2" />
-              <p className="text-3xl font-bold text-slate-800">{overviewData.chartData.find(d => d.name === 'Completed')?.value || 0}</p>
-              <p className="text-sm font-semibold text-slate-600">Completed</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{overviewData.chartData.find(d => d.name === 'Completed')?.value || 0}</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-white">Completed</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 flex flex-col">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">High-Priority Active Tasks</h3>
+        <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 flex flex-col">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">High-Priority Active Tasks</h3>
           <div className="flex-1 overflow-y-auto -mr-2 pr-2">
             {overviewData.highPriorityTasks.length > 0 ? (
               <ul className="space-y-2">
                 {overviewData.highPriorityTasks.map(task => <TaskListItem key={task._id} task={task} />)}
               </ul>
             ) : (
-              <p className="text-center text-sm text-slate-400 pt-10">No high-priority tasks are active.</p>
+              <p className="text-center text-sm text-slate-400 dark:text-white pt-10">No high-priority tasks are active.</p>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 flex flex-col">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Overdue Tasks</h3>
+        <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-6 flex flex-col">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Overdue Tasks</h3>
           <div className="flex-1 overflow-y-auto -mr-2 pr-2">
             {overviewData.overdueTasks.length > 0 ? (
               <ul className="space-y-2">
                 {overviewData.overdueTasks.map(task => <TaskListItem key={task._id} task={task} isOverdue={true} />)}
               </ul>
             ) : (
-              <p className="text-center text-sm text-slate-400 pt-10">No tasks are currently overdue.</p>
+              <p className="text-center text-sm text-slate-400 dark:text-white pt-10">No tasks are currently overdue.</p>
             )}
           </div>
         </div>
