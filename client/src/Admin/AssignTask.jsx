@@ -81,7 +81,7 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
                   <button
                     type="button"
                     onClick={() => removeTask(index)}
-                    className="absolute -top-2 -right-2 p-1.5 bg-white rounded-full text-slate-400 hover:text-red-600 hover:bg-red-100 border shadow-sm"
+                    className="absolute -top-2 -right-2 p-1.5 bg-white dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-100 border dark:border-slate-700 shadow-sm"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -145,12 +145,12 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
             <button
               type="button"
               onClick={addTask}
-              className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border-2 border-dashed border-blue-300 hover:border-blue-400 dark:border-slate-600 dark:hover:border-slate-500 rounded-lg py-2 transition-colors"
+              className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border-2 border-dashed border-blue-300 hover:border-blue-400 dark:border-slate-600 dark:hover:border-slate-500 rounded-lg py-2 transition-colors dark:text-blue-400"
             >
               <PlusIcon className="h-4 w-4" /> Add Another Task
             </button>
           </div>
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-black border-t border-slate-100 dark:border-slate-800 flex justify-end">
             <button
               type="submit"
               disabled={isAssigning}

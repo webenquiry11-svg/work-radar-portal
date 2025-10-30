@@ -72,7 +72,7 @@ const Dashboard = ({ onNavigate }) => {
 
   // --- Redesigned Attractive Admin Dashboard ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:bg-black font-manrope relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:bg-black font-manrope relative overflow-hidden dark:text-white">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white dark:text-black rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 dark:bg-black/10 rounded-full blur-2xl"></div>
@@ -130,7 +130,7 @@ const Dashboard = ({ onNavigate }) => {
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
               <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
-              <p className="text-sm text-indigo-200 dark:text-black mt-1 break-words">{announcement.content}</p>
+              <p className="text-sm text-indigo-200 dark:text-indigo-300 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
@@ -166,9 +166,9 @@ const Dashboard = ({ onNavigate }) => {
             <h3 className="text-lg font-bold text-slate-800 dark:text-white mt-2">Top Performer This Month</h3>
             <img src={dashboardData.topCandidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${dashboardData.topCandidate.employee.name}&background=random`} alt={dashboardData.topCandidate.employee.name} className="h-20 w-20 rounded-full object-cover border-4 border-amber-200 my-4" />
             <p className="font-bold text-slate-800 dark:text-white">{dashboardData.topCandidate.employee.name}</p>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm text-slate-500 dark:text-white">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
-              <p className="text-sm text-slate-500 dark:text-white">Avg. Earliness: <span className="font-bold text-lg text-green-600">{(dashboardData.topCandidate.averageEarliness / (1000 * 60 * 60)).toFixed(1)}h</span></p>
+            <div className="flex items-center gap-4 mt-1 dark:text-white">
+              <p className="text-sm text-slate-500">Avg. Completion: <span className="font-bold text-lg text-amber-600">{dashboardData.topCandidate.totalScore.toFixed(1)}%</span></p>
+              <p className="text-sm text-slate-500">Avg. Earliness: <span className="font-bold text-lg text-green-600">{(dashboardData.topCandidate.averageEarliness / (1000 * 60 * 60)).toFixed(1)}h</span></p>
             </div>
 
             <div className="mt-3">
