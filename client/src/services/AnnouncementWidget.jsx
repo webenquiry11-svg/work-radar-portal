@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import { MegaphoneIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 const AnnouncementWidget = () => {
   const { data: announcement, isLoading } = useGetActiveAnnouncementQuery();
-  const [isVisible, setIsVisible] = useState(false);
+  const storageKey = useMemo(() => announcement ? `announcementDismissed_${announcement._id}` : null, [announcement]);
 
-  useEffect(() => {
-    setIsVisible(!!announcement);
-  }, [announcement]);
+  const [isVisible, setIsVisible] = useState(true);
+  
+  React.useEffect(() => {
+    if (storageKey) {
+      setIsVisible(!localStorage.getItem(storageKey));
+    }
+  }, [storageKey]);
 
-  if (isLoading || !isVisible) {
+  const handleDismiss = () => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, 'true');
+    }
+    setIsVisible(false);
+  };
+
+  if (isLoading || !announcement || !isVisible) {
     return null;
   }
 
@@ -27,7 +38,7 @@ const AnnouncementWidget = () => {
           )}
           <p className="text-sm text-slate-700 dark:text-slate-300">{announcement.content}</p>
         </div>
-        <button onClick={() => setIsVisible(false)} className="p-1.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20">
+        <button onClick={handleDismiss} className="p-1.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20">
           <XMarkIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         </button>
       </div>

@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
-import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery } from '../services/EmployeApi';
+import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import GooglePieChart from './GooglePieChart.jsx';
-import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
 
 const formatDueDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -26,8 +25,9 @@ const Dashboard = ({ onNavigate }) => {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+  const { data: announcement, isLoading: isLoadingAnnouncement } = useGetActiveAnnouncementQuery();
 
-  const isLoading = isLoadingStats || isLoadingTasks || isLoadingEOM;
+  const isLoading = isLoadingStats || isLoadingTasks || isLoadingEOM || isLoadingAnnouncement;
 
   const dashboardData = useMemo(() => {
     if (isLoading) return null;
@@ -73,7 +73,6 @@ const Dashboard = ({ onNavigate }) => {
   // --- Redesigned Attractive Admin Dashboard ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-black font-manrope relative overflow-hidden">
-      <AnnouncementWidget />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white rounded-b-3xl shadow-xl mb-12 overflow-hidden p-8">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
@@ -119,7 +118,7 @@ const Dashboard = ({ onNavigate }) => {
           <p className="text-2xl font-bold text-amber-700">{dashboardData.tasksPendingVerification}</p>
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
         </div>
-        {dashboardData.announcement ? (
+        {announcement ? (
           <div
             onClick={() => onNavigate && onNavigate('announcements')}
             className="bg-indigo-600 text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer relative overflow-hidden"
@@ -130,8 +129,8 @@ const Dashboard = ({ onNavigate }) => {
                 <div className="animate-pulse-slow"><MegaphoneIcon className="h-6 w-6" /></div>
                 <p className="text-xs font-semibold uppercase tracking-wider">Announcement</p>
               </div>
-              <p className="text-xl font-bold mt-2 break-words">{dashboardData.announcement.title}</p>
-              <p className="text-sm text-indigo-200 mt-1 break-words">{dashboardData.announcement.content}</p>
+              <p className="text-xl font-bold mt-2 break-words">{announcement.title}</p>
+              <p className="text-sm text-indigo-200 mt-1 break-words">{announcement.content}</p>
             </div>
           </div>
         ) : (
