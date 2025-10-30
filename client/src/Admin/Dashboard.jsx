@@ -1,14 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  UsersIcon,
-  BuildingOfficeIcon,
-  BriefcaseIcon,
-  ClockIcon,
-  TrophyIcon,
-  CheckBadgeIcon,
-  CheckCircleIcon,
-  MegaphoneIcon,
-} from '@heroicons/react/24/outline';
+import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import GooglePieChart from './GooglePieChart.jsx';
 
@@ -105,7 +96,7 @@ const Dashboard = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-20 z-20 relative">
         <div
           onClick={() => onNavigate && onNavigate('employees')}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <UsersIcon className="h-10 w-10 text-blue-500 mb-2" />
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{dashboardData.totalEmployees}</p>
@@ -113,19 +104,19 @@ const Dashboard = ({ onNavigate }) => {
         </div>
         <div
           onClick={() => onNavigate && onNavigate('view-tasks')}
-          className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-indigo-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
-          <BriefcaseIcon className="h-10 w-10 text-indigo-500 mb-2" />
-          <p className="text-2xl font-bold text-indigo-700">{dashboardData.totalTasks}</p>
+          <BriefcaseIcon className="h-10 w-10 text-purple-500 mb-2" />
+          <p className="text-2xl font-bold text-purple-700">{dashboardData.totalTasks}</p>
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Total Tasks</p>
         </div>
         <div
           onClick={() => onNavigate && onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
-          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <ClockIcon className="h-10 w-10 text-amber-500 mb-2" />
           <p className="text-2xl font-bold text-amber-700">{dashboardData.tasksPendingVerification}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Verification</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Pending Approvals</p>
         </div>
         {announcement ? (
           <div
@@ -143,7 +134,7 @@ const Dashboard = ({ onNavigate }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-200 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Completed' } } })}>
             <CheckBadgeIcon className="h-10 w-10 text-green-500 mb-2" />
             <p className="text-2xl font-bold text-green-700 dark:text-green-400">{dashboardData.tasksCompletedThisMonth}</p>
             <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Completed This Month</p>
