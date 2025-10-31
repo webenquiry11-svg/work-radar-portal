@@ -108,6 +108,30 @@ class ReportController {
         { new: true, upsert: true, runValidators: true }
       );
 
+      // If the report was successfully submitted, notify the team lead and all admins.
+      if (status === 'Submitted') {
+        const submittingEmployee = await Employee.findById(employeeId).populate('teamLead');
+        if (submittingEmployee) {
+          const notifications = [];
+          const message = `${submittingEmployee.name} has submitted their daily progress report.`;
+
+          // 1. Notify the direct team lead (if they exist)
+          if (submittingEmployee.teamLead) {
+            notifications.push({
+              recipient: submittingEmployee.teamLead._id,
+              subjectEmployee: submittingEmployee._id,
+              message: message,
+              type: 'info',
+            });
+          }
+
+          // 2. Notify all Admins
+          const admins = await Employee.find({ role: 'Admin' }).select('_id');
+          admins.forEach(admin => notifications.push({ recipient: admin._id, subjectEmployee: submittingEmployee._id, message: message, type: 'info' }));
+          if (notifications.length > 0) await Notification.insertMany(notifications);
+        }
+      }
+
       res.status(200).json({ message: 'Report saved successfully!', report: updatedReport });
     } catch (error) {
       console.error("Error updating today's report:", error);
