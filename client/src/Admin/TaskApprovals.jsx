@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useGetNotificationsQuery, useApproveTaskMutation, useRejectTaskMutation, useMarkNotificationsAsReadMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi.js';
+import React, { useState, useMemo } from 'react';
+import { useGetNotificationsQuery, useApproveTaskMutation, useRejectTaskMutation, useGetEmployeesQuery } from '../services/EmployeApi.js';
 import toast from 'react-hot-toast';
-import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon } from '@heroicons/react/24/solid';
+import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 
@@ -165,25 +165,49 @@ const TaskDetailsModal = ({ isOpen, onClose, task }) => {
 };
 
 const TaskApprovals = () => {
-  const { data: notifications = [], isLoading } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
+  const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
+  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [approveTask, { isLoading: isApproving }] = useApproveTaskMutation();
   const [rejectTask, { isLoading: isRejecting }] = useRejectTaskMutation();
-  const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
-  const [processPastDueTasks, { isLoading: isProcessing }] = useProcessPastDueTasksMutation();
   const currentUser = useSelector(selectCurrentUser);
   const [rejectingNotification, setRejectingNotification] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [approvingNotification, setApprovingNotification] = useState(null);
-
-  useEffect(() => {
-    // When the component mounts, trigger the backend to process past-due tasks.
-    // This moves tasks to 'Pending Verification' after their due date.
-    processPastDueTasks();
-  }, [processPastDueTasks]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const approvalRequests = useMemo(() => {
     return notifications.filter(n => n.type === 'task_approval' && n.relatedTask);
   }, [notifications]);
+
+  const teamMemberIds = useMemo(() => {
+    if (!allEmployees || !currentUser?._id) return new Set();
+    // If the user is an Admin, they should see approvals from everyone.
+    if (currentUser.role === 'Admin') {
+      // We can just get all employee IDs.
+      return new Set(allEmployees.map(e => e._id.toString()));
+    }
+    // Otherwise, for Managers, show only their direct team members.
+    const subordinates = allEmployees.filter(emp => emp.teamLead?._id === currentUser._id);
+    return new Set(subordinates.map(e => e._id.toString()));
+  }, [allEmployees, currentUser]);
+
+  const pendingApprovalsByEmployee = useMemo(() => {
+    return approvalRequests.reduce((acc, notification) => {
+      const employeeId = notification.subjectEmployee?._id;
+      if (employeeId && teamMemberIds.has(employeeId)) {
+        if (!acc[employeeId]) {
+          acc[employeeId] = {
+            employee: notification.subjectEmployee,
+            notifications: []
+          };
+        }
+        acc[employeeId].notifications.push(notification);
+      }
+      return acc;
+    }, {});
+  }, [approvalRequests, teamMemberIds]);
+
+  const employeesWithPendingApprovals = Object.values(pendingApprovalsByEmployee);
 
   const handleApprove = (notification) => {
     setApprovingNotification(notification);
@@ -215,57 +239,94 @@ const TaskApprovals = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingNotifications || isLoadingEmployees) {
     return <div className="p-8 text-center">Loading approval requests...</div>;
   }
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Task Completion Approvals</h1>
-        <p className="text-slate-500 mt-2">Review and approve or reject tasks marked as complete by your team.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {approvalRequests.length > 0 ? (
-          approvalRequests.map(notification => (
-            <div key={notification._id} className="bg-white rounded-xl border border-slate-200 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <img src={notification.subjectEmployee.profilePicture || `https://ui-avatars.com/api/?name=${notification.subjectEmployee.name}`} alt={notification.subjectEmployee.name} className="h-10 w-10 rounded-full object-cover" />
-                  <div>
-                    <p className="font-bold text-slate-800">{notification.subjectEmployee.name}</p>
-                    <p className="text-xs text-slate-500">Submitted for approval</p>
-                  </div>
+  // Main view showing team members with pending approvals
+  if (!selectedEmployee) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Task Completion Approvals</h1>
+          <p className="text-slate-500 dark:text-white mt-2">Select a team member to review their submitted tasks.</p>
+        </div>
+        {employeesWithPendingApprovals.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {employeesWithPendingApprovals.map(({ employee, notifications }) => (
+              <div
+                key={employee._id}
+                onClick={() => setSelectedEmployee({ employee, notifications })}
+                className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+              >
+                <div className="relative">
+                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
+                  <span className="absolute top-0 right-0 block h-6 w-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center ring-2 ring-white dark:ring-black">
+                    {notifications.length}
+                  </span>
                 </div>
-                <p className="text-lg font-semibold text-blue-700 my-2">"{notification.relatedTask.title}"</p>
-                <p className="text-xs text-slate-400">Submitted on: {new Date(notification.createdAt).toLocaleString()}</p>
-                <div className="mt-3">
-                  <p className="text-sm font-semibold text-slate-600">Submitted Progress:</p>
-                  <p className="text-2xl font-bold text-blue-600">{notification.relatedTask.progress}%</p>
-                </div>
+                <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
+                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">{employee.role}</p>
               </div>
-              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <button onClick={() => setViewingTask(notification.relatedTask)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
-                  <EyeIcon className="h-4 w-4" /> View Details
-                </button>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleReject(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
-                    <XMarkIcon className="h-4 w-4" /> Reject
-                  </button>
-                  <button onClick={() => handleApprove(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
-                    {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />} Approve
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
-          <div className="md:col-span-2 lg:col-span-3 text-center py-24 text-slate-500 bg-white rounded-xl border border-dashed">
-            <InboxIcon className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-            <h3 className="text-lg font-semibold">All Caught Up!</h3>
-            <p className="text-sm">There are no pending task approvals at this time.</p>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center py-24 text-slate-500 dark:text-white bg-white dark:bg-black rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 w-full">
+              <InboxIcon className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+              <h3 className="text-lg font-semibold">All Caught Up!</h3>
+              <p className="text-sm">There are no pending task approvals from your team at this time.</p>
+            </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Detailed view showing tasks for the selected employee
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
+      <div className="mb-8">
+        <button onClick={() => setSelectedEmployee(null)} className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white mb-4">
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Team View
+        </button>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Approvals for {selectedEmployee.employee.name}</h1>
+        <p className="text-slate-500 dark:text-white mt-2">Review and approve or reject tasks marked as complete.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {selectedEmployee.notifications.map(notification => (
+          <div key={notification._id} className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <img src={notification.subjectEmployee.profilePicture || `https://ui-avatars.com/api/?name=${notification.subjectEmployee.name}`} alt={notification.subjectEmployee.name} className="h-10 w-10 rounded-full object-cover" />
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-white">{notification.subjectEmployee.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Submitted for approval</p>
+                </div>
+              </div>
+              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400 my-2">"{notification.relatedTask.title}"</p>
+              <p className="text-xs text-slate-400">Submitted on: {new Date(notification.createdAt).toLocaleString()}</p>
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Submitted Progress:</p>
+                <p className="text-2xl font-bold text-blue-600">{notification.relatedTask.progress}%</p>
+              </div>
+            </div>
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <button onClick={() => setViewingTask(notification.relatedTask)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                <EyeIcon className="h-4 w-4" /> View Details
+              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleReject(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
+                  <XMarkIcon className="h-4 w-4" /> Reject
+                </button>
+                <button onClick={() => handleApprove(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
+                  {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />} Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
       <RejectModal
         isOpen={!!rejectingNotification}
