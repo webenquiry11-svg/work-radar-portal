@@ -12,7 +12,7 @@ class NotificationController {
       const query = req.user.role === 'Admin' ? {} : { recipient: req.user._id };
 
       const notifications = await Notification.find(query)
-        .populate('subjectEmployee', 'name')
+        .populate('subjectEmployee', 'name role profilePicture')
         .populate('recipient', 'name') // Also populate recipient to see who it's for
         .populate('relatedTask')
         .sort({ createdAt: -1 });
