@@ -1,6 +1,7 @@
 const Report = require('../models/report.js');
 const Task = require('../models/task.js');
 const Notification = require('../models/notification.js');
+const Employee = require('../models/employee.js');
 
 class ReportController {
   /**
@@ -73,12 +74,12 @@ class ReportController {
                     task.submittedForCompletionDate = today; // Set submission date
                     
                     // Find the employee's team lead to send the notification
-                    const employee = await Employee.findById(employeeId).populate('teamLead');
+                    const employee = await Employee.findById(task.assignedTo).populate('teamLead');
                     if (employee && employee.teamLead) {
                       await Notification.create({
                         recipient: employee.teamLead._id,
-                        subjectEmployee: employeeId,
-                        message: `${req.user.name} has marked the task "${task.title}" as 100% complete.`,
+                        subjectEmployee: employee._id,
+                        message: `${employee.name} has marked the task "${task.title}" as 100% complete.`,
                         type: 'task_approval',
                         relatedTask: task._id,
                       });

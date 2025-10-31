@@ -1,4 +1,5 @@
 const Announcement = require('../models/announcement.js');
+const Employee = require('../models/employee.js');
 
 class AnnouncementController {
   static getActiveAnnouncement = async (req, res) => {
@@ -49,17 +50,31 @@ class AnnouncementController {
     if (req.user.role !== 'Admin') {
       return res.status(403).json({ message: 'Not authorized.' });
     }
-    const { title, content } = req.body;
-    if (!title || !content) {
+    const { title, content, startDate, endDate } = req.body;
+    if (!title.trim() || !content.trim()) {
       return res.status(400).json({ message: 'Title and content are required.' });
     }
 
     try {
-      // Deactivate all other announcements
-      await Announcement.updateMany({}, { isActive: false });
-
-      const newAnnouncement = new Announcement({ title, content, createdBy: req.user._id, isActive: true });
+      const newAnnouncement = new Announcement({ 
+        title, 
+        content, 
+        createdBy: req.user._id, 
+        isActive: true,
+        startDate: startDate || null,
+        endDate: endDate || null,
+      });
       await newAnnouncement.save();
+
+      // Notify all employees about the new announcement
+      const allEmployees = await Employee.find({ _id: { $ne: req.user._id } }).select('_id');
+      const notifications = allEmployees.map(emp => ({
+        recipient: emp._id,
+        message: `A new announcement has been published: "${title}"`,
+        type: 'info',
+      }));
+      if (notifications.length > 0) await Notification.insertMany(notifications);
+
       res.status(201).json(newAnnouncement);
     } catch (error) {
       res.status(500).json({ message: 'Error creating announcement.' });
