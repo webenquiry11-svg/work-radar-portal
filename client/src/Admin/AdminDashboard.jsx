@@ -938,7 +938,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
 
   return (
     <div 
-      className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
+      className={`fixed md:sticky top-0 z-20 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
       onMouseEnter={() => isCollapsed && setIsHovering(true)}
       onMouseLeave={() => isCollapsed && setIsHovering(false)}
     >
