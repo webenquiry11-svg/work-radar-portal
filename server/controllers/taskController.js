@@ -129,6 +129,23 @@ class TaskController {
       task.status = status || task.status;
 
       const updatedTask = await task.save();
+
+      // If the status is 'Pending Verification', create a notification for the direct team lead
+      if (status === 'Pending Verification') {
+        const employee = await Employee.findById(task.assignedTo).populate('teamLead');
+        // Ensure notification goes to the direct team lead, not further up the chain.
+        const recipient = employee.teamLead;
+        if (recipient) {
+          await Notification.create({
+            recipient: recipient._id,
+            subjectEmployee: employee._id,
+            type: 'task_approval',
+            message: `${employee.name} has submitted a task for your approval: "${task.title}"`,
+            relatedTask: task._id,
+          });
+        }
+      }
+
       res.status(200).json({ message: 'Task updated successfully', task: updatedTask });
     } catch (error) {
       console.error('Error updating task:', error);
@@ -380,13 +397,17 @@ class TaskController {
         task.submittedForCompletionDate = new Date(); // Set submission date to now
         await task.save();
 
-        await Notification.create({
-          recipient: task.assignedBy._id,
-          subjectEmployee: task.assignedTo._id,
-          message: `The due date for the task "${task.title}" assigned to ${task.assignedTo.name} has passed. It is now ready for your review.`,
-          type: 'task_approval',
-          relatedTask: task._id,
-        });
+        // Find the employee's team lead to send the notification
+        const employee = await Employee.findById(task.assignedTo._id).populate('teamLead');
+        if (employee && employee.teamLead) {
+          await Notification.create({
+            recipient: employee.teamLead._id,
+            subjectEmployee: employee._id,
+            message: `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`,
+            type: 'task_approval',
+            relatedTask: task._id,
+          });
+        }
       }
       res.status(200).json({ message: `${pastDueTasks.length} past-due tasks processed.` });
     } catch (error) {

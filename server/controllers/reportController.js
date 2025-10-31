@@ -72,13 +72,17 @@ class ReportController {
                     task.status = 'Pending Verification';
                     task.submittedForCompletionDate = today; // Set submission date
                     
-                    await Notification.create({
-                      recipient: task.assignedBy,
-                      subjectEmployee: employeeId,
-                      message: `${req.user.name} has marked the task "${task.title}" as 100% complete.`,
-                      type: 'task_approval',
-                      relatedTask: task._id,
-                    });
+                    // Find the employee's team lead to send the notification
+                    const employee = await Employee.findById(employeeId).populate('teamLead');
+                    if (employee && employee.teamLead) {
+                      await Notification.create({
+                        recipient: employee.teamLead._id,
+                        subjectEmployee: employeeId,
+                        message: `${req.user.name} has marked the task "${task.title}" as 100% complete.`,
+                        type: 'task_approval',
+                        relatedTask: task._id,
+                      });
+                    }
                   }
                 } else if (completion > 0) {
                   task.status = 'In Progress';
