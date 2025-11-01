@@ -61,7 +61,7 @@ class ReportController {
                 const completion = parseInt(update.completion, 10);
                 task.progress = completion;
 
-                if (completion === 100 && task.status !== 'Pending Verification') {
+                if (completion === 100 && !['Pending Verification', 'Completed', 'Not Completed'].includes(task.status)) {
                   // Check if an approval notification already exists for this task
                   const existingNotification = await Notification.findOne({
                     relatedTask: task._id,

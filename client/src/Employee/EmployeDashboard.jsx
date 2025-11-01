@@ -675,7 +675,6 @@ const MyTasks = () => {
                 const now = new Date();
                 const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
                 const isOverdue = !['Completed', 'Not Completed', 'Pending Verification'].includes(task.status) && task.dueDate && new Date(task.dueDate) < todayUTCStart;
-
                 return (
                   <li key={task._id} className="bg-white rounded-xl shadow-md border border-slate-100 p-4 group flex flex-col sm:flex-row sm:items-center gap-y-2 gap-x-4">
                     <span className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${priorityStyles[task.priority]}`} title={`${task.priority} Priority`}></span>
