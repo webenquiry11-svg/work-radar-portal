@@ -301,7 +301,7 @@ export const employeApi = apiSlice.injectEndpoints({
         method: 'PUT',
         body: patch,
       }),
-      invalidatesTags: (result, error, { id }) => ['Task', { type: 'Employee', id: 'LIST' }, 'Notification'],
+      invalidatesTags: ['Task', 'Notification'],
     }),
 
     approveTask: builder.mutation({
@@ -336,7 +336,7 @@ export const employeApi = apiSlice.injectEndpoints({
         url: `/tasks/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Task'],
+      invalidatesTags: ['Task', 'Notification'],
     }),
     processPastDueTasks: builder.mutation({
       query: () => ({

@@ -297,7 +297,6 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
     try {
       await deleteTask(deletingTask._id).unwrap();
       toast.success('Task deleted successfully!');
-      refetch(); // Manually trigger a refetch of all tasks
       setDeletingTask(null);
     } catch (err) {
       toast.error(err.data?.message || 'Failed to delete task.');
