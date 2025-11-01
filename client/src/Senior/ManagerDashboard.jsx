@@ -4,7 +4,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectCurrentUser } from '../app/authSlice';
+import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
 import { apiSlice } from '../services/apiSlice'; 
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useGetTodaysReportQuery, useUpdateTodaysReportMutation, useUpdateEmployeeMutation, useGetManagerDashboardStatsQuery, useGetHolidaysQuery, useGetLeavesQuery, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetMyTasksQuery, useApproveTaskMutation, useRejectTaskMutation, useUpdateTaskMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useDeleteReadNotificationsMutation, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
@@ -1591,6 +1591,14 @@ const ManagerDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
 
+
+  const [processPastDueTasks] = useProcessPastDueTasksMutation();
+
+  useEffect(() => {
+    // When the manager's dashboard loads, trigger the backend to process any past-due tasks.
+    // This automatically moves tasks to 'Pending Verification' after their due date has passed.
+    processPastDueTasks();
+  }, [processPastDueTasks]);
 
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi';
 import { useLogoutMutation } from '../services/apiSlice';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
 import { apiSlice } from '../services/apiSlice';
@@ -1473,6 +1473,13 @@ const EmployeeDashboard = ({ employeeId }) => {
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const { data: allEmployees = [] } = useGetEmployeesQuery();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+  const [processPastDueTasks] = useProcessPastDueTasksMutation();
+
+  useEffect(() => {
+    // When the employee's dashboard loads, trigger the backend to process any past-due tasks.
+    // This automatically moves tasks to 'Pending Verification' after their due date has passed.
+    processPastDueTasks();
+  }, [processPastDueTasks]);
   const pageTitles = {
     dashboard: 'Dashboard',
     'my-report': "Today's Report",
