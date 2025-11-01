@@ -13,11 +13,14 @@ class ReportController {
     // In a real app, employeeId would come from auth middleware (e.g., req.user.id)
     const { employeeId } = req.params;
     
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Get the start of today in UTC
+    const now = new Date();
+    const startOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     try {
-      const report = await Report.findOne({ employee: employeeId, reportDate: today });
+      // Find a report for the employee where the reportDate is on or after the start of today UTC.
+      // This correctly finds the report for the current day regardless of timezones.
+      const report = await Report.findOne({ employee: employeeId, reportDate: { $gte: startOfTodayUTC } });
       res.status(200).json(report); // Will be null if not found, which is expected
     } catch (error) {
       console.error("Error fetching today's report:", error);
