@@ -658,8 +658,8 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
 
   // Stats & next due dates
   const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id) && task.progress < 100);
     let teamUpcomingDueDate = null;
@@ -669,7 +669,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
     const allTeamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
 
     allTeamTasks.forEach(task => {
-      if (task.progress < 100 && task.dueDate && new Date(task.dueDate) >= today) {
+      if (task.progress < 100 && task.dueDate && new Date(task.dueDate) >= todayUTCStart) {
         const dueDate = new Date(task.dueDate);
         if (!teamUpcomingDueDate || dueDate < teamUpcomingDueDate) {
           teamUpcomingDueDate = dueDate;
@@ -686,7 +686,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
     let myUpcomingDueDate = null;
     let myUpcomingTaskTitle = '';
     myTasks.forEach(task => {
-      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= today) {
+      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= todayUTCStart) {
         const dueDate = new Date(task.dueDate);
         if (!myUpcomingDueDate || dueDate < myUpcomingDueDate) {
           myUpcomingDueDate = dueDate;
