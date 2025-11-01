@@ -370,27 +370,19 @@ class TaskController {
         status: { $in: ['Pending', 'In Progress'] }
       }).populate('assignedTo', 'name');
 
-      // Find reports submitted today to avoid double-triggering verification
-      const reportsFromToday = await Report.find({
-        reportDate: today,
-        status: 'Submitted'
-      }).select('employee');
-      const employeesWhoReportedToday = new Set(reportsFromToday.map(r => r.employee.toString()));
-
       for (const task of pastDueTasks) {
         // Check if an approval notification already exists for this task
         const existingNotification = await Notification.findOne({
           relatedTask: task._id,
           type: 'task_approval'
         });
-
-        // If a notification already exists, or if the employee submitted a report today, skip.
-        if (existingNotification || employeesWhoReportedToday.has(task.assignedTo._id.toString())) {
+        
+        // If a notification for this task's approval already exists, skip to avoid duplicates.
+        if (existingNotification) {
           continue;
         }
 
-        // If we are here, it means no notification exists and the user hasn't reported today.
-        // Now, we can update the status and create the notification.
+        // If no approval notification exists, update the status and create one.
         task.status = 'Pending Verification';
         task.submittedForCompletionDate = new Date(); // Set submission date to now
         await task.save();
