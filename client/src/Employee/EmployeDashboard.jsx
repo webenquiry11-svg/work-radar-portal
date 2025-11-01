@@ -582,14 +582,14 @@ const MyTasks = () => {
       });
     }
 
-    // Use UTC dates for reliable, timezone-agnostic comparison
+    // Use UTC dates for reliable, timezone-agnostic comparison to prevent bugs
     const now = new Date();
     const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     // A task is overdue only if its due date has passed, its progress is less than 100%, AND it is still an active task.
     const overdue = dateFilteredTasks.filter(t => t.progress < 100 && ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < todayUTCStart);
 
-    // Active tasks are those not yet graded (Completed/Not Completed) and not in the overdue list.
+    // Active tasks are those not yet graded and not in the overdue list.
     const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && !overdue.some(ot => ot._id === t._id));
     const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
 
