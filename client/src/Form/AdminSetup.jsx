@@ -183,7 +183,7 @@ const AdminSetup = ({ onSetupComplete }) => {
           </div>
           <div className="z-10 text-center animate-slide-in-left">
             <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
-              <img src={portalLogo} alt="Logo" className="h-24 w-24" />
+              <img src={portalLogo} alt="Logo" className="h-28 w-28" />
             </div>
             <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
             <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Initial Portal Setup</p>
