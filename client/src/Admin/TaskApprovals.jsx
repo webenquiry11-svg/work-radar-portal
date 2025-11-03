@@ -191,21 +191,21 @@ const TaskApprovals = () => {
     return new Set(subordinates.map(e => e._id.toString()));
   }, [allEmployees, currentUser]);
 
-  const pendingApprovalsByEmployee = useMemo(() => {
-    return approvalRequests.reduce((acc, notification) => {
-      const employeeId = notification.subjectEmployee?._id;
-      if (employeeId && teamMemberIds.has(employeeId)) {
-        if (!acc[employeeId]) {
-          acc[employeeId] = {
-            employee: notification.subjectEmployee,
-            notifications: []
-          };
-        }
-        acc[employeeId].notifications.push(notification);
+const pendingApprovalsByEmployee = useMemo(() => {
+  return approvalRequests.reduce((acc, notification) => {
+    const employeeId = notification.subjectEmployee?._id;
+    if (employeeId) {
+      if (!acc[employeeId]) {
+        acc[employeeId] = {
+          employee: notification.subjectEmployee,
+          notifications: []
+        };
       }
-      return acc;
-    }, {});
-  }, [approvalRequests, teamMemberIds]);
+      acc[employeeId].notifications.push(notification);
+    }
+    return acc;
+  }, {});
+}, [approvalRequests]);
 
   const employeesWithPendingApprovals = Object.values(pendingApprovalsByEmployee);
 
