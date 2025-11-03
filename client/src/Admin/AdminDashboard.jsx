@@ -8,9 +8,9 @@ import EmployeeManagement from './EmployeeManagement';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials } from '../app/authSlice';
 import { useLogoutMutation } from '../services/apiSlice';
-import { apiSlice } from '../services/apiSlice';
+import { apiSlice } from '../services/apiSlice'; 
 import AssignEmployee from './AssignEmployee';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery, useProcessPastDueTasksMutation } from '../services/EmployeApi';
 import Dashboard from './Dashboard';
 import HolidayManagement from './HolidayManagement';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
@@ -1146,6 +1146,16 @@ export default function AdminPageLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
+  const [processPastDueTasks] = useProcessPastDueTasksMutation();
+
+  useEffect(() => {
+    // When the admin's dashboard loads, trigger the backend to process any past-due tasks.
+    // This automatically moves tasks to 'Pending Verification' after their due date has passed.
+    const processTasks = async () => {
+      await processPastDueTasks();
+    };
+    processTasks();
+  }, [processPastDueTasks]);
 
   const pageTitles = {
     dashboard: 'Dashboard',

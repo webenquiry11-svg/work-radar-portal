@@ -1607,6 +1607,12 @@ const ManagerDashboard = () => {
   }, [processPastDueTasks]);
 
   const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
+  const [activeView, setActiveView] = useState({ component: 'dashboard', props: {} });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovering, setIsSidebarHovering] = useState(false);
+
+
+  const [processPastDueTasks] = useProcessPastDueTasksMutation();
 
   useEffect(() => {
     const styleId = 'slider-thumb-styles';

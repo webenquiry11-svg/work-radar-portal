@@ -389,15 +389,26 @@ class TaskController {
 
         // Find the employee's team lead to send the notification
         const employee = await Employee.findById(task.assignedTo._id).populate('teamLead');
+        const notifications = [];
+        const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`;
+
+        // 1. Notify the direct team lead (if they exist)
         if (employee && employee.teamLead) {
-          await Notification.create({
+          notifications.push({
             recipient: employee.teamLead._id,
             subjectEmployee: employee._id,
-            message: `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`,
+            message: message,
             type: 'task_approval',
             relatedTask: task._id,
           });
         }
+
+        // 2. Notify all Admins
+        const admins = await Employee.find({ role: 'Admin' }).select('_id');
+        admins.forEach(admin => notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id }));
+
+        // Insert all notifications if any were created
+        if (notifications.length > 0) await Notification.insertMany(notifications);
       }
       res.status(200).json({ message: `${pastDueTasks.length} past-due tasks processed.` });
     } catch (error) {
