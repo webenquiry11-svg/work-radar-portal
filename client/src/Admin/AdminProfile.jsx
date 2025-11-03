@@ -46,6 +46,19 @@ const AdminProfile = ({ user }) => {
     qualification: user.qualification || '',
   });
 
+  // This effect ensures that if the user prop changes (e.g., after a Redux store update),
+  // the form data is reset to reflect the new user data.
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        profilePicture: null,
+        ...Object.fromEntries(['address', 'gender', 'country', 'city', 'qualification'].map(key => [key, user[key] || ''])),
+      });
+    }
+  }, [user]);
+
   const handleChange = (e) => {
     if (e.target.type === 'file') {
       setFormData({ ...formData, profilePicture: e.target.files[0] });

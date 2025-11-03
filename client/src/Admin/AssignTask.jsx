@@ -173,7 +173,9 @@ const AssignTask = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const managers = useMemo(() => {
-    return employees.filter(emp => emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard');
+    return employees.filter(emp => 
+      emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard'
+    );
   }, [employees]);
 
   const filteredEmployees = useMemo(() => {

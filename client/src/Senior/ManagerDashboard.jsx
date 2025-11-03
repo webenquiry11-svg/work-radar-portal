@@ -1470,10 +1470,11 @@ const MyDailyReport = ({ employeeId }) => {
 
   const handleSubmit = async () => {
     const taskUpdates = Object.entries(progress)
+      .filter(([taskId, completion]) => completion > 0) // Only submit tasks with progress
       .map(([taskId, completion]) => ({ taskId, completion }));
 
     if (taskUpdates.length === 0) {
-      toast('Submitting attendance for today.');
+      toast.error("No progress updates to submit.");
       return;
     }
 

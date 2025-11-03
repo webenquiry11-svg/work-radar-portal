@@ -346,6 +346,12 @@ export const employeApi = apiSlice.injectEndpoints({
       invalidatesTags: ['Task', 'Notification'],
     }),
 
+    getTasksForApproval: builder.query({
+      query: () => '/tasks/for-approval',
+      providesTags: ['Task'],
+      pollingInterval: 30000,
+    }),
+
     getEmployeeOfTheMonthCandidates: builder.query({
       query: ({ month, year }) => `/employees/employee-of-the-month?month=${month}&year=${year}`,
       providesTags: (result, error, { month, year }) => [
@@ -452,6 +458,7 @@ export const {
   useUpdateTaskMutation,
   useApproveTaskMutation,
   useRejectTaskMutation,
+  useGetTasksForApprovalQuery,
   useAddTaskCommentMutation,
   useDeleteTaskMutation,
   useGetEmployeeOfTheMonthCandidatesQuery,

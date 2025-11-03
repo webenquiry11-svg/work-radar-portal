@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useGetNotificationsQuery, useApproveTaskMutation, useRejectTaskMutation, useGetEmployeesQuery } from '../services/EmployeApi.js';
+import { useGetTasksForApprovalQuery, useApproveTaskMutation, useRejectTaskMutation } from '../services/EmployeApi.js';
 import toast from 'react-hot-toast';
 import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
@@ -171,63 +171,31 @@ const TaskDetailsModal = ({ isOpen, onClose, task }) => {
 };
 
 const TaskApprovals = () => {
-  const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
-  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const { data: tasksForApproval = [], isLoading: isLoadingTasks } = useGetTasksForApprovalQuery(undefined, { pollingInterval: 30000 });
   const [approveTask, { isLoading: isApproving }] = useApproveTaskMutation();
   const [rejectTask, { isLoading: isRejecting }] = useRejectTaskMutation();
   const currentUser = useSelector(selectCurrentUser);
-  const [rejectingNotification, setRejectingNotification] = useState(null);
+  const [rejectingTask, setRejectingTask] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
-  const [approvingNotification, setApprovingNotification] = useState(null);
+  const [approvingTask, setApprovingTask] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  const approvalRequests = useMemo(() => {
-    // Admins see all, managers only see their team's requests
-    return notifications.filter(n => 
-      n.type === 'task_approval' && n.relatedTask && (currentUser.role === 'Admin' || teamMemberIds.has(n.subjectEmployee?._id))
-    );
-  }, [notifications]);
-
-  const teamMemberIds = useMemo(() => {
-    if (!allEmployees || !currentUser?._id) return new Set();
-    if (currentUser.role === 'Admin') {
-      return new Set(allEmployees.map(e => e._id.toString()));
-    }
-    
-    // For managers, find all direct and indirect subordinates
-    const subordinates = [];
-    const queue = allEmployees.filter(emp => emp.teamLead?._id === currentUser._id);
-    const visited = new Set(queue.map(e => e._id.toString()));
-
-    while (queue.length > 0) {
-      const currentEmployee = queue.shift();
-      subordinates.push(currentEmployee);
-      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
-      for (const report of directReports) {
-        if (!visited.has(report._id.toString())) {
-          visited.add(report._id.toString());
-          queue.push(report);
-        }
-      }
-    }
-    return new Set(subordinates.map(e => e._id.toString()));
-  }, [allEmployees, currentUser]);
-
 const pendingApprovalsByEmployee = useMemo(() => {
-  return approvalRequests.reduce((acc, notification) => {
-    const employeeId = notification.subjectEmployee?._id;
+  if (!tasksForApproval) return {};
+  return tasksForApproval.reduce((acc, task) => {
+    const employeeId = task.assignedTo?._id;
     if (employeeId) {
       if (!acc[employeeId]) {
         acc[employeeId] = {
-          employee: notification.subjectEmployee,
-          notifications: []
+          employee: task.assignedTo,
+          tasks: []
         };
       }
-      acc[employeeId].notifications.push(notification);
+      acc[employeeId].tasks.push(task);
     }
     return acc;
   }, {});
-}, [approvalRequests]);
+}, [tasksForApproval]);
 
   const employeesWithPendingApprovals = Object.values(pendingApprovalsByEmployee);
 
@@ -275,16 +243,16 @@ const pendingApprovalsByEmployee = useMemo(() => {
         </div>
         {employeesWithPendingApprovals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {employeesWithPendingApprovals.map(({ employee, notifications }) => (
+            {employeesWithPendingApprovals.map(({ employee, tasks }) => (
               <div
                 key={employee._id}
-                onClick={() => setSelectedEmployee({ employee, notifications })}
+                onClick={() => setSelectedEmployee({ employee, tasks })}
                 className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
               >
                 <div className="relative">
                   <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
                   <span className="absolute top-0 right-0 block h-6 w-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center ring-2 ring-white dark:ring-black">
-                    {notifications.length}
+                    {tasks.length}
                   </span>
                 </div>
                 <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
@@ -317,21 +285,21 @@ const pendingApprovalsByEmployee = useMemo(() => {
         <p className="text-slate-500 dark:text-white mt-2">Review and approve or reject tasks marked as complete.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {selectedEmployee.notifications.map(notification => (
-          <div key={notification._id} className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
+        {selectedEmployee.tasks.map(task => (
+          <div key={task._id} className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <img src={notification.subjectEmployee.profilePicture || `https://ui-avatars.com/api/?name=${notification.subjectEmployee.name}`} alt={notification.subjectEmployee.name} className="h-10 w-10 rounded-full object-cover" />
+                <img src={task.assignedTo.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo.name}`} alt={task.assignedTo.name} className="h-10 w-10 rounded-full object-cover" />
                 <div>
-                  <p className="font-bold text-slate-800 dark:text-white">{notification.subjectEmployee.name}</p>
+                  <p className="font-bold text-slate-800 dark:text-white">{task.assignedTo.name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Submitted for approval</p>
                 </div>
               </div>
-              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400 my-2">"{notification.relatedTask.title}"</p>
-              <p className="text-xs text-slate-400">Submitted on: {new Date(notification.createdAt).toLocaleString()}</p>
+              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400 my-2">"{task.title}"</p>
+              <p className="text-xs text-slate-400">Submitted on: {new Date(task.submittedForCompletionDate).toLocaleString()}</p>
               <div className="mt-3">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Submitted Progress:</p>
-                <p className="text-2xl font-bold text-blue-600">{notification.relatedTask.progress}%</p>
+                <p className="text-2xl font-bold text-blue-600">{task.progress}%</p>
               </div>
             </div>
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -339,10 +307,10 @@ const pendingApprovalsByEmployee = useMemo(() => {
                 <EyeIcon className="h-4 w-4" /> View Details
               </button>
               <div className="flex items-center gap-2">
-                <button onClick={() => handleReject(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
+                <button onClick={() => handleReject(task)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
                   <XMarkIcon className="h-4 w-4" /> Reject
                 </button>
-                <button onClick={() => handleApprove(notification)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
+                <button onClick={() => handleApprove(task)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
                   {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />} Approve
                 </button>
               </div>
@@ -351,17 +319,17 @@ const pendingApprovalsByEmployee = useMemo(() => {
         ))}
       </div>
       <RejectModal
-        isOpen={!!rejectingNotification}
-        onClose={() => setRejectingNotification(null)}
+        isOpen={!!rejectingTask}
+        onClose={() => setRejectingTask(null)}
         onConfirm={handleConfirmReject}
         isRejecting={isRejecting}
       />
       <ApproveModal
-        isOpen={!!approvingNotification}
-        onClose={() => setApprovingNotification(null)}
+        isOpen={!!approvingTask}
+        onClose={() => setApprovingTask(null)}
         onConfirm={handleConfirmApprove}
         isApproving={isApproving}
-        initialProgress={approvingNotification?.relatedTask?.progress}
+        initialProgress={approvingTask?.progress}
       />
       <TaskDetailsModal
         isOpen={!!viewingTask}

@@ -7,7 +7,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const LeaveManagementModal = ({ isOpen, onClose, employee }) => {
   const [date, setDate] = useState(new Date());
-  const { data: leaves = [], isLoading } = useGetLeavesQuery(employee?._id, { skip: !employee });
+  const { data: leaves = [], isLoading } = useGetLeavesQuery(employee?._id, { skip: !isOpen || !employee });
   const { data: holidays = [] } = useGetHolidaysQuery();
   const [addLeave] = useAddLeaveMutation();
   const [removeLeave] = useRemoveLeaveMutation();

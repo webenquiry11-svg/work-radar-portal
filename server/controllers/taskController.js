@@ -413,6 +413,52 @@ class TaskController {
       res.status(500).json({ message: 'Server error while processing past-due tasks.' });
     }
   };
+
+  /**
+   * @description Get all tasks with status 'Pending Verification' for the user's team or all if admin.
+   * @route GET /api/tasks/for-approval
+   * @access Admin, Manager
+   */
+  static getTasksForApproval = async (req, res) => {
+    try {
+      let tasksForApproval = [];
+      if (req.user.role === 'Admin') {
+        // Admins can see all tasks pending verification
+        tasksForApproval = await Task.find({ status: 'Pending Verification' })
+          .populate('assignedTo', 'name profilePicture employeeId')
+          .sort({ submittedForCompletionDate: 1 });
+      } else {
+        // Managers see tasks for their team members
+        const allEmployees = await Employee.find({}).populate('teamLead', '_id');
+        const managerId = req.user._id.toString();
+
+        // Find all direct and indirect subordinates
+        const teamMemberIds = new Set();
+        const queue = allEmployees.filter(emp => emp.teamLead?._id.toString() === managerId);
+        const visited = new Set(queue.map(e => e._id.toString()));
+        
+        while (queue.length > 0) {
+          const currentEmployee = queue.shift();
+          teamMemberIds.add(currentEmployee._id);
+          const directReports = allEmployees.filter(emp => emp.teamLead?._id.toString() === currentEmployee._id.toString());
+          for (const report of directReports) {
+            if (!visited.has(report._id.toString())) {
+              visited.add(report._id.toString());
+              queue.push(report);
+            }
+          }
+        }
+
+        tasksForApproval = await Task.find({ status: 'Pending Verification', assignedTo: { $in: Array.from(teamMemberIds) } })
+          .populate('assignedTo', 'name profilePicture employeeId')
+          .sort({ submittedForCompletionDate: 1 });
+      }
+      res.status(200).json(tasksForApproval);
+    } catch (error) {
+      console.error('Error fetching tasks for approval:', error);
+      res.status(500).json({ message: 'Server error while fetching tasks for approval.' });
+    }
+  };
 }
 
 module.exports = TaskController;

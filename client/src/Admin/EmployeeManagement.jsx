@@ -629,7 +629,7 @@ export default function EmployeeManagement() {
     try {
       await deleteEmployee(deletingUser._id).unwrap();
       setDeletingUser(null); // Close the modal
-      toast.success(`Employee "${deletingUser?.name}" deleted.`);
+      toast.success(`Employee "${deletingUser?.name || ''}" deleted.`);
     } catch (err) {
       console.error('Failed to delete the employee: ', err);
       toast.error(err.data?.message || 'Failed to delete employee.');

@@ -72,6 +72,7 @@ router.get('/attendance/:employeeId', protect, AttendanceController.getAttendanc
 router.post('/tasks', protect, TaskController.createTask);
 router.post('/tasks/multiple', protect, TaskController.createMultipleTasks);
 router.get('/tasks/my-tasks', protect, TaskController.getMyTasks);
+router.get('/tasks/for-approval', protect, TaskController.getTasksForApproval);
 router.get('/tasks/all', protect, TaskController.getAllTasks);
 router.put('/tasks/:id', protect, TaskController.updateTask);
 router.put('/tasks/:id/approve', protect, TaskController.approveTaskCompletion);
