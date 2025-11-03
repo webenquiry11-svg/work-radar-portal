@@ -19,6 +19,7 @@ const upload = multer({ storage });
 const router = express.Router();
 router.get('/setup/check', SetupController.checkSetup);
 router.post('/setup/create-admin', upload.single('profilePicture'), SetupController.createAdmin);
+router.get('/setup/company-info', SetupController.getCompanyInfo);
 
 // Public route
 router.post('/login', AuthController.login);

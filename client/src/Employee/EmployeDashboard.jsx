@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
-import { useLogoutMutation } from '../services/apiSlice';
-import volgaInfosysLogo from '../assets/volgainfosys.png';
+import { useLogoutMutation } from '../services/apiSlice'; 
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -14,6 +13,7 @@ import TaskApprovals from '../Admin/TaskApprovals.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
 import AssignTask from './AssignTask.jsx'; 
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
+import volgaInfosysLogo from '../assets/volgainfosys.png';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
@@ -89,7 +89,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                   type="text"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment..."
+                  placeholder="Add a comment..." 
                   className="w-full text-xs border-slate-300 dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-700 dark:text-white"
                 />
                 <button onClick={handleAddComment} disabled={isAddingComment} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300">
@@ -588,11 +588,10 @@ const MyTasks = () => {
 
     // A task is overdue only if its due date has passed, its progress is less than 100%, AND it is still an active task.
     const overdue = dateFilteredTasks.filter(t => t.progress < 100 && ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < todayUTCStart);
-
     // Active tasks are those not yet graded and not in the overdue list.
-    const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed'].includes(t.status) && !overdue.some(ot => ot._id === t._id));
+    const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status) && !overdue.some(ot => ot._id === t._id));
     const completed = dateFilteredTasks.filter(t => ['Completed', 'Not Completed'].includes(t.status));
-
+    
     const stats = {
       active: activeAndNotOverdue.length,
       overdue: overdue.length,
@@ -603,7 +602,7 @@ const MyTasks = () => {
     if (activeTab === 'Active') {
       tasks = activeAndNotOverdue;
     } else if (activeTab === 'Completed') {
-      tasks = completed;
+      tasks = completed; 
     } else { // 'All' tab
       tasks = dateFilteredTasks;
     }
@@ -1060,14 +1059,7 @@ const MyDailyReport = ({ employeeId }) => {
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
   const [progress, setProgress] = useState({});
 
-  const isReadOnly = useMemo(() => {
-    const now = new Date();
-    // Check if it's past 7 PM (19:00)
-    const isPastCutoff = now.getHours() >= 19;
-    // Check if a report has already been submitted today
-    const isSubmitted = todaysReport?.status === 'Submitted';
-    return isPastCutoff || isSubmitted;
-  }, [todaysReport]);
+  const isReadOnly = useMemo(() => todaysReport?.status === 'Submitted', [todaysReport]);
 
   const isTaskReadOnly = (task) => {
     // A task is read-only if the main report is read-only, or if the task itself was rejected.
@@ -1100,12 +1092,11 @@ const MyDailyReport = ({ employeeId }) => {
 
   const handleSubmit = async () => {
     const taskUpdates = Object.entries(progress)
-      .filter(([taskId, completion]) => completion > 0) // Only submit tasks with progress
       .map(([taskId, completion]) => ({ taskId, completion }));
 
     if (taskUpdates.length === 0) {
-      toast.error("No progress updates to submit.");
-      return;
+      // If there are no tasks to report on, still allow submitting an empty report for attendance.
+      toast('Submitting attendance for today.');
     }
 
     try {
@@ -1148,21 +1139,7 @@ const MyDailyReport = ({ employeeId }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {assignedTasks
-          .filter(t => { 
-            const now = new Date();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-            const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
-            const dueDate = t.dueDate ? new Date(t.dueDate) : null; // This is already in UTC from backend
-
-            const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
-            const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
-            // Compare dueDate (UTC) with the start of the user's local day
-            const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart; 
-
-            return isNotCompleted && hasStarted && isNotPastDue;
-          })
+          .filter(t => !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status))
           .map((task, index) => ( 
           <div key={task._id} className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700 flex flex-col">
             <div className="p-5 border-b border-slate-200 dark:border-slate-700"> 
@@ -1619,6 +1596,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       </style>
       <aside className={`fixed z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
+          <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarCollapsed ? 'h-12 w-12' : 'h-10 w-auto'}`} />
           {!isSidebarCollapsed && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}

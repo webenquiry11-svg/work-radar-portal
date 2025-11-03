@@ -19,7 +19,7 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
   return (
     !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6 border-b">
           <h3 className="text-lg font-semibold text-slate-800">Review and Reject Task</h3>
         </div>
@@ -27,7 +27,7 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Please provide a clear reason for rejecting this task completion..."
+            placeholder="Please provide a clear reason for the grade given..."
             className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
             rows="4"
           />
@@ -37,7 +37,7 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
               <input
                 type="range"
                 min="0"
-                max="90" // Cannot reject and give 100%
+                max="99" // Cannot reject and give 100%
                 step="10"
                 value={finalPercentage}
                 onChange={(e) => setFinalPercentage(parseInt(e.target.value, 10))}
@@ -49,9 +49,15 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
         </div>
         <div className="p-4 bg-slate-50 flex justify-end gap-3">
           <button onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
-          <button onClick={() => onConfirm(reason, finalPercentage)} disabled={!reason || isRejecting} className="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-red-300">
-            {isRejecting && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
-            Confirm Rejection
+          <button onClick={() => {
+            if (finalPercentage === 100) {
+              toast.error("Cannot reject with 100% progress. Please use the 'Approve' flow.");
+              return;
+            }
+            onConfirm(reason, finalPercentage);
+          }} disabled={!reason || isRejecting} className="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-red-300">
+            {isRejecting ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" /> : <XMarkIcon className="h-4 w-4 mr-2" />}
+            Submit Grade
           </button>
         </div>
       </div>
@@ -176,36 +182,52 @@ const TaskApprovals = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const approvalRequests = useMemo(() => {
-    return notifications.filter(n => n.type === 'task_approval' && n.relatedTask);
+    // Admins see all, managers only see their team's requests
+    return notifications.filter(n => 
+      n.type === 'task_approval' && n.relatedTask && (currentUser.role === 'Admin' || teamMemberIds.has(n.subjectEmployee?._id))
+    );
   }, [notifications]);
 
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !currentUser?._id) return new Set();
-    // If the user is an Admin, they should see approvals from everyone.
     if (currentUser.role === 'Admin') {
-      // We can just get all employee IDs.
       return new Set(allEmployees.map(e => e._id.toString()));
     }
-    // Otherwise, for Managers, show only their direct team members.
-    const subordinates = allEmployees.filter(emp => emp.teamLead?._id === currentUser._id);
+    
+    // For managers, find all direct and indirect subordinates
+    const subordinates = [];
+    const queue = allEmployees.filter(emp => emp.teamLead?._id === currentUser._id);
+    const visited = new Set(queue.map(e => e._id.toString()));
+
+    while (queue.length > 0) {
+      const currentEmployee = queue.shift();
+      subordinates.push(currentEmployee);
+      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+      for (const report of directReports) {
+        if (!visited.has(report._id.toString())) {
+          visited.add(report._id.toString());
+          queue.push(report);
+        }
+      }
+    }
     return new Set(subordinates.map(e => e._id.toString()));
   }, [allEmployees, currentUser]);
 
-  const pendingApprovalsByEmployee = useMemo(() => {
-    return approvalRequests.reduce((acc, notification) => {
-      const employeeId = notification.subjectEmployee?._id;
-      if (employeeId && teamMemberIds.has(employeeId)) {
-        if (!acc[employeeId]) {
-          acc[employeeId] = {
-            employee: notification.subjectEmployee,
-            notifications: []
-          };
-        }
-        acc[employeeId].notifications.push(notification);
+const pendingApprovalsByEmployee = useMemo(() => {
+  return approvalRequests.reduce((acc, notification) => {
+    const employeeId = notification.subjectEmployee?._id;
+    if (employeeId) {
+      if (!acc[employeeId]) {
+        acc[employeeId] = {
+          employee: notification.subjectEmployee,
+          notifications: []
+        };
       }
-      return acc;
-    }, {});
-  }, [approvalRequests, teamMemberIds]);
+      acc[employeeId].notifications.push(notification);
+    }
+    return acc;
+  }, {});
+}, [approvalRequests]);
 
   const employeesWithPendingApprovals = Object.values(pendingApprovalsByEmployee);
 

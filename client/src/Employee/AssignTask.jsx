@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useGetEmployeesQuery, useCreateTaskMutation } from '../services/EmployeApi';
+import { useGetEmployeesQuery, useCreateMultipleTasksMutation } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon, ClipboardDocumentListIcon, PlusIcon, TrashIcon, UserCircleIcon } from '@heroicons/react/24/outline';
  
@@ -129,7 +129,7 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 
 const AssignTask = ({ teamLeadId }) => {
   const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
-  const [createTask, { isLoading: isAssigning }] = useCreateTaskMutation();
+  const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
@@ -163,12 +163,9 @@ const AssignTask = ({ teamLeadId }) => {
 
   const handleAssignTask = async (tasks) => {
     try {
-      // Sequentially create each task
-      for (const task of tasks) {
-        await createTask(task).unwrap();
-      }
+      await createMultipleTasks({ tasks }).unwrap();
       toast.success(`${tasks.length} task(s) assigned to ${selectedEmployee.name} successfully!`);
-      setSelectedEmployee(null); // Close modal on success
+      setSelectedEmployee(null);
     } catch (err) {
       toast.error(err.data?.message || 'Failed to assign task.');
     }

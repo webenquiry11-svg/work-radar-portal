@@ -134,6 +134,10 @@ const employeeSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  canDeleteReport: {
+    type: Boolean,
+    default: false,
+  },
   passwordResetToken: String,
   passwordResetExpires: Date,
 }, { timestamps: true });

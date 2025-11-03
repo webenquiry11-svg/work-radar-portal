@@ -433,6 +433,7 @@ export const {
   useDeleteReportMutation,
   useCheckAdminSetupQuery,
   useCreateAdminMutation,
+  useGetCompanyInfoQuery,
   useGetNotificationsQuery,
   useMarkNotificationsAsReadMutation,
   useDeleteReadNotificationsMutation,

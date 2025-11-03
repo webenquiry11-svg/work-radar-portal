@@ -168,14 +168,14 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                           className="h-8 w-8 rounded-full object-cover border border-blue-100"
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100 dark:border-blue-800">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
                           {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
                           <span className="font-semibold text-xs text-slate-800 dark:text-white truncate">{c.author.name}</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 break-words">{c.text}</p>
                       </div>
@@ -204,7 +204,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                 <button
                   type="submit"
                   disabled={isAddingComment || !comment.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-900/50"
+                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
                   title="Send"
                 >
                   <PaperAirplaneIcon className="h-4 w-4" />

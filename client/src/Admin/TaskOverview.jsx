@@ -59,9 +59,7 @@ const TaskOverview = () => {
       highPriorityTasks: allTasks.filter(
         (t) =>
           !['Completed', 'Not Completed'].includes(t.status) &&
-          t.priority === 'High' &&
-          t.dueDate &&
-          new Date(t.dueDate) >= firstDayOfWeek && new Date(t.dueDate) <= endOfWeek,
+          t.priority === 'High'
       ),
       overdueTasks: allTasks.filter(
         t => ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < todayStart

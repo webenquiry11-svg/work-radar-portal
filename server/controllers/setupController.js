@@ -63,6 +63,26 @@ class SetupController {
       res.status(500).json({ message: 'Server error during admin creation.' });
     }
   };
+
+  /**
+   * @description Get the company name for the login page.
+   * @route GET /api/setup/company-info
+   * @access Public
+   */
+  static getCompanyInfo = async (req, res) => {
+    try {
+      // Find any admin to get the company name. This assumes all admins belong to the same company.
+      const admin = await Employee.findOne({ role: 'Admin' }).select('company');
+      if (admin) {
+        res.status(200).json({ companyName: admin.company });
+      } else {
+        res.status(200).json({ companyName: null }); // No admin/company set up yet
+      }
+    } catch (error) {
+      console.error('Error fetching company info:', error);
+      res.status(500).json({ message: 'Server error fetching company info.' });
+    }
+  };
 }
 
 module.exports = SetupController;

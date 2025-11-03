@@ -241,9 +241,9 @@ class TaskController {
       const finalProgress = parseInt(finalPercentage, 10);
 
       // Set completion category based on the manager's final percentage
-      if (finalProgress >= 95) { // Let's consider 95-100 as completed
+      if (finalProgress === 100) {
         task.completionCategory = 'Completed';
-      } else if (finalProgress >= 75) {
+      } else if (finalProgress >= 80) {
         task.completionCategory = 'Moderate';
       } else if (finalProgress >= 60) {
         task.completionCategory = 'Low';
@@ -251,15 +251,12 @@ class TaskController {
         task.completionCategory = 'Pending';
       }
 
-      // Set final status based on progress
-      if (finalProgress < 95) {
-        task.status = 'Not Completed';
-      } else {
+      if (finalProgress === 100) {
         task.status = 'Completed';
+      } else {
+        task.status = 'Not Completed';
       }
-
       task.completionDate = task.submittedForCompletionDate || new Date();
-      task.progress = finalProgress;
       task.rejectionReason = reason;
       task.comments.push({
         text: `Task reviewed and graded with progress set to ${task.progress}%. Reason: ${reason}`,
@@ -389,15 +386,26 @@ class TaskController {
 
         // Find the employee's team lead to send the notification
         const employee = await Employee.findById(task.assignedTo._id).populate('teamLead');
+        const notifications = [];
+        const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`;
+
+        // 1. Notify the direct team lead (if they exist)
         if (employee && employee.teamLead) {
-          await Notification.create({
+          notifications.push({
             recipient: employee.teamLead._id,
             subjectEmployee: employee._id,
-            message: `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`,
+            message: message,
             type: 'task_approval',
             relatedTask: task._id,
           });
         }
+
+        // 2. Notify all Admins
+        const admins = await Employee.find({ role: 'Admin' }).select('_id');
+        admins.forEach(admin => notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id }));
+
+        // Insert all notifications if any were created
+        if (notifications.length > 0) await Notification.insertMany(notifications);
       }
       res.status(200).json({ message: `${pastDueTasks.length} past-due tasks processed.` });
     } catch (error) {

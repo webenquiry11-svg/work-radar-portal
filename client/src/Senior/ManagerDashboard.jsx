@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
+  HomeIcon as HomeIconSolid,
   HomeIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, UserGroupIcon, PencilSquareIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, Bars3Icon, ChevronDownIcon, UserCircleIcon, InformationCircleIcon, CalendarDaysIcon, ArchiveBoxIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, ArrowLeftIcon, SparklesIcon, BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon, CheckCircleIcon, UsersIcon, BriefcaseIcon, CakeIcon, ArrowPathIcon, EyeIcon, MegaphoneIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/solid';
@@ -22,6 +23,7 @@ import AttendanceCalendar from '../services/AttendanceCalendar.jsx';
 import AllEmployeeAttendance from '../Admin/AllEmployeeAttendance.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
+import volgaInfosysLogo from '../assets/volgainfosys.png';
 
 const formatDueDate = (dateObj) => {
   if (!dateObj) return 'N/A';
@@ -103,14 +105,14 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
                           className="h-8 w-8 rounded-full object-cover border border-blue-100"
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
                           {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
                           <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{c.author.name}</span>
-                          <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <p className="text-xs text-slate-700 mt-0.5 break-words">{c.text}</p>
                       </div>
@@ -1038,6 +1040,19 @@ const ManagerProfile = ({ user }) => {
     qualification: user.qualification || '',
   });
 
+  // When edit mode is toggled, or user prop changes, reset the form data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        profilePicture: null, // Don't try to pre-fill file input
+        ...Object.fromEntries(['address', 'gender', 'country', 'city', 'qualification'].map(key => [key, user[key] || ''])),
+      });
+    }
+  }, [user, isEditMode]);
+
+
   const handleChange = (e) => {
     if (e.target.type === 'file') {
       setFormData({ ...formData, profilePicture: e.target.files[0] });
@@ -1455,11 +1470,10 @@ const MyDailyReport = ({ employeeId }) => {
 
   const handleSubmit = async () => {
     const taskUpdates = Object.entries(progress)
-      .filter(([taskId, completion]) => completion > 0) // Only submit tasks with progress
       .map(([taskId, completion]) => ({ taskId, completion }));
 
     if (taskUpdates.length === 0) {
-      toast.error("No progress updates to submit.");
+      toast('Submitting attendance for today.');
       return;
     }
 
@@ -1604,22 +1618,6 @@ const ManagerDashboard = () => {
     processPastDueTasks();
   }, [processPastDueTasks]);
 
-  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
-
-  useEffect(() => {
-    const styleId = 'slider-thumb-styles';
-    if (document.getElementById(styleId)) return;
-
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.innerHTML = ` .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } `;
-    document.head.appendChild(style);
-
-    return () => {
-      const styleElement = document.getElementById(styleId);
-      if (styleElement) document.head.removeChild(styleElement);
-    };
-  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -1639,21 +1637,6 @@ const ManagerDashboard = () => {
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
-
-  useEffect(() => {
-    const styleId = 'slider-thumb-styles';
-    if (document.getElementById(styleId)) return;
-
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.innerHTML = ` .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #ffffff; border: 3px solid #3B82F6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.1); } `;
-    document.head.appendChild(style);
-
-    return () => {
-      const styleElement = document.getElementById(styleId);
-      if (styleElement) document.head.removeChild(styleElement);
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1820,6 +1803,7 @@ const ManagerDashboard = () => {
           {/* Sidebar */}
           <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
             <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
+            <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
             {isSidebarExpanded && (
               <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
             )}

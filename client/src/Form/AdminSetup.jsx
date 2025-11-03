@@ -79,8 +79,8 @@ const AdminSetup = ({ onSetupComplete }) => {
       toast.error('Passwords do not match.');
       return;
     }
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error('Please fill all fields.');
+    if (!formData.name || !formData.email || !formData.password || !formData.company || !formData.employeeId || !formData.department) {
+      toast.error('Please ensure all required fields in every step are filled out.');
       return;
     }
 

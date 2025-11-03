@@ -55,6 +55,11 @@ class AnnouncementController {
       return res.status(400).json({ message: 'Title and content are required.' });
     }
 
+    // Validate that if dates are provided, they are valid
+    if ((startDate && isNaN(new Date(startDate))) || (endDate && isNaN(new Date(endDate)))) {
+      return res.status(400).json({ message: 'Invalid start or end date format.' });
+    }
+
     try {
       const newAnnouncement = new Announcement({ 
         title, 

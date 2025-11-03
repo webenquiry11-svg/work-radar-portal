@@ -157,7 +157,11 @@ class ReportController {
       // Manually populate task details inside the JSON content
       const populatedReports = await Promise.all(reports.map(async (report) => {
         try {
-          const content = JSON.parse(report.content);
+          // Ensure content is a string before parsing
+          const contentString = typeof report.content === 'string' ? report.content : JSON.stringify(report.content);
+          if (!contentString) return report;
+
+          const content = JSON.parse(contentString);
           if (content.taskUpdates && Array.isArray(content.taskUpdates)) {
             content.taskUpdates = await Promise.all(content.taskUpdates.map(async (update) => {
               if (update.taskId) {
@@ -198,7 +202,11 @@ class ReportController {
       // Manually populate task details inside the JSON content
       const populatedReports = await Promise.all(reports.map(async (report) => {
         try {
-          const content = JSON.parse(report.content);
+          // Ensure content is a string before parsing
+          const contentString = typeof report.content === 'string' ? report.content : JSON.stringify(report.content);
+          if (!contentString) return report;
+
+          const content = JSON.parse(contentString);
           if (content.taskUpdates && Array.isArray(content.taskUpdates)) {
             content.taskUpdates = await Promise.all(content.taskUpdates.map(async (update) => {
               if (update.taskId) {
@@ -230,7 +238,7 @@ class ReportController {
    * @access Admin
    */
   static deleteReport = async (req, res) => {
-    if (req.user.role !== 'Admin') {
+    if (req.user.role !== 'Admin' && !req.user.canDeleteReport) {
       return res.status(403).json({ message: 'Not authorized to delete reports.' });
     }
 
