@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import LeaveManagementModal from './LeaveManagementModal';
 
 const EmployeeCard = ({ user, onEdit, onDelete, onView, onPermissions, onLeave }) => (
-  <div className="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 dark:from-slate-900 dark:to-black rounded-2xl shadow-xl border border-blue-100 dark:border-slate-800 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
+ <div className="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 dark:from-slate-900 dark:to-black rounded-2xl shadow-xl border border-blue-100 dark:border-slate-800 flex flex-col items-center p-6 relative hover:shadow-2xl transition-all duration-200 group">
     <div className="relative">
       <img
         src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
@@ -50,12 +50,13 @@ const EmployeeCardGrid = ({ users, ...actions }) => (
 );
 
 const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
-  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
-    skip: !isOpen || !employee?._id,
-  });
   if (!isOpen || !employee) return null;
 
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
+    skip: !employee,
+  });
   const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
+
   const InfoField = ({ label, value }) => (
     <div>
       <p className="text-xs text-slate-500">{label}</p>
@@ -628,7 +629,7 @@ export default function EmployeeManagement() {
     try {
       await deleteEmployee(deletingUser._id).unwrap();
       setDeletingUser(null); // Close the modal
-      toast.success(`Employee "${deletingUser?.name || ''}" deleted.`);
+      toast.success(`Employee "${deletingUser?.name}" deleted.`);
     } catch (err) {
       console.error('Failed to delete the employee: ', err);
       toast.error(err.data?.message || 'Failed to delete employee.');
@@ -719,6 +720,122 @@ export default function EmployeeManagement() {
         onClose={handleCloseLeaveModal}
         employee={leaveUser}
       />
+    </div>
+  );
+};
+
+const ManagePermissionsModal = ({ isOpen, onClose, employee, permissions, onChange, onSave, isSaving }) => {
+  if (!isOpen || !employee) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-gray-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <h3 className="text-lg font-bold text-gray-800">Manage Permissions</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-blue-600 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* Content */}
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <img
+              src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
+              alt={employee.name}
+              className="h-10 w-10 rounded-full border border-blue-200 object-cover"
+            />
+            <div>
+              <div className="font-semibold text-blue-900">{employee.name}</div>
+              <div className="text-xs text-gray-500">{employee.role}</div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">Edit Own Profile</span>
+              <input
+                type="checkbox"
+                checked={permissions.canEditProfile}
+                onChange={() => onChange('canEditProfile')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">View Team</span>
+              <input
+                type="checkbox"
+                checked={permissions.canViewTeam}
+                onChange={() => onChange('canViewTeam')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">Edit Assigned Tasks</span>
+              <input
+                type="checkbox"
+                checked={permissions.canUpdateTask}
+                onChange={() => onChange('canUpdateTask')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">Approve Tasks</span>
+              <input
+                type="checkbox"
+                checked={permissions.canApproveTask}
+                onChange={() => onChange('canApproveTask')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">Assign Tasks</span>
+              <input
+                type="checkbox"
+                checked={permissions.canAssignTask}
+                onChange={() => onChange('canAssignTask')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <span className="font-medium text-gray-700">Delete Tasks</span>
+              <input
+                type="checkbox"
+                checked={permissions.canDeleteTask}
+                onChange={() => onChange('canDeleteTask')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-700">View Analytics</span>
+              <input
+                type="checkbox"
+                checked={permissions.canViewAnalytics}
+                onChange={() => onChange('canViewAnalytics')}
+                className="h-5 w-5 accent-blue-600"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={isSaving}
+              className="px-5 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:bg-gray-400"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
