@@ -50,13 +50,12 @@ const EmployeeCardGrid = ({ users, ...actions }) => (
 );
 
 const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
+    skip: !isOpen || !employee?._id,
+  });
   if (!isOpen || !employee) return null;
 
-  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
-    skip: !isOpen || !employee,
-  });
   const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
-
   const InfoField = ({ label, value }) => (
     <div>
       <p className="text-xs text-slate-500">{label}</p>
