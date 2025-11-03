@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation } from '../services/EmployeApi';
-import { useLogoutMutation } from '../services/apiSlice';
-import volgaInfosysLogo from '../assets/volgainfosys.png';
+import { useLogoutMutation } from '../services/apiSlice'; 
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -14,6 +13,7 @@ import TaskApprovals from '../Admin/TaskApprovals.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
 import AssignTask from './AssignTask.jsx'; 
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
+import volgaInfosysLogo from '../assets/volgainfosys.png';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
@@ -1619,6 +1619,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       </style>
       <aside className={`fixed z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
+          <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarCollapsed ? 'h-12 w-12' : 'h-10 w-auto'}`} />
           {!isSidebarCollapsed && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}
