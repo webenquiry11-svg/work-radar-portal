@@ -764,7 +764,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
           <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Team Tasks</p>
         </div>
         <div
-          onClick={() => onNavigate && onNavigate('task-approvals')}
+          onClick={() => onNavigate && onNavigate({ component: 'view-team-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
           className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <CheckBadgeIcon className="h-10 w-10 text-amber-500 mb-2" />
