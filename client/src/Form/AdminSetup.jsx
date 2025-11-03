@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import portalLogo from '../assets/portal_logo.png';
 import { useCreateAdminMutation } from '../services/EmployeApi';
 import { UserIcon, EnvelopeIcon, LockClosedIcon, ArrowPathIcon, IdentificationIcon, MapPinIcon, GlobeAltIcon, AcademicCapIcon, BriefcaseIcon, BuildingOfficeIcon, CalendarIcon, SunIcon, BuildingLibraryIcon, SparklesIcon, CheckIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
@@ -182,7 +183,7 @@ const AdminSetup = ({ onSetupComplete }) => {
           </div>
           <div className="z-10 text-center animate-slide-in-left">
             <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
-              <img src="/assets/fevicon.png" alt="Logo" className="h-20 w-20" />
+              <img src={portalLogo} alt="Logo" className="h-20 w-20" />
             </div>
             <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
             <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Initial Portal Setup</p>
