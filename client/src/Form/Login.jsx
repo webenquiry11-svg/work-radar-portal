@@ -154,7 +154,7 @@ const Login = () => {
         </div>
         <div className="z-10 text-center animate-slide-in-left">
           <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
-            <img src={portalLogo} alt="Logo" className="h-24 w-24" />
+            <img src={portalLogo} alt="Logo" className="h-48 w-48" />
           </div>
           <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
           <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Your daily hub for productivity and progress.</p>
@@ -191,7 +191,7 @@ const Login = () => {
         <div className="relative z-10 w-full max-w-md p-8 sm:p-10 space-y-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 transition-transform duration-300 hover:-translate-y-1 hover:shadow-3xl">
           <div className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/50 dark:via-indigo-900/50 dark:to-purple-900/50 shadow-lg ring-4 ring-white/20 animate-bounce-slow">
-              <img src={portalLogo} alt="Logo" className="h-16 w-16" />
+              <img src={portalLogo} alt="Logo" className="h-32 w-32" />
             </div>
             <h1 className="text-4xl font-extrabold text-slate-800 dark:text-indigo-300 drop-shadow-md mb-2 tracking-tight animate-fade-in">
               {getGreeting()}!
