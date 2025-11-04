@@ -14,6 +14,7 @@ import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMu
 import Dashboard from './Dashboard';
 import HolidayManagement from './HolidayManagement';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
+import starPublicityLogo from '../assets/starpublicity.png';
 import ViewAllTasks from './ViewAllTasks';
 import TaskOverview from './TaskOverview';
 import TaskApprovals from './TaskApprovals';
@@ -702,7 +703,11 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     >
       <aside className="h-full w-full bg-white/95 backdrop-blur-lg text-gray-800 flex flex-col border-r border-gray-200 shadow-xl dark:bg-black/95 dark:border-slate-700">
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
-        <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+        {user?.company === 'Volga Infosys' ? (
+          <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+        ) : (
+          <img src={starPublicityLogo} alt="Logo" className={`transition-all ${isExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+        )}
         {isExpanded && (
           <span className="text-lg font-bold text-blue-800 dark:text-white truncate" title={user?.company}>{user?.company || 'Company Portal'}</span>
         )}

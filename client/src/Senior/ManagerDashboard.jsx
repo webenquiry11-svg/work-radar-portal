@@ -23,6 +23,7 @@ import AttendanceCalendar from '../services/AttendanceCalendar.jsx';
 import AllEmployeeAttendance from '../Admin/AllEmployeeAttendance.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline'; 
+import starPublicityLogo from '../assets/starpublicity.png';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
 
 const formatDueDate = (dateObj) => {
@@ -1807,7 +1808,11 @@ const ManagerDashboard = () => {
           {/* Sidebar */}
           <aside className="w-full h-full bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 flex flex-col border-r border-gray-200 dark:border-slate-700 shadow-lg">
             <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarExpanded ? 'px-4 gap-3' : 'justify-center'}`}>
-            <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+            {user?.company === 'Volga Infosys' ? (
+              <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+            ) : (
+              <img src={starPublicityLogo} alt="Logo" className={`transition-all ${isSidebarExpanded ? 'h-10 w-auto' : 'h-12 w-12'}`} />
+            )}
             {isSidebarExpanded && (
               <span className="text-lg font-bold text-gray-800 dark:text-slate-200 tracking-tight">{user?.company || 'Company Portal'}</span>
             )}
