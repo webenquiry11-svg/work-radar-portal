@@ -167,11 +167,8 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 };
 
 export default AssignTask;
-  const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
-  const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+const AssignTask = () => {
   const managers = useMemo(() => {
     return employees.filter(emp => 
       emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard'
