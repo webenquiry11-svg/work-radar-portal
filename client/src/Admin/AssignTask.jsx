@@ -166,8 +166,6 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
   );
 };
 
-export default AssignTask;
-
 const AssignTask = () => {  
   const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
@@ -202,3 +200,5 @@ const AssignTask = () => {
     </div>
   );
 };
+
+export default AssignTask;
