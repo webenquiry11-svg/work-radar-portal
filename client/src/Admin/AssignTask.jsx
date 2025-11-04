@@ -9,6 +9,7 @@ import {
   PlusIcon,
   TrashIcon,
   UserCircleIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) => {
@@ -167,11 +168,30 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 };
 
 const AssignTask = () => {
+  const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedManager, setSelectedManager] = useState(null);
+
   const managers = useMemo(() => {
     return employees.filter(emp => 
       emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard'
     );
   }, [employees]);
+
+  const teamMembers = useMemo(() => {
+    if (!selectedManager) return [];
+    // This will find all employees who report to the selected manager.
+    return employees.filter(emp => emp.teamLead?._id === selectedManager._id);
+  }, [employees, selectedManager]);
+
+  const filteredEmployees = useMemo(() => {
+    return teamMembers.filter(employee =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (employee.employeeId && employee.employeeId.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [teamMembers, searchTerm]);
 
   const handleAssignTask = async (tasks) => {
     try {
@@ -183,15 +203,79 @@ const AssignTask = () => {
     }
   };
 
-  // The component's return JSX was missing. I'm assuming a structure similar to other assignment pages.
-  // If this is incorrect, we can adjust it.
+  if (isLoadingEmployees) {
+    return <div className="p-8 text-center">Loading managers...</div>;
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Assign Task to Employee</h1>
-        <p className="text-slate-500 dark:text-white mt-2">Select a manager to assign tasks to their team members.</p>
+        <p className="text-slate-500 dark:text-white mt-2">Select a manager to view their team and assign tasks.</p>
       </div>
-      {/* Manager selection and task assignment UI would go here */}
+      <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg flex-1 flex flex-col">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="relative w-full md:w-auto">
+            <ChevronDownIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+            <select
+              onChange={(e) => {
+                const manager = managers.find(m => m._id === e.target.value);
+                setSelectedManager(manager);
+              }}
+              className="w-full md:w-64 text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              value={selectedManager?._id || ''}
+            >
+              <option value="">-- Select a Manager --</option>
+              {managers.map(manager => (
+                <option key={manager._id} value={manager._id}>{manager.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="relative w-full md:w-auto">
+            <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search team members by name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2.5 w-full md:w-80 text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              disabled={!selectedManager}
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto rounded-b-2xl p-6">
+          {!selectedManager ? (
+            <div className="text-center text-slate-400 dark:text-slate-500 py-16">Please select a manager to see their team members.</div>
+          ) : filteredEmployees.length === 0 ? (
+            <div className="text-center text-slate-400 dark:text-slate-500 py-16">No team members found for this manager.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredEmployees.map(employee => (
+                <div key={employee._id} className="bg-slate-50/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow hover:shadow-lg transition-shadow p-6 flex flex-col items-center">
+                  <img
+                    src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
+                    alt={employee.name}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 mb-3"
+                  />
+                  <div className="text-center">
+                    <div className="font-bold text-slate-900 dark:text-white text-lg">{employee.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{employee.employeeId}</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">{employee.role}</div>
+                    <div className="text-xs text-slate-400 dark:text-slate-500">{employee.department || 'N/A'}</div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedEmployee(employee)}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition-colors shadow"
+                  >
+                    Assign Task
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <AssignTaskModal isOpen={!!selectedEmployee} onClose={() => setSelectedEmployee(null)} employee={selectedEmployee} isAssigning={isAssigning} onAssign={handleAssignTask} />
     </div>
   );
 };
