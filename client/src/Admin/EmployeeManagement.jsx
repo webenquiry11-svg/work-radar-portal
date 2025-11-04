@@ -53,9 +53,10 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
   const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee?._id, {
     skip: !isOpen || !employee,
   });
-  if (!isOpen || !employee) return null;
 
   const monthNames = useMemo(() => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], []);
+
+  if (!isOpen || !employee) return null;
 
   const InfoField = ({ label, value }) => (
     <div>
