@@ -1,6 +1,7 @@
 const Task = require('../models/task.js');
 const Report = require('../models/report.js');
 const Notification = require('../models/notification.js');
+const Employee = require('../models/employee.js');
 
 class TaskController {
   static createTask = async (req, res) => {
@@ -385,7 +386,7 @@ class TaskController {
         await task.save();
 
         // Find the employee's team lead to send the notification
-        const employee = await Employee.findById(task.assignedTo._id).populate('teamLead');
+        const employee = await Employee.findById(task.assignedTo._id).populate('teamLead', '_id');
         const notifications = [];
         const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`;
 
