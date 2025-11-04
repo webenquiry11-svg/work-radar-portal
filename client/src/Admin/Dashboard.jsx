@@ -143,7 +143,7 @@ const Dashboard = ({ onNavigate }) => {
           <p className="text-sm font-semibold text-gray-500 dark:text-white">Total Tasks</p>
         </div>
         <div
-          onClick={() => onNavigate && onNavigate({ component: 'view-tasks', props: { initialFilters: { status: 'Pending Verification' } } })}
+          onClick={() => onNavigate && onNavigate('task-approvals')}
           className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-amber-500 hover:scale-105 transition-transform duration-300 cursor-pointer"
         >
           <ClockIcon className="h-10 w-10 text-amber-500 mb-2" />
