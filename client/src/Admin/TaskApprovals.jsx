@@ -178,13 +178,13 @@ const TaskApprovals = () => {
   const [rejectingTask, setRejectingTask] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [approvingTask, setApprovingTask] = useState(null);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
 
 const pendingApprovalsByEmployee = useMemo(() => {
   if (!tasksForApproval) return {};
   return tasksForApproval.reduce((acc, task) => {
     const employeeId = task.assignedTo?._id;
-    if (employeeId) {
+    if (employeeId && task.assignedTo) {
       if (!acc[employeeId]) {
         acc[employeeId] = {
           employee: task.assignedTo,
@@ -199,42 +199,41 @@ const pendingApprovalsByEmployee = useMemo(() => {
 
   const employeesWithPendingApprovals = Object.values(pendingApprovalsByEmployee);
 
-  const handleApprove = (notification) => {
-    setApprovingNotification(notification);
+  const handleApprove = (task) => {
+    setApprovingTask(task);
   };
 
   const handleConfirmApprove = async (finalPercentage, comment) => {
-    if (!approvingNotification) return;
+    if (!approvingTask) return;
     try {
-      await approveTask({ id: approvingNotification.relatedTask._id, finalPercentage, comment }).unwrap();
+      await approveTask({ id: approvingTask._id, finalPercentage, comment }).unwrap();
       toast.success('Task approved!');
-      setApprovingNotification(null);
+      setApprovingTask(null);
     } catch (err) {
       toast.error('Failed to approve task.');
     }
   };
 
-  const handleReject = (notification) => {
-    setRejectingNotification(notification);
+  const handleReject = (task) => {
+    setRejectingTask(task);
   };
 
   const handleConfirmReject = async (reason, finalPercentage) => {
-    if (!rejectingNotification) return;
     try {
-      await rejectTask({ id: rejectingNotification.relatedTask._id, reason, finalPercentage }).unwrap();
+      await rejectTask({ id: rejectingTask._id, reason, finalPercentage }).unwrap();
       toast.success('Task rejected and feedback sent.');
-      setRejectingNotification(null);
+      setRejectingTask(null);
     } catch (err) {
       toast.error(err.data?.message || 'Failed to reject task.');
     }
   };
 
-  if (isLoadingNotifications || isLoadingEmployees) {
+  if (isLoadingTasks) {
     return <div className="p-8 text-center">Loading approval requests...</div>;
   }
 
   // Main view showing team members with pending approvals
-  if (!selectedEmployee) {
+  if (!selectedEmployeeData) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
         <div className="mb-8 text-center">
@@ -246,7 +245,7 @@ const pendingApprovalsByEmployee = useMemo(() => {
             {employeesWithPendingApprovals.map(({ employee, tasks }) => (
               <div
                 key={employee._id}
-                onClick={() => setSelectedEmployee({ employee, tasks })}
+                onClick={() => setSelectedEmployeeData({ employee, tasks })}
                 className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
               >
                 <div className="relative">
@@ -277,15 +276,15 @@ const pendingApprovalsByEmployee = useMemo(() => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
       <div className="mb-8">
-        <button onClick={() => setSelectedEmployee(null)} className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white mb-4">
+        <button onClick={() => setSelectedEmployeeData(null)} className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white mb-4">
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Team View
         </button>
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Approvals for {selectedEmployee.employee.name}</h1>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Approvals for {selectedEmployeeData.employee.name}</h1>
         <p className="text-slate-500 dark:text-white mt-2">Review and approve or reject tasks marked as complete.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {selectedEmployee.tasks.map(task => (
+        {selectedEmployeeData.tasks.map(task => (
           <div key={task._id} className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -303,7 +302,7 @@ const pendingApprovalsByEmployee = useMemo(() => {
               </div>
             </div>
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <button onClick={() => setViewingTask(notification.relatedTask)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <button onClick={() => setViewingTask(task)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
                 <EyeIcon className="h-4 w-4" /> View Details
               </button>
               <div className="flex items-center gap-2">
@@ -329,7 +328,7 @@ const pendingApprovalsByEmployee = useMemo(() => {
         onClose={() => setApprovingTask(null)}
         onConfirm={handleConfirmApprove}
         isApproving={isApproving}
-        initialProgress={approvingTask?.progress}
+        initialProgress={approvingTask?.progress || 100}
       />
       <TaskDetailsModal
         isOpen={!!viewingTask}
