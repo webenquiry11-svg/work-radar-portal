@@ -8,6 +8,24 @@ import {
 } from '@heroicons/react/24/solid'; 
 import GooglePieChart from './GooglePieChart.jsx';
 
+const TaskListItem = ({ task, isOverdue }) => (
+  <li className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
+    <div className="flex items-center gap-3">
+      <img src={task.assignedTo?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo?.name || '?'}`} alt={task.assignedTo?.name} className="h-8 w-8 rounded-full object-cover" />
+      <div>
+        <p className="font-semibold text-sm text-slate-800 dark:text-white">{task.title}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">To: {task.assignedTo?.name || 'N/A'}</p>
+      </div>
+    </div>
+    {isOverdue && task.dueDate && (
+      <div className="text-right">
+        <p className="text-sm font-bold text-red-600">Overdue</p>
+        <p className="text-xs text-red-500">{new Date(task.dueDate).toLocaleDateString()}</p>
+      </div>
+    )}
+  </li>
+);
+
 const TaskOverview = () => {
   const { data: allTasks = [], isLoading } = useGetAllTasksQuery();
 
@@ -75,24 +93,6 @@ const TaskOverview = () => {
     'Completed': '#10B981', // Emerald
     'Not Completed': '#F97316', // Orange
   };
-
-  const TaskListItem = ({ task, isOverdue }) => (
-    <li className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
-      <div className="flex items-center gap-3">
-        <img src={task.assignedTo?.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo?.name || '?'}`} alt={task.assignedTo?.name} className="h-8 w-8 rounded-full object-cover" />
-        <div>
-          <p className="font-semibold text-sm text-slate-800 dark:text-white">{task.title}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">To: {task.assignedTo?.name || 'N/A'}</p>
-        </div>
-      </div>
-      {isOverdue && task.dueDate && (
-        <div className="text-right">
-          <p className="text-sm font-bold text-red-600">Overdue</p>
-          <p className="text-xs text-red-500">{new Date(task.dueDate).toLocaleDateString()}</p>
-        </div>
-      )}
-    </li>
-  );
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading task overview...</div>;
