@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { ArrowPathIcon, UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, ArrowRightOnRectangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
-import { useGetCompanyInfoQuery } from "../services/EmployeApi";
+import { useGetCompanyInfoQuery, useLoginMutation } from "../services/apiSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useLoginMutation } from "../services/EmployeApi";
 import portalLogo from '../assets/portal_logo.png';
 import { setCredentials } from "../app/authSlice";
 

@@ -831,6 +831,23 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
   );
 };
 
+const StatCard = ({ grade, count }) => {
+  const GRADE_COLORS = { 'Avg. Completion': '#10B981', 'Total Tasks': '#3B82F6', 'In Progress': '#F59E0B', 'In Verification': '#8B5CF6', 'Not Completed': '#f97316', 'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444', 'Pending Verification': '#8B5CF6' };
+  const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
+  const Icon = GRADE_ICONS[grade] || InformationCircleIcon;
+  return (
+    <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
+      <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
+        <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-slate-800">{count}</p>
+        <p className="text-sm font-semibold text-slate-500">{grade}</p>
+      </div>
+    </div>
+  );
+};
+
 const Analytics = ({ user }) => {
   const [view, setView] = useState('my_stats'); // 'my_stats' or 'team_stats'
   const { data: allTasks = [], isLoading: isLoadingAllTasks } = useGetAllTasksQuery();
@@ -942,21 +959,6 @@ const Analytics = ({ user }) => {
     'Pending Verification': '#8B5CF6', // Purple
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
-
-  const StatCard = ({ grade, count }) => {
-    const Icon = GRADE_ICONS[grade] || InformationCircleIcon;
-    return (
-      <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
-        <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
-          <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-slate-800">{count}</p>
-          <p className="text-sm font-semibold text-slate-500">{grade}</p>
-        </div>
-      </div>
-    );
-  };
 
   if (isLoadingAllTasks || isLoadingEmployees) {
     return <div className="p-8 text-center">Loading analytics...</div>;
