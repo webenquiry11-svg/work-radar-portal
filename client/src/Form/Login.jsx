@@ -157,7 +157,7 @@ const Login = () => {
           <div className="p-4 bg-white/10 rounded-full inline-block shadow-lg mb-6 backdrop-blur-sm border border-white/10">
             <img src={portalLogo} alt="Logo" className="h-28 w-28" />
           </div>
-            <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">{companyInfo?.companyName || 'Work Radar'}</h1>
+            <h1 className="text-6xl font-orbitron font-bold tracking-wider text-white drop-shadow-lg">Work Radar</h1>
           <p className="mt-4 text-lg text-indigo-200 max-w-sm mx-auto">Your daily hub for productivity and progress.</p>
         </div>
         <div className="z-10 mt-12 text-left max-w-md animate-slide-in-left animation-delay-300">
