@@ -369,6 +369,11 @@ class TaskController {
       }).populate('assignedTo', 'name');
 
       for (const task of pastDueTasks) {
+        if (!task.assignedTo) {
+          console.log(`Skipping past-due processing for task ${task._id}: no assignee.`);
+          continue; // Skip this task if it has no assignee
+        }
+
         // Check if an approval notification already exists for this task
         const existingNotification = await Notification.findOne({
           relatedTask: task._id,
