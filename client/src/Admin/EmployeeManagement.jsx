@@ -636,9 +636,10 @@ export default function EmployeeManagement() {
     }
   };
   const filteredUsers = useMemo(() => 
-    users.filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+    users.filter(user =>
+      user && // Ensure user object is not null/undefined
+      (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()))
     ), [users, searchTerm]);
 
   if (isLoading) {
