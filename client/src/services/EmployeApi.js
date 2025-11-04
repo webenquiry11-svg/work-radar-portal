@@ -134,6 +134,11 @@ export const employeApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    getCompanyInfo: builder.query({
+      query: () => '/setup/company-info',
+      providesTags: ['CompanyInfo'],
+    }),
+
     // Query to get today's report for an employee
     getTodaysReport: builder.query({
       query: (employeeId) => `/reports/my-today/${employeeId}`,
