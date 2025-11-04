@@ -75,18 +75,30 @@ class ReportController {
                   if (!existingNotification) {
                     task.status = 'Pending Verification';
                     task.submittedForCompletionDate = today; // Set submission date
-                    
-                    // Find the employee's team lead to send the notification
-                    const employee = await Employee.findById(task.assignedTo).populate('teamLead');
-                    if (employee && employee.teamLead) {
-                      await Notification.create({
-                        recipient: employee.teamLead._id,
-                        subjectEmployee: employee._id,
-                        message: `${employee.name} has marked the task "${task.title}" as 100% complete.`,
-                        type: 'task_approval',
-                        relatedTask: task._id,
-                      });
-                    }
+
+                    // New Logic: Notify the assigner and all admins
+                    const employee = await Employee.findById(task.assignedTo);
+                    const message = `${employee.name} has marked the task "${task.title}" as 100% complete and it is ready for your approval.`;
+                    const notifications = [];
+
+                    // 1. Notify the person who assigned the task
+                    notifications.push({
+                      recipient: task.assignedBy,
+                      subjectEmployee: employee._id,
+                      message: message,
+                      type: 'task_approval',
+                      relatedTask: task._id,
+                    });
+
+                    // 2. Notify all Admins
+                    const admins = await Employee.find({ role: 'Admin' }).select('_id');
+                    admins.forEach(admin => {
+                      // Avoid sending a duplicate notification if the admin is the assigner
+                      if (admin._id.toString() !== task.assignedBy.toString()) {
+                        notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id });
+                      }
+                    });
+                    if (notifications.length > 0) await Notification.insertMany(notifications);
                   }
                 } else if (completion > 0) {
                   task.status = 'In Progress';

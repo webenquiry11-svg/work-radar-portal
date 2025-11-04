@@ -422,20 +422,23 @@ class TaskController {
         const notifications = [];
         const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`;
 
-        // 1. Notify the direct team lead (if they exist)
-        if (employee.teamLead) {
-          notifications.push({
-            recipient: employee.teamLead._id,
-            subjectEmployee: employee._id,
-            message: message,
-            type: 'task_approval',
-            relatedTask: task._id,
-          });
-        }
+        // 1. Notify the person who assigned the task
+        notifications.push({
+          recipient: task.assignedBy,
+          subjectEmployee: employee._id,
+          message: message,
+          type: 'task_approval',
+          relatedTask: task._id,
+        });
 
         // 2. Notify all Admins
         const admins = await Employee.find({ role: 'Admin' }).select('_id');
-        admins.forEach(admin => notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id }));
+        admins.forEach(admin => {
+          // Avoid sending a duplicate notification if the admin is the assigner
+          if (admin._id.toString() !== task.assignedBy.toString()) {
+            notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id });
+          }
+        });
 
         // Insert all notifications if any were created
         if (notifications.length > 0) await Notification.insertMany(notifications);
@@ -455,19 +458,20 @@ class TaskController {
   static getTasksForApproval = async (req, res) => {
     try {
       let tasksForApproval = [];
+      const approverId = req.user._id;
+
       if (req.user.role === 'Admin') {
         // Admins can see all tasks pending verification
         tasksForApproval = await Task.find({ status: 'Pending Verification' })
           .populate('assignedTo', 'name profilePicture employeeId')
           .sort({ submittedForCompletionDate: 1 });
       } else {
-        // Managers see tasks for their team members
+        // Managers see tasks they assigned OR tasks assigned to their team members.
         const allEmployees = await Employee.find({}).populate('teamLead', '_id');
-        const managerId = req.user._id.toString();
 
         // Find all direct and indirect subordinates
         const teamMemberIds = new Set();
-        const queue = allEmployees.filter(emp => emp.teamLead?._id.toString() === managerId);
+        const queue = allEmployees.filter(emp => emp.teamLead?._id.toString() === approverId.toString());
         const visited = new Set(queue.map(e => e._id.toString()));
         
         while (queue.length > 0) {
@@ -482,7 +486,13 @@ class TaskController {
           }
         }
 
-        tasksForApproval = await Task.find({ status: 'Pending Verification', assignedTo: { $in: Array.from(teamMemberIds) } })
+        tasksForApproval = await Task.find({
+          status: 'Pending Verification',
+          $or: [
+            { assignedTo: { $in: Array.from(teamMemberIds) } }, // Task is assigned to a team member
+            { assignedBy: approverId } // Task was assigned by the current manager
+          ]
+        })
           .populate('assignedTo', 'name profilePicture employeeId')
           .sort({ submittedForCompletionDate: 1 });
       }
