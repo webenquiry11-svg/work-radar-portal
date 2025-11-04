@@ -50,8 +50,8 @@ const EmployeeCardGrid = ({ users, ...actions }) => (
 );
 
 const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
-  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee._id, {
-    skip: !isOpen || !employee?._id,
+  const { data: eomHistory = [] } = useGetEmployeeEOMHistoryQuery(employee?._id, {
+    skip: !isOpen || !employee,
   });
   if (!isOpen || !employee) return null;
 
