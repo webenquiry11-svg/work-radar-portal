@@ -1612,6 +1612,7 @@ const ManagerDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
 
+  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovering;
 
   const [processPastDueTasks] = useProcessPastDueTasksMutation();
 
