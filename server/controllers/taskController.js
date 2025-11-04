@@ -158,11 +158,22 @@ class TaskController {
     const approverId = req.user._id;
 
     try {
-      const task = await Task.findById(id).populate('assignedTo', 'name');
+      const task = await Task.findById(id).populate('assignedTo'); // Populate the full assignee object
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== approverId.toString() && req.user.role !== 'Admin' && !req.user.canApproveTask) {
+      if (!task.assignedTo) {
+        return res.status(400).json({ message: 'This task has no assignee and cannot be approved.' });
+      }
+
+      // Authorization Check:
+      const isAssigner = task.assignedBy.toString() === approverId.toString();
+      const isAdmin = req.user.role === 'Admin';
+      const hasGlobalApprovePermission = req.user.canApproveTask;
+      // New Rule: Check if the approver is the direct team lead of the assignee
+      const isTeamLeadOfAssignee = task.assignedTo.teamLead?.toString() === approverId.toString();
+
+      if (!isAssigner && !isAdmin && !hasGlobalApprovePermission && !isTeamLeadOfAssignee) {
         return res.status(403).json({ message: 'You are not authorized to approve this task.' });
       }
 
@@ -231,11 +242,22 @@ class TaskController {
     }
 
     try {
-      const task = await Task.findById(id).populate('assignedTo', 'name');
+      const task = await Task.findById(id).populate('assignedTo'); // Populate the full assignee object
       if (!task) {
         return res.status(404).json({ message: 'Task not found.' });
       }
-      if (task.assignedBy.toString() !== rejectorId.toString() && req.user.role !== 'Admin' && !req.user.canApproveTask) {
+      if (!task.assignedTo) {
+        return res.status(400).json({ message: 'This task has no assignee and cannot be reviewed.' });
+      }
+
+      // Authorization Check:
+      const isAssigner = task.assignedBy.toString() === rejectorId.toString();
+      const isAdmin = req.user.role === 'Admin';
+      const hasGlobalApprovePermission = req.user.canApproveTask;
+      // New Rule: Check if the reviewer is the direct team lead of the assignee
+      const isTeamLeadOfAssignee = task.assignedTo.teamLead?.toString() === rejectorId.toString();
+
+      if (!isAssigner && !isAdmin && !hasGlobalApprovePermission && !isTeamLeadOfAssignee) {
         return res.status(403).json({ message: 'You are not authorized to reject this task.' });
       }
 
