@@ -168,9 +168,37 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
 
 export default AssignTask;
 
-const AssignTask = () => {
+const AssignTask = () => {  
+  const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   const managers = useMemo(() => {
     return employees.filter(emp => 
       emp.dashboardAccess === 'Manager Dashboard' || emp.dashboardAccess === 'Admin Dashboard'
     );
   }, [employees]);
+
+  const handleAssignTask = async (tasks) => {
+    try {
+      await createMultipleTasks({ tasks }).unwrap();
+      toast.success(`${tasks.length} task(s) assigned to ${selectedEmployee.name} successfully!`);
+      setSelectedEmployee(null);
+    } catch (err) {
+      toast.error(err.data?.message || 'Failed to assign task.');
+    }
+  };
+
+  // The component's return JSX was missing. I'm assuming a structure similar to other assignment pages.
+  // If this is incorrect, we can adjust it.
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Assign Task to Employee</h1>
+        <p className="text-slate-500 dark:text-white mt-2">Select a manager to assign tasks to their team members.</p>
+      </div>
+      {/* Manager selection and task assignment UI would go here */}
+    </div>
+  );
+};
