@@ -430,6 +430,23 @@ const TeamReports = () => {
   );
 };
 
+const StatCard = ({ grade, count }) => {
+  const GRADE_COLORS = { 'Avg. Completion': '#10B981', 'Total Tasks': '#3B82F6', 'In Progress': '#F59E0B', 'In Verification': '#8B5CF6', 'Pending Verification': '#8B5CF6', 'Not Completed': '#f97316', 'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444' };
+  const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon, 'Total Tasks': ClipboardDocumentListIcon, 'Avg. Completion': CheckBadgeIcon, 'In Progress': ArrowPathIcon, 'In Verification': CheckBadgeIcon };
+  const Icon = GRADE_ICONS[grade] || InfoOutlineIcon;
+  return (
+    <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
+      <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
+        <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-slate-800">{count}</p>
+        <p className="text-sm font-semibold text-slate-500">{grade}</p>
+      </div>
+    </div>
+  );
+};
+
 const Analytics = () => {
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
   const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
@@ -556,21 +573,6 @@ const Analytics = () => {
   };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
 
-  const StatCard = ({ grade, count }) => {
-    const Icon = GRADE_ICONS[grade] || InfoOutlineIcon;
-    return (
-      <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
-        <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
-          <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-slate-800">{count}</p>
-          <p className="text-sm font-semibold text-slate-500">{grade}</p>
-        </div>
-      </div>
-    );
-  };
-
   if (isLoadingTasks || isLoadingEmployees) {
     return <div className="p-8 text-center">Loading analytics...</div>;
   }
@@ -641,10 +643,10 @@ const Analytics = () => {
             <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}>Team Stats</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} /> {/* These StatCards are defined below */}
-            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} /> {/* These StatCards are defined below */}
-            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} /> {/* These StatCards are defined below */}
-            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} /> {/* These StatCards are defined below */}
+            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
+            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} />
+            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
+            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 dark:text-white">
             <div className="lg:col-span-2 bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8">
