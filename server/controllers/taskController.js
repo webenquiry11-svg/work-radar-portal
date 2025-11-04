@@ -392,11 +392,16 @@ class TaskController {
 
         // Find the employee's team lead to send the notification
         const employee = await Employee.findById(task.assignedTo._id).populate('teamLead', '_id');
+        if (!employee) {
+          console.log(`Skipping notification for task ${task._id}: assigned employee not found.`);
+          continue; // Skip to the next task if the employee doesn't exist
+        }
+
         const notifications = [];
         const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It is now ready for your review.`;
 
         // 1. Notify the direct team lead (if they exist)
-        if (employee && employee.teamLead) {
+        if (employee.teamLead) {
           notifications.push({
             recipient: employee.teamLead._id,
             subjectEmployee: employee._id,
