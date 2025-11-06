@@ -1456,6 +1456,15 @@ const EmployeeDashboard = ({ employeeId }) => {
   const [isSidebarHovering, setIsSidebarHovering] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+  const [processPastDueTasks] = useProcessPastDueTasksMutation();
+
+  useEffect(() => {
+    // When the employee's dashboard loads, trigger the backend to process any past-due tasks.
+    // This automatically moves tasks to 'Pending Verification' after their due date has passed.
+    processPastDueTasks();
+  }, [processPastDueTasks]);
+
+
   const { data: allEmployees = [] } = useGetEmployeesQuery();
   const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
   const pageTitles = {
