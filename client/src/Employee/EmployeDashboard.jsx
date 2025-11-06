@@ -109,41 +109,21 @@ const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
 };
 
 const Dashboard = ({ user, onNavigate }) => {
-  const { data: tasks = [], isLoading } = useGetMyTasksQuery();
-  const { data: allTasks = [] } = useGetAllTasksQuery();
-  const { data: allEmployees = [] } = useGetEmployeesQuery();
-  const { data: announcement } = useGetActiveAnnouncementQuery();
+  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+  const { data: tasks = [], isLoading } = useGetMyTasksQuery(undefined, { pollingInterval: 30000 });
+  const { data: announcement } = useGetActiveAnnouncementQuery(); // This is for the announcement card
 
   // Find next due date for user's own tasks
   const nextMyTaskDueDate = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to midnight for date-only comparison
     const upcoming = tasks
-      .filter(task => task.dueDate && (task.status === 'Pending' || task.status === 'In Progress'))
+      .filter(task => task.dueDate && !['Completed', 'Not Completed', 'Pending Verification'].includes(task.status))
       .map(task => new Date(task.dueDate))
       .filter(date => date >= today)
       .sort((a, b) => a - b);
     return upcoming.length > 0 ? upcoming[0] : null;
   }, [tasks]);
-
-  // Find next due date for team tasks assigned by this user (if they are a team lead)
-  const nextTeamTaskDueDate = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (!user?.canAssignTask) return null;
-    const teamMemberIds = allEmployees
-      .filter(emp => emp.teamLead?._id === user._id)
-      .map(emp => emp._id);
-    const teamTasks = allTasks
-      .filter(task =>
-        teamMemberIds.includes(task.assignedTo?._id) && task.dueDate &&
-        (task.status === 'Pending' || task.status === 'In Progress')
-      )
-      .map(task => new Date(task.dueDate))
-      .filter(date => date >= today)
-      .sort((a, b) => a - b);
-    return teamTasks.length > 0 ? teamTasks[0] : null;
-  }, [allTasks, allEmployees, user]);
 
   const stats = useMemo(() => {
     const taskStats = { active: 0 };
@@ -151,16 +131,16 @@ const Dashboard = ({ user, onNavigate }) => {
     const recentTasks = [];
 
     tasks.forEach(task => {
-      if (!['Completed', 'Not Completed'].includes(task.status)) {
+      if (!['Completed', 'Not Completed', 'Pending Verification'].includes(task.status)) {
         taskStats.active++;
         recentTasks.push(task);
       } else if (task.status === 'Completed' || task.status === 'Not Completed') {
-        // Determine grade based on progress for completed/not completed tasks
-        const progress = task.progress || 0;
-        if (progress === 100) gradeStats.Completed++;
-        else if (progress >= 80) gradeStats.Moderate++;
-        else if (progress >= 60) gradeStats.Low++;
-        else gradeStats['Not Completed']++;
+        // Use completionCategory for graded tasks, or default to 'Not Completed' if category is missing
+        if (task.completionCategory) {
+          gradeStats[task.completionCategory] = (gradeStats[task.completionCategory] || 0) + 1;
+        }
+      } else if (task.status === 'Pending') {
+        gradeStats.Pending = (gradeStats.Pending || 0) + 1;
       } else if (task.status === 'Pending Verification') {
         recentTasks.push(task);
       }
@@ -169,7 +149,7 @@ const Dashboard = ({ user, onNavigate }) => {
     // Sort recent tasks by creation date and take the top 5
     const sortedRecentTasks = recentTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
 
-    return { taskStats, gradeStats, recentTasks: sortedRecentTasks };
+    return { taskStats, gradeStats, recentTasks: sortedRecentTasks, totalTasks: tasks.length };
   }, [tasks]);
 
   const GradeCard = ({ label, value, icon: Icon, colorClass }) => (
@@ -210,21 +190,11 @@ const Dashboard = ({ user, onNavigate }) => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg text-center md:text-left">Welcome, {user.name}!</h1>
             <p className="mt-3 text-base sm:text-lg text-blue-100/90 font-medium text-center md:text-left">Here’s your daily snapshot. Stay productive and keep growing!</p>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <ClockIcon className="h-7 w-7 text-white/80" />
-              <span className="font-semibold text-lg">
-                Next Task Due: <span className="text-yellow-200">{formatDueDate(nextMyTaskDueDate)}</span>
-              </span>
-            </div>
-            {user?.canAssignTask && nextTeamTaskDueDate && (
-              <div className="flex items-center gap-3">
-                <UserGroupIcon className="h-7 w-7 text-white/80" />
-                <span className="font-semibold text-lg">
-                  Next Team Task Due: <span className="text-green-200">{formatDueDate(nextTeamTaskDueDate)}</span>
-                </span>
-              </div>
-            )}
+          <div className="flex items-center gap-3">
+            <ClockIcon className="h-7 w-7 text-white/80" />
+            <span className="font-semibold text-lg">
+              Next Task Due: <span className="text-yellow-200">{formatDueDate(nextMyTaskDueDate)}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -234,7 +204,7 @@ const Dashboard = ({ user, onNavigate }) => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" /> 
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.active}</p>
-          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Tasks</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Tasks</p> 
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-emerald-500 hover:scale-105 transition-transform duration-200">
           <TrophyIcon className="h-10 w-10 text-emerald-500 mb-2" />
@@ -283,10 +253,10 @@ const Dashboard = ({ user, onNavigate }) => {
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Performance Snapshot</h3>
             <div className="grid grid-cols-2 gap-4">
-              <GradeCard label="Completed" value={stats.gradeStats.Completed} icon={TrophyIcon} colorClass="bg-emerald-500" />
-              <GradeCard label="Moderate" value={stats.gradeStats.Moderate} icon={ShieldCheckIcon} colorClass="bg-blue-500" />
-              <GradeCard label="Low" value={stats.gradeStats.Low} icon={StarIcon} colorClass="bg-amber-500" />
-              <GradeCard label="Not Completed" value={stats.gradeStats['Not Completed']} icon={ExclamationTriangleIcon} colorClass="bg-red-500" />
+              <GradeCard label="Completed" value={stats.gradeStats.Completed || 0} icon={TrophyIcon} colorClass="bg-emerald-500" />
+              <GradeCard label="Moderate" value={stats.gradeStats.Moderate || 0} icon={ShieldCheckIcon} colorClass="bg-blue-500" />
+              <GradeCard label="Low" value={stats.gradeStats.Low || 0} icon={StarIcon} colorClass="bg-amber-500" />
+              <GradeCard label="Pending" value={stats.gradeStats.Pending || 0} icon={ExclamationTriangleIcon} colorClass="bg-red-500" />
             </div>
           </div>
         </div>
@@ -589,7 +559,9 @@ const MyTasks = () => {
     const now = new Date();
     const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-    // A task is overdue only if its due date has passed, its progress is less than 100%, AND it is still an active task.
+    // A task is overdue only if its due date has passed, its progress is less than 100%,
+    // AND it is still an active task (not Completed, Not Completed, or Pending Verification).
+    // Use todayUTCStart for consistent comparison.
     const overdue = dateFilteredTasks.filter(t => t.progress < 100 && ['Pending', 'In Progress'].includes(t.status) && t.dueDate && new Date(t.dueDate) < todayUTCStart);
     // Active tasks are those not yet graded and not in the overdue list.
     const activeAndNotOverdue = dateFilteredTasks.filter(t => !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status) && !overdue.some(ot => ot._id === t._id));
@@ -1104,7 +1076,7 @@ const MyDailyReport = ({ employeeId }) => {
 
     if (taskUpdates.length === 0) {
       // If there are no tasks to report on, still allow submitting an empty report for attendance.
-      toast('Submitting attendance for today.');
+      toast.info('Submitting attendance for today.');
     }
 
     try {
@@ -1172,7 +1144,7 @@ const MyDailyReport = ({ employeeId }) => {
                     min="0"
                     max="100"
                     step="5"
-                    value={progress[task._id] || 0}
+                    value={progress[task._id] ?? 0}
                     onChange={(e) => handleProgressChange(task._id, e.target.value)}
                         disabled={isTaskReadOnly(task)}
                     className="w-full h-4 bg-transparent appearance-none cursor-pointer disabled:cursor-not-allowed slider-thumb"
