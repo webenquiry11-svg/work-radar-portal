@@ -642,20 +642,24 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
   // Team member IDs (direct & indirect)
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !user?._id) return new Set();
-    const subordinatesMap = new Map();
-    const queue = allEmployees.filter(emp => emp.teamLead?._id === user._id);
-
-    while (queue.length > 0) {
-      const currentEmployee = queue.shift();
-      if (!subordinatesMap.has(currentEmployee._id)) {
-        subordinatesMap.set(currentEmployee._id, currentEmployee);
-        const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+    const getAllSubordinates = (managerId, employees) => {
+      const subordinates = [];
+      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
+      const visited = new Set(queue.map(e => e._id));
+      while (queue.length > 0) {
+        const currentEmployee = queue.shift();
+        subordinates.push(currentEmployee);
+        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
         for (const report of directReports) {
-          queue.push(report);
+          if (!visited.has(report._id)) {
+            visited.add(report._id);
+            queue.push(report);
+          }
         }
       }
-    }
-    return new Set(Array.from(subordinatesMap.keys()));
+      return subordinates;
+    };
+    return new Set(getAllSubordinates(user._id, allEmployees).map(e => e._id));
   }, [allEmployees, user]);
 
   // Stats & next due dates

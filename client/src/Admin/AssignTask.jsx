@@ -181,9 +181,25 @@ const AssignTask = () => {
   }, [employees]);
 
   const teamMembers = useMemo(() => {
+    const getAllSubordinates = (managerId, allEmployees) => {
+      const subordinates = [];
+      const queue = allEmployees.filter(emp => emp.teamLead?._id === managerId);
+      const visited = new Set(queue.map(e => e._id));
+      while (queue.length > 0) {
+        const currentEmployee = queue.shift();
+        subordinates.push(currentEmployee);
+        const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        for (const report of directReports) {
+          if (!visited.has(report._id)) {
+            visited.add(report._id);
+            queue.push(report);
+          }
+        }
+      }
+      return subordinates;
+    };
     if (!selectedManager) return [];
-    // This will find all employees who report to the selected manager.
-    return employees.filter(emp => emp.teamLead?._id === selectedManager._id);
+    return getAllSubordinates(selectedManager._id, employees);
   }, [employees, selectedManager]);
 
   const filteredEmployees = useMemo(() => {
