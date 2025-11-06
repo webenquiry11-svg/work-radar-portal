@@ -11,7 +11,7 @@ class AuthController {
       const user = await Employee.findOne({ employeeId });
 
       if (user && (await user.matchPassword(password))) {
-        res.json({
+        return res.json({
           // Return the user object, but exclude the password
           user: await Employee.findById(user._id).select('-password'),
           token: generateToken(user._id),

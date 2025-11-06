@@ -634,29 +634,28 @@ const TeamInformation = ({ seniorId }) => {
 };
 
 const ManagerDashboardContent = ({ user, onNavigate }) => {
-  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery(); 
+  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
-  const { data: notifications = [], isLoading: isLoadingNotifications } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+  const { data: tasksForApproval = [], isLoading: isLoadingApprovals } = useGetTasksForApprovalQuery(undefined, { pollingInterval: 30000 });
   const { data: announcement } = useGetActiveAnnouncementQuery();
 
   // Team member IDs (direct & indirect)
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !user?._id) return new Set();
-    const subordinates = [];
+    const subordinatesMap = new Map();
     const queue = allEmployees.filter(emp => emp.teamLead?._id === user._id);
-    const visited = new Set(queue.map(e => e._id));
+
     while (queue.length > 0) {
       const currentEmployee = queue.shift();
-      subordinates.push(currentEmployee);
-      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
-      for (const report of directReports) {
-        if (!visited.has(report._id)) {
-          visited.add(report._id);
+      if (!subordinatesMap.has(currentEmployee._id)) {
+        subordinatesMap.set(currentEmployee._id, currentEmployee);
+        const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        for (const report of directReports) {
           queue.push(report);
         }
       }
     }
-    return new Set(subordinates.map(emp => emp._id));
+    return new Set(Array.from(subordinatesMap.keys()));
   }, [allEmployees, user]);
 
   // Stats & next due dates
@@ -664,15 +663,13 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
     const now = new Date();
     const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-    const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id) && task.progress < 100);
+    const teamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
     let teamUpcomingDueDate = null;
     let teamUpcomingTaskTitle = '';
     const taskStats = { completed: 0, inProgress: 0, pending: 0, pendingVerification: 0 };
 
-    const allTeamTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
-
-    allTeamTasks.forEach(task => {
-      if (task.progress < 100 && task.dueDate && new Date(task.dueDate) >= todayUTCStart) {
+    teamTasks.forEach(task => {
+      if (['Pending', 'In Progress'].includes(task.status) && task.dueDate && new Date(task.dueDate) >= todayUTCStart) {
         const dueDate = new Date(task.dueDate);
         if (!teamUpcomingDueDate || dueDate < teamUpcomingDueDate) {
           teamUpcomingDueDate = dueDate;
@@ -685,33 +682,16 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
       else if (task.status === 'Pending') taskStats.pending++;
     });
 
-    const myTasks = allTasks.filter(task => task.assignedTo?._id === user._id && task.progress < 100);
-    let myUpcomingDueDate = null;
-    let myUpcomingTaskTitle = '';
-    myTasks.forEach(task => {
-      if (task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) >= todayUTCStart) {
-        const dueDate = new Date(task.dueDate);
-        if (!myUpcomingDueDate || dueDate < myUpcomingDueDate) {
-          myUpcomingDueDate = dueDate;
-          myUpcomingTaskTitle = task.title;
-        }
-      }
-    });
-
-    const pendingApprovals = notifications.filter(n => n.type === 'task_approval' && n.relatedTask);
-
     return {
       teamMemberCount: teamMemberIds.size,
-      totalTeamTasks: allTeamTasks.length,
-      pendingApprovalsCount: pendingApprovals.length, 
-      pendingApprovalTasks: pendingApprovals.slice(0, 5),
+      totalTeamTasks: teamTasks.length,
+      pendingApprovalsCount: tasksForApproval.length,
+      pendingApprovalTasks: tasksForApproval.slice(0, 5),
       teamUpcomingDueDate,
       teamUpcomingTaskTitle,
-      myUpcomingDueDate,
-      myUpcomingTaskTitle,
       taskStats,
     };
-  }, [allTasks, teamMemberIds, notifications, user]);
+  }, [allTasks, teamMemberIds, tasksForApproval, user]);
 
   // Chart data
   const taskChartData = [
@@ -723,7 +703,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
 
   const TASK_COLORS = { 'Completed': '#10B981', 'In Progress': '#3B82F6', 'Pending': '#F59E0B', 'Verification': '#8B5CF6' };
 
-  if (isLoadingTasks || isLoadingEmployees || isLoadingNotifications) {
+  if (isLoadingTasks || isLoadingEmployees || isLoadingApprovals) {
     return <div className="p-8 text-center">Loading dashboard...</div>;
   }
 

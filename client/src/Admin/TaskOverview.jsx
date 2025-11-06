@@ -40,8 +40,8 @@ const TaskOverview = () => {
     }
 
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
     // Get the start of the current week (Sunday)
     const firstDayOfWeek = new Date(todayStart);
     firstDayOfWeek.setDate(firstDayOfWeek.getDate() - todayStart.getDay());

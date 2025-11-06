@@ -474,13 +474,13 @@ class TaskController {
 
         // Find all direct and indirect subordinates
         const teamMemberIds = new Set();
-        const queue = allEmployees.filter(emp => emp.teamLead?.toString() === approverId.toString());
+        const queue = allEmployees.filter(emp => emp.teamLead?._id.toString() === approverId.toString());
         const visited = new Set(queue.map(e => e._id.toString()));
         
         while (queue.length > 0) {
           const currentEmployee = queue.shift();
           teamMemberIds.add(currentEmployee._id);
-          const directReports = allEmployees.filter(emp => emp.teamLead?.toString() === currentEmployee._id.toString());
+          const directReports = allEmployees.filter(emp => emp.teamLead?._id.toString() === currentEmployee._id.toString());
           for (const report of directReports) {
             if (!visited.has(report._id.toString())) {
               visited.add(report._id.toString());

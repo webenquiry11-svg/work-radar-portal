@@ -156,8 +156,9 @@ class ManageEmployeeController {
 
       const totalEmployees = await Employee.countDocuments({ role: { $ne: 'Admin' } });
 
-      const managers = await Employee.find({ dashboardAccess: 'Manager Dashboard' }).select('_id');
-      const managerIds = managers.map(m => m._id);
+      // Find all users who can manage others (Admins or anyone with canAssignTask permission)
+      const managersAndAdmins = await Employee.find({ $or: [{ role: 'Admin' }, { canAssignTask: true }] }).select('_id');
+      const managerIds = managersAndAdmins.map(m => m._id);
 
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);

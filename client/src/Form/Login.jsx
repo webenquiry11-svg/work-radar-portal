@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { setCredentials } from "../app/authSlice";
 import portalLogo from "../assets/portal_logo.png";
 
+import starPublicityLogo from "../assets/starpublicity.png";
+import volgaInfosysLogo from "../assets/volgainfosys.png";
 const wishes = [
   "Let's make today productive!",
   "Ready to achieve great things?",
@@ -191,8 +193,12 @@ const Login = () => {
       <div className="flex items-center justify-center p-4 sm:p-8 bg-slate-50 dark:bg-slate-900">
         <div className="relative z-10 w-full max-w-md p-8 sm:p-10 space-y-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 transition-transform duration-300 hover:-translate-y-1 hover:shadow-3xl">
           <div className="text-center">
-            <div className="mx-auto mb-4 flex items-center justify-center h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/50 dark:via-indigo-900/50 dark:to-purple-900/50 shadow-lg ring-4 ring-white/20 animate-bounce-slow">
-              <img src={portalLogo} alt="Logo" className="h-20 w-20" />
+            <div className="mx-auto mb-4 flex items-center justify-center h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/50 dark:via-indigo-900/50 dark:to-purple-900/50 shadow-lg ring-4 ring-white/20 animate-bounce-slow">              
+              {companyInfo?.companyName === 'Volga Infosys' ? (
+                <img src={volgaInfosysLogo} alt="Logo" className="h-20 w-20" />
+              ) : (
+                <img src={starPublicityLogo} alt="Logo" className="h-20 w-20" />
+              )}
             </div>
             <h1 className="text-4xl font-extrabold text-slate-800 dark:text-indigo-300 drop-shadow-md mb-2 tracking-tight animate-fade-in">
               {getGreeting()}!
