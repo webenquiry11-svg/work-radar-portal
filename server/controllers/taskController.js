@@ -467,7 +467,7 @@ class TaskController {
           .sort({ submittedForCompletionDate: 1 });
       } else {
         // Managers see tasks they assigned OR tasks assigned to their team members.
-        const allEmployees = await Employee.find({}).populate('teamLead', '_id');
+        const allEmployees = await Employee.find({});
 
         // Find all direct and indirect subordinates
         const teamMemberIds = new Set();
