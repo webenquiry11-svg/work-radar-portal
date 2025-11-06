@@ -1777,5 +1777,4 @@ const EmployeeDashboard = ({ employeeId }) => {
 };
 
 export default EmployeeDashboard;
-
-export default EmployeeDashboard;
+ 
