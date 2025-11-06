@@ -391,8 +391,9 @@ class TaskController {
       }).populate('assignedTo', 'name');
 
       for (const task of pastDueTasks) {
-        if (!task.assignedTo) {
-          console.log(`Skipping past-due processing for task ${task._id}: no assignee.`);
+        // Crucial check: If assignedTo is null after population (e.g., employee was deleted)
+        if (!task.assignedTo || !task.assignedTo._id) {
+          console.log(`Skipping past-due processing for task ${task._id}: assigned employee reference is null or its ID is missing after population.`);
           continue; // Skip this task if it has no assignee
         }
 
