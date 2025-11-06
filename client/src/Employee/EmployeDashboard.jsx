@@ -1137,7 +1137,8 @@ const MyDailyReport = ({ employeeId }) => {
               </div>
             </div>
           </div>
-        ))}        {tasksToDisplay.length === 0 && (
+        ))}
+        {tasksToDisplay.length === 0 && (
           <div className="lg:col-span-2 text-center py-16 text-slate-500 bg-white dark:bg-slate-800 rounded-xl border border-dashed dark:border-slate-700">
             <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400" />
             <p className="mt-4 font-semibold text-lg">All tasks are completed!</p>
