@@ -127,11 +127,13 @@ class ReportController {
       if (status === 'Submitted') {
         const submittingEmployee = await Employee.findById(employeeId).populate('teamLead');
         if (submittingEmployee) {
+          const notifiedRecipients = new Set();
           const notifications = [];
           const message = `${submittingEmployee.name} has submitted their daily progress report.`;
 
           // 1. Notify the direct team lead (if they exist)
           if (submittingEmployee.teamLead) {
+            notifiedRecipients.add(submittingEmployee.teamLead._id.toString());
             notifications.push({
               recipient: submittingEmployee.teamLead._id,
               subjectEmployee: submittingEmployee._id,
@@ -142,7 +144,12 @@ class ReportController {
 
           // 2. Notify all Admins
           const admins = await Employee.find({ role: 'Admin' }).select('_id');
-          admins.forEach(admin => notifications.push({ recipient: admin._id, subjectEmployee: submittingEmployee._id, message: message, type: 'info' }));
+          admins.forEach(admin => {
+            // Only add notification if the admin hasn't already been notified (as a team lead)
+            if (!notifiedRecipients.has(admin._id.toString())) {
+              notifications.push({ recipient: admin._id, subjectEmployee: submittingEmployee._id, message: message, type: 'info' });
+            }
+          });
           if (notifications.length > 0) await Notification.insertMany(notifications);
         }
       }
