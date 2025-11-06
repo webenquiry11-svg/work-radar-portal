@@ -387,7 +387,9 @@ class TaskController {
 
       const pastDueTasks = await Task.find({
         dueDate: { $lt: today },
-        status: { $in: ['Pending', 'In Progress'] }
+          $or: [{ status: { $in: ['Pending', 'In Progress'] } }, // Tasks that are simply overdue
+          { status: 'In Progress', progress: 100 } // Tasks marked 100% but not yet submitted
+        ]
       }).populate('assignedTo', 'name');
 
       for (const task of pastDueTasks) {

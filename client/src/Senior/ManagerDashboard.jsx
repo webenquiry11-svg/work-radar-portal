@@ -1495,19 +1495,16 @@ const MyDailyReport = ({ employeeId }) => {
 
   const tasksToDisplay = useMemo(() => {
     return assignedTasks.filter(t => {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Local start of day
-      const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-      const startDateUTC = t.startDate ? new Date(Date.UTC(new Date(t.startDate).getUTCFullYear(), new Date(t.startDate).getUTCMonth(), new Date(t.startDate).getUTCDate())) : null;
-      const dueDate = t.dueDate ? new Date(t.dueDate) : null; // This is already in UTC from backend 
+      const now = new Date(); // Use local time for comparison with UI
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dueDate = t.dueDate ? new Date(t.dueDate) : null;
 
-      
       // A task should not be in the report if it's already completed or pending verification.
       const isNotCompleted = !['Completed', 'Not Completed', 'Pending Verification'].includes(t.status);
-      const hasStarted = !startDateUTC || startDateUTC <= todayUTC;
-      const isNotPastDue = !dueDate || new Date(dueDate) >= todayStart;
-      return isNotCompleted && hasStarted && isNotPastDue;
-      return isNotCompleted && hasStarted;
+      // A task should only be in the report if its due date has not passed.
+      const isNotPastDue = !dueDate || dueDate >= todayStart;
+
+      return isNotCompleted && isNotPastDue;
     });
   }, [assignedTasks]);
 

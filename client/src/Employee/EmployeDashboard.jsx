@@ -1061,8 +1061,13 @@ const MyDailyReport = ({ employeeId }) => {
   const { data: todaysReport, isLoading: isLoadingReport } = useGetTodaysReportQuery(employeeId);
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
   const [progress, setProgress] = useState({});
-
-  const isReadOnly = useMemo(() => todaysReport?.status === 'Submitted', [todaysReport]);
+  
+  const isReadOnly = useMemo(() => {
+    const now = new Date();
+    const isPastCutoff = now.getHours() >= 19; // 7:00 PM
+    const isSubmitted = todaysReport?.status === 'Submitted';
+    return isPastCutoff || isSubmitted;
+  }, [todaysReport]);
 
   const isTaskReadOnly = (task) => {
     // A task is read-only if the main report is read-only, or if the task itself was rejected.
