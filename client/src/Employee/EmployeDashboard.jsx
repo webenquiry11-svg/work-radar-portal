@@ -192,6 +192,7 @@ const Dashboard = ({ user, onNavigate }) => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" /> 
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.active}</p>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Active Tasks</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-emerald-500 hover:scale-105 transition-transform duration-200">
           <TrophyIcon className="h-10 w-10 text-emerald-500 mb-2" />
