@@ -68,10 +68,10 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
 
 const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, initialProgress }) => {
   const [comment, setComment] = useState('');
-  const [finalPercentage, setFinalPercentage] = useState(initialProgress || 100);
+  const [finalPercentage, setFinalPercentage] = useState(100);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && initialProgress !== undefined) {
       setFinalPercentage(initialProgress || 100);
       setComment('');
     }

@@ -386,10 +386,9 @@ class TaskController {
       today.setUTCHours(0, 0, 0, 0);
 
       const pastDueTasks = await Task.find({
-        dueDate: { $lt: today },
-          $or: [{ status: { $in: ['Pending', 'In Progress'] } }, // Tasks that are simply overdue
-          { status: 'In Progress', progress: 100 } // Tasks marked 100% but not yet submitted
-        ]
+        dueDate: { $lt: today }, // Find tasks whose due date is before today
+        // Only select tasks that are still active and not already finalized or pending verification
+        status: { $in: ['Pending', 'In Progress'] }
       }).populate('assignedTo', 'name');
 
       for (const task of pastDueTasks) {
