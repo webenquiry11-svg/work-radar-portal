@@ -1077,6 +1077,19 @@ const MyDailyReport = ({ employeeId }) => {
     }
   };
 
+  const tasksToDisplay = useMemo(() => {
+    const now = new Date();
+    // Use UTC for consistent date comparison with the server.
+    const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    return assignedTasks.filter(task => {
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+      const isNotFinalized = !['Completed', 'Not Completed', 'Pending Verification'].includes(task.status);
+      const isNotPastDue = !dueDate || dueDate >= todayUTCStart;
+      return isNotFinalized && isNotPastDue;
+    });
+  }, [assignedTasks]);
+
   if (isLoadingTasks || isLoadingReport) {
     return <div className="text-center p-10">Loading Report...</div>;
   }
