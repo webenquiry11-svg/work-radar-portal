@@ -1473,7 +1473,7 @@ const MyDailyReport = ({ employeeId }) => {
       }).unwrap();
       toast.success('Progress submitted successfully!');
     } catch (err) {
-      toast.error(err.data?.message || 'Failed to submit progress.');
+      toast.error(err.data?.message || "Error in submitting today's report");
     }
   };
 
