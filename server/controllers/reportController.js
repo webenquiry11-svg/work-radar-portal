@@ -74,7 +74,7 @@ class ReportController {
                   // Only create a notification if one doesn't already exist to prevent duplicates
                   if (!existingNotification) {
                     task.status = 'Pending Verification';
-                    task.submittedForCompletionDate = today; // Set submission date
+                    task.submittedForCompletionDate = new Date(); // Set submission date to the exact time
 
                     // New Logic: Notify the assigner and all admins
                     const employee = await Employee.findById(task.assignedTo);
