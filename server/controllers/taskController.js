@@ -196,7 +196,7 @@ class TaskController {
         task.status = 'Completed';
       }
       task.completionDate = task.submittedForCompletionDate || new Date();
-      task.progress = finalProgress;
+      task.progress = finalProgress; // Correctly assign the final progress
       task.rejectionReason = ''; // Clear any previous rejection reason
 
       // If there's a comment, add it to the task
@@ -220,7 +220,7 @@ class TaskController {
       });
 
       // After approval, delete the corresponding 'task_approval' notification
-      await Notification.findOneAndDelete({
+      await Notification.deleteMany({
         relatedTask: task._id,
         type: 'task_approval',
       });
@@ -398,6 +398,16 @@ class TaskController {
           continue; // Skip this task if it has no assignee
         }
 
+        // Check if an approval notification already exists for this task
+        const existingNotification = await Notification.findOne({
+          relatedTask: task._id,
+          type: 'task_approval'
+        });
+        
+        // If a notification for this task's approval already exists, skip to avoid duplicates.
+        if (existingNotification) {
+          continue;
+        }
         // Check if an approval notification already exists for this task
         const existingNotification = await Notification.findOne({
           relatedTask: task._id,
