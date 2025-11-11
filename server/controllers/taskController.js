@@ -397,13 +397,6 @@ class TaskController {
           console.log(`Skipping past-due processing for task ${task._id}: assigned employee reference is null or its ID is missing after population.`);
           continue; // Skip this task if it has no assignee
         }
-
-        // Check if an approval notification already exists for this task
-        const existingNotification = await Notification.findOne({
-          relatedTask: task._id,
-          type: 'task_approval'
-        });
-        
         // If a notification for this task's approval already exists, skip to avoid duplicates.
         if (existingNotification) {
           continue;
