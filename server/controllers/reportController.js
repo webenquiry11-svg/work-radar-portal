@@ -69,7 +69,7 @@ class ReportController {
                   const existingNotification = await Notification.findOne({
                     relatedTask: task._id,
                     type: 'task_approval'
-                  });
+                  }); 
 
                   // Only create a notification if one doesn't already exist to prevent duplicates
                   if (!existingNotification) {
@@ -80,7 +80,7 @@ class ReportController {
                     const employee = await Employee.findById(task.assignedTo);
                     const message = `${employee.name} has marked the task "${task.title}" as 100% complete and it is ready for your approval.`;
                     const notifications = [];
-
+       
                     // 1. Notify the person who assigned the task
                     notifications.push({
                       recipient: task.assignedBy,

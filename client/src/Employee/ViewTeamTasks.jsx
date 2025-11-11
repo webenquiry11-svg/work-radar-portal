@@ -321,8 +321,8 @@ const ViewTeamTasks = ({ teamLeadId }) => {
                     <td className="px-6 py-4"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span></td>
                     <td className="px-6 py-4">
                       {['Completed', 'Not Completed'].includes(task.status) ? (
-                        <span className="text-sm font-semibold text-slate-700">
-                          {task.progress}%
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${completionCategoryStyles[task.completionCategory]}`}>
+                          {task.completionCategory || 'Graded'}
                         </span>
                       ) : <span className="text-slate-400 text-xs">--</span>}
                     </td>
