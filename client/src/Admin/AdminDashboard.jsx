@@ -27,6 +27,7 @@ import ManageAnnouncements from './ManageAnnouncements';
 import AllEmployeeAttendance from './AllEmployeeAttendance';
 import GooglePieChart from './GooglePieChart.jsx';
 import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
+import * as XLSX from 'xlsx';
 const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
   const [comment, setComment] = useState('');
   const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
