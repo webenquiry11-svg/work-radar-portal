@@ -37,8 +37,7 @@ export const apiSlice = createApi({
   tagTypes: ['Employee', 'Report', 'User'], // Define tag types for caching
   endpoints: (builder) => ({
     logout: builder.mutation({
-      // The query is intentionally empty because we are just using this to trigger the onQueryStarted logic.
-      query: () => ({ url: '/logout', method: 'POST' }), // This can be a dummy endpoint
+      query: () => ({ url: '/logout', method: 'POST' }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         dispatch({ type: 'auth/logOut' });
         // Reset the entire API state to clear out any cached data
