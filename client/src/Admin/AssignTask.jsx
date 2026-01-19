@@ -62,11 +62,12 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
         </div>
         <div className="px-6 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            {employee.profilePicture ? (
-              <img src={employee.profilePicture} alt={employee.name} className="h-10 w-10 rounded-full border border-blue-200" />
-            ) : (
-              <UserCircleIcon className="h-10 w-10 text-blue-200" />
-            )}
+            <img 
+              src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} 
+              alt={employee.name} 
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
+              className="h-10 w-10 rounded-full border border-blue-200" 
+            />
             <div>
               <div className="font-semibold text-slate-800 dark:text-white">{employee.name}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{employee.role} &middot; {employee.department || 'N/A'}</div>
@@ -271,6 +272,7 @@ const AssignTask = () => {
                   <img
                     src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
                     alt={employee.name}
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
                     className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 mb-3"
                   />
                   <div className="text-center">

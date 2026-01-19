@@ -23,70 +23,56 @@ const AttendanceCalendar = ({ employeeId }) => {
     return map;
   }, [attendanceData]);
 
-  const statusStyles = {
-    Present: 'bg-green-100 text-green-800',
-    Absent: 'bg-red-100 text-red-800',
-    'On Leave': 'bg-yellow-100 text-yellow-800',
-    Holiday: 'holiday-gradient text-white',
-    Future: 'bg-white',
-    Pending: 'bg-gray-200 text-gray-600',
-  };
-
+  const legendItems = [
+    { label: 'Present', className: 'present-tile' },
+    { label: 'Absent', className: 'absent-tile' },
+    { label: 'On Leave', className: 'leave-tile' },
+    { label: 'Holiday', className: 'holiday-tile' },
+    { label: 'Sunday', className: 'sunday-tile' },
+  ];
   const tileContent = ({ date, view }) => {
     if (view === 'month') {
       const dateStr = date.toISOString().split('T')[0];
       // The calendar passes local time dates, we need to find the status for the corresponding UTC date string.
       const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
       const status = attendanceMap.get(utcDate.toISOString().split('T')[0]);
-      if (status && status !== 'Future') {
-        return (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-full px-1 text-center">
-            <p className={`rounded-full text-[9px] font-bold truncate leading-tight ${statusStyles[status]}`}>
-              {status}
-            </p>
-          </div>
-        );
+      if (status && status !== 'Future' && status !== 'Pending') {
+        return <p className="tile-label">{status}</p>;
       }
+    }
+    return null;
+  };
+
+  const tileClassName = ({ date, view }) => {
+    if (view === 'month') {
+      const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const status = attendanceMap.get(utcDate.toISOString().split('T')[0]);
+      
+      if (status === 'Present') return 'present-tile';
+      if (status === 'Absent') return 'absent-tile';
+      if (status === 'On Leave') return 'leave-tile';
+      if (status === 'Holiday') return 'holiday-tile';
+      if (date.getUTCDay() === 0) return 'sunday-tile';
     }
     return null;
   };
 
   const Legend = () => (
     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-      {Object.entries(statusStyles).filter(([key]) => !['Future', 'Pending', 'Weekend'].includes(key)).map(([status, className]) => (
-        <div key={status} className="flex items-center gap-2">
-          <span className={`h-3 w-3 rounded-full ${className.split(' ')[0]}`}></span>
-          <span>{status}</span>
+      {legendItems.map(({ label, className }) => (
+        <div key={label} className="flex items-center gap-2">
+          <span className={`h-3 w-3 rounded-full ${className}`}></span>
+          <span className="dark:text-slate-300">{label}</span>
         </div>
       ))}
     </div>
   );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <style>{`
-        .attendance-calendar .react-calendar { 
-          width: 100%; border: none; border-radius: 1rem;
-          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-          padding: 1.5rem; background: white; 
-        }
-        .dark .attendance-calendar .react-calendar { background: #1E293B; }
-        .attendance-calendar .react-calendar__tile { 
-          border-radius: 0.5rem; position: relative; height: 80px;
-        }
-        .attendance-calendar .react-calendar__navigation button {
-          font-weight: bold; font-size: 1.1rem;
-        }
-        .attendance-calendar .react-calendar__navigation__arrow {
-          font-size: 1.5rem;
-        }
-        .holiday-gradient {
-          background-image: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6);
-        }
-      `}</style>
-      <div className="attendance-calendar">
+    <div className="p-0 sm:p-2 lg:p-4">
         {isLoading && <div className="text-center p-4">Loading attendance...</div>}
         <Calendar
+          className="custom-calendar"
           activeStartDate={activeStartDate}
           onActiveStartDateChange={({ activeStartDate }) => {
             // Ensure the new start date is also treated as UTC midnight
@@ -94,6 +80,7 @@ const AttendanceCalendar = ({ employeeId }) => {
           }}
           value={new Date()}
           tileContent={tileContent}
+          tileClassName={tileClassName}
           showNeighboringMonth={false}
           prev2Label={null}
           next2Label={null}
@@ -101,7 +88,6 @@ const AttendanceCalendar = ({ employeeId }) => {
           nextLabel={<ChevronRightIcon className="h-6 w-6" />}
         />
         <Legend />
-      </div>
     </div>
   );
 };

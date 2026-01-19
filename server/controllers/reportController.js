@@ -2,6 +2,7 @@ const Report = require('../models/report.js');
 const Task = require('../models/task.js');
 const Notification = require('../models/notification.js');
 const Employee = require('../models/employee.js');
+const Assignment = require('../models/assignment.js');
 
 class ReportController {
   /**
@@ -37,15 +38,22 @@ class ReportController {
     const { employeeId } = req.params;
     const { content, status } = req.body;
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
-    // Prevent updates if the report has already been submitted.
+    const now = new Date();
+    // Use UTC date to prevent timezone issues
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+ 
     try {
+      // Prevent updates if the report has already been submitted or if it's past the cutoff time.
       const existingReport = await Report.findOne({ employee: employeeId, reportDate: today });
-
+ 
       if (existingReport && existingReport.status === 'Submitted') {
         return res.status(403).json({ message: 'Report has already been submitted and cannot be modified.' });
+      }
+ 
+      // Add a server-side time check for consistency. Assumes server is in the company's local timezone.
+      const currentHour = new Date().getHours();
+      if (currentHour >= 19) { // 7 PM
+        return res.status(403).json({ message: 'The deadline for submitting reports (7:00 PM) has passed.' });
       }
 
       // If the report is being submitted, check for task completion updates.
@@ -56,56 +64,72 @@ class ReportController {
             for (const update of reportContent.taskUpdates) {
               const task = await Task.findById(update.taskId);
               if (task) {
-                // If the task was previously rejected, the progress set by the manager is final.
-                if (task.rejectionReason && task.status === 'In Progress') {
-                  continue; // Skip progress update from employee
-                }
+                let completion = parseInt(update.completion, 10);
+                if (isNaN(completion)) continue; // Skip invalid updates to prevent data corruption
 
-                const completion = parseInt(update.completion, 10);
                 task.progress = completion;
+                // Clear rejection reason so the task is eligible for auto-submission if it becomes overdue
+                task.rejectionReason = '';
 
-                if (completion === 100 && !['Pending Verification', 'Completed', 'Not Completed'].includes(task.status)) {
-                  // Check if an approval notification already exists for this task
-                  const existingNotification = await Notification.findOne({
-                    relatedTask: task._id,
-                    type: 'task_approval'
-                  }); 
+                // Check if the task is already in a state that shouldn't be changed by simple progress updates
+                const isFinalizedState = ['Pending Verification', 'Completed', 'Not Completed'].includes(task.status);
 
-                  // Only create a notification if one doesn't already exist to prevent duplicates
-                  if (!existingNotification) {
-                    task.status = 'Pending Verification';
-                    task.submittedForCompletionDate = new Date(); // Set submission date to the exact time
+                if (completion === 100 && !isFinalizedState) {
+                  // If progress is 100%, move to verification
+                  task.status = 'Pending Verification';
+                  task.submittedForCompletionDate = new Date(); // Set submission date to the exact time
 
-                    // New Logic: Notify the assigner and all admins
-                    const employee = await Employee.findById(task.assignedTo);
-                    const message = `${employee.name} has marked the task "${task.title}" as 100% complete and it is ready for your approval.`;
-                    const notifications = [];
-       
-                    // 1. Notify the person who assigned the task
-                    notifications.push({
-                      recipient: task.assignedBy,
-                      subjectEmployee: employee._id,
-                      message: message,
-                      type: 'task_approval',
-                      relatedTask: task._id,
-                    });
-
-                    // 2. Notify all Admins
-                    const admins = await Employee.find({ role: 'Admin' }).select('_id');
-                    admins.forEach(admin => {
-                      // Avoid sending a duplicate notification if the admin is the assigner
-                      if (admin._id.toString() !== task.assignedBy.toString()) {
-                        notifications.push({ recipient: admin._id, subjectEmployee: employee._id, message: message, type: 'task_approval', relatedTask: task._id });
+                  // --- Notification Logic ---
+                  // This is wrapped in a try/catch so that a failure in sending notifications
+                  // does not prevent the user's report and task progress from being saved.
+                  try {
+                    const employee = await Employee.findById(task.assignedTo).select('name');
+                    if (employee) {
+                      const message = `${employee.name} has marked the task "${task.title}" as 100% complete and it is ready for your approval.`;
+                      
+                      // Build a unique list of recipients who can approve the task
+                      const recipientIds = new Set();
+                      if (task.assignedBy) recipientIds.add(task.assignedBy.toString());
+  
+                      // Find assignee's team lead
+                      const assignment = await Assignment.findOne({ employee: task.assignedTo });
+                      if (assignment && assignment.teamLead) {
+                        recipientIds.add(assignment.teamLead.toString());
                       }
-                    });
-                    if (notifications.length > 0) await Notification.insertMany(notifications);
+  
+                      // Add all admins
+                      const admins = await Employee.find({ role: 'Admin' }).select('_id');
+                      admins.forEach(admin => recipientIds.add(admin._id.toString()));
+  
+                      // Don't notify the person who completed the task
+                      if (task.assignedTo) {
+                        recipientIds.delete(task.assignedTo.toString());
+                      }
+  
+                      const notifications = Array.from(recipientIds).map(id => ({
+                        recipient: id,
+                        subjectEmployee: employee._id,
+                        message: message,
+                        type: 'task_approval',
+                        relatedTask: task._id,
+                      }));
+  
+                      if (notifications.length > 0) {
+                        // Use ordered: false to insert all possible notifications,
+                        // skipping any duplicates without failing the entire batch.
+                        // This is robust against race conditions.
+                        await Notification.insertMany(notifications, { ordered: false });
+                      }
+                    }
+                  } catch (notificationError) {
+                    // Log the error but do not fail the entire report submission.
+                    console.error(`Non-critical error: Failed to create approval notification for task ${task._id}:`, notificationError);
                   }
-                } else if (completion > 0) {
-                  task.status = 'In Progress';
-                } else {
-                  // If progress is 0, it remains 'Pending' unless it was already in progress
-                  if (task.status !== 'In Progress') {
-                    task.status = 'Pending';
+                } else if (!isFinalizedState) {
+                  // Only update status if it's not already in a finalized or verification state
+                  // If progress is made (> 0) and the task is currently Pending, move it to In Progress.
+                  if (completion > 0 && task.status === 'Pending') {
+                    task.status = 'In Progress';
                   }
                 }
                 await task.save();
@@ -125,32 +149,47 @@ class ReportController {
 
       // If the report was successfully submitted, notify the team lead and all admins.
       if (status === 'Submitted') {
-        const submittingEmployee = await Employee.findById(employeeId).populate('teamLead');
+        const submittingEmployee = await Employee.findById(employeeId);
         if (submittingEmployee) {
-          const notifiedRecipients = new Set();
-          const notifications = [];
           const message = `${submittingEmployee.name} has submitted their daily progress report.`;
+          
+          // Find the assignment to get the team lead
+          const assignment = await Assignment.findOne({ employee: employeeId });
+          const admins = await Employee.find({ role: 'Admin' }).select('_id');
+          
+          const potentialRecipients = new Set();
+          if (assignment && assignment.teamLead) {
+            potentialRecipients.add(assignment.teamLead.toString());
+          }
+          admins.forEach(admin => {
+            potentialRecipients.add(admin._id.toString());
+          });
+          // Don't notify the person who submitted the report
+          potentialRecipients.delete(submittingEmployee._id.toString());
 
-          // 1. Notify the direct team lead (if they exist)
-          if (submittingEmployee.teamLead) {
-            notifiedRecipients.add(submittingEmployee.teamLead._id.toString());
-            notifications.push({
-              recipient: submittingEmployee.teamLead._id,
+          const recipientIds = Array.from(potentialRecipients);
+
+          if (recipientIds.length > 0) {
+            const todayForNotification = new Date();
+            todayForNotification.setUTCHours(0, 0, 0, 0);
+
+            const notifications = recipientIds.map(id => ({
+              recipient: id,
               subjectEmployee: submittingEmployee._id,
               message: message,
-              type: 'info',
-            });
-          }
+              type: 'report_submitted',
+              notificationDate: todayForNotification
+            }));
 
-          // 2. Notify all Admins
-          const admins = await Employee.find({ role: 'Admin' }).select('_id');
-          admins.forEach(admin => {
-            // Only add notification if the admin hasn't already been notified (as a team lead)
-            if (!notifiedRecipients.has(admin._id.toString())) {
-              notifications.push({ recipient: admin._id, subjectEmployee: submittingEmployee._id, message: message, type: 'info' });
+            // The unique index on the Notification model will prevent duplicates for the same day.
+            // Using ordered: false ensures that if one notification fails (e.g., duplicate), the others are still inserted.
+            try {
+              await Notification.insertMany(notifications, { ordered: false });
+            } catch (notificationError) {
+              // Log the error but do not fail the entire report submission.
+              console.error(`Non-critical error: Failed to create report submission notification for employee ${employeeId}:`, notificationError);
             }
-          });
-          if (notifications.length > 0) await Notification.insertMany(notifications);
+          }
         }
       }
 

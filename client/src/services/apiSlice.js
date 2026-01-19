@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Employee', 'Report', 'User'], // Define tag types for caching
+  tagTypes: ['Employee', 'Report', 'User', 'Task', 'Notification', 'Leave', 'Holiday', 'Announcement', 'EOMHistory', 'EOMOfficial', 'CompanyInfo'], // Define tag types for caching
   endpoints: (builder) => ({
     logout: builder.mutation({
       query: () => ({ url: '/logout', method: 'POST' }),

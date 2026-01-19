@@ -1,5 +1,6 @@
 const Announcement = require('../models/announcement.js');
 const Employee = require('../models/employee.js');
+const Notification = require('../models/notification.js');
 
 class AnnouncementController {
   static getActiveAnnouncement = async (req, res) => {

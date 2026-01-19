@@ -80,10 +80,11 @@ class ManageEmployeeController {
       try {
         const employee = await Employee.findById(id);
         if (employee && employee.profilePicture) {
-          // Extract public_id from the Cloudinary URL
-          const urlParts = employee.profilePicture.split('/');
-          const publicIdWithExtension = urlParts.slice(urlParts.indexOf('employee-profiles')).join('/');
-          const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
+          // Robustly extract public_id from the Cloudinary URL
+          // Example URL: http://res.cloudinary.com/cloud_name/image/upload/v12345/employee-profiles/profile-123.png
+          const publicIdMatch = employee.profilePicture.match(/employee-profiles\/([^\.]+)/);
+          const publicId = publicIdMatch ? `employee-profiles/${publicIdMatch[1]}` : null;
+          if (publicId)
           await cloudinary.uploader.destroy(publicId);
         }
       } catch (e) {

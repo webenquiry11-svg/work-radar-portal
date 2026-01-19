@@ -111,6 +111,7 @@ const AdminProfile = ({ user }) => {
             <img
               src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
               alt="Profile"
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`; }}
               className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
             />
             <div>

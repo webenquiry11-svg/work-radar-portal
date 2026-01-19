@@ -23,6 +23,7 @@ router.get('/setup/company-info', SetupController.getCompanyInfo);
 
 // Public route
 router.post('/login', AuthController.login);
+router.post('/logout', AuthController.logout);
 router.get('/auth/me', protect, AuthController.getMe);
 router.post('/auth/forgot-password', AuthController.forgotPassword);
 router.post('/auth/reset-password/:token', AuthController.resetPassword);

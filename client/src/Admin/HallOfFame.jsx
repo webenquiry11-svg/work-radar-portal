@@ -9,6 +9,7 @@ const WinnerCard = ({ winner }) => (
     <img
       src={winner.employee?.profilePicture || `https://ui-avatars.com/api/?name=${winner.employee?.name}`}
       alt={winner.employee.name}
+      onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${winner.employee?.name}&background=random`; }}
       className="h-20 w-20 rounded-full object-cover border-4 border-amber-300"
     />
     <h4 className="mt-3 font-bold text-slate-800">{winner.employee.name}</h4>

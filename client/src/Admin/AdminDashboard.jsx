@@ -1,17 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  HomeIcon, UsersIcon, BellIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ArrowRightOnRectangleIcon, UserCircleIcon, UserGroupIcon, CalendarDaysIcon, ArrowPathIcon, ClipboardDocumentListIcon, EyeIcon, DocumentTextIcon, CheckCircleIcon, ArrowDownTrayIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, ShieldCheckIcon, StarIcon, ExclamationTriangleIcon, TrashIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, Cog6ToothIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, WrenchScrewdriverIcon
+  HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon
 } from '@heroicons/react/24/outline';
-import { Bars3Icon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectCurrentUser, setCredentials } from '../app/authSlice';
-import { useLogoutMutation } from '../services/apiSlice';
-import { apiSlice } from '../services/apiSlice'; 
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../app/authSlice';
 import AssignEmployee from './AssignEmployee';
-import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useDeleteReportMutation, useDeleteReadNotificationsMutation, useAddTaskCommentMutation, useGetDashboardStatsQuery, useGetOfficialEOMQuery, useGetActiveAnnouncementQuery, useProcessPastDueTasksMutation, useGetTasksForApprovalQuery } from '../services/EmployeApi';
-import Dashboard from './Dashboard';
+import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useDeleteReportMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi';
+import Dashboard from './Dashboard.jsx';
 import HolidayManagement from './HolidayManagement';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
 import starPublicityLogo from '../assets/starpublicity.png';
@@ -19,134 +16,18 @@ import ViewAllTasks from './ViewAllTasks';
 import TaskOverview from './TaskOverview';
 import TaskApprovals from './TaskApprovals';
 import AssignTask from './AssignTask';
+import SeniorAssignTask from '../Senior/AssignTask';
 import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
 import HallOfFame from './HallOfFame';
 import AdminProfile from './AdminProfile'; 
-import ThemeToggle from '../ThemeToggle';
+import AppHeader from '../app/AppHeader.jsx';
 import ManageAnnouncements from './ManageAnnouncements';
 import AllEmployeeAttendance from './AllEmployeeAttendance';
 import GooglePieChart from './GooglePieChart.jsx';
-import { XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/outline';
-import * as XLSX from 'xlsx';
-const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
-  const [comment, setComment] = useState('');
-  const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
-  if (!isOpen || !task) return null;
-
-  const InfoField = ({ label, value, icon: Icon }) => (
-    <div className="flex items-start gap-3">
-      <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
-      <div>
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
-
-  const handleAddComment = async () => {
-    if (!comment.trim()) return;
-    try {
-      await addComment({ taskId: task._id, text: comment }).unwrap();
-      setComment('');
-      toast.success('Comment added!');
-    } catch (err) {
-      toast.error('Failed to add comment.');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
-              <h4 className="font-bold text-xl text-blue-700 dark:text-blue-400">
-                {task.title} 
-                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
-              </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t dark:border-slate-700">
-                <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
-                <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
-                <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-                <InfoField label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-              </div>
-            </div>
-            <div className="md:col-span-1 bg-slate-50 p-3 rounded-xl border flex flex-col h-[350px] w-full max-w-xs mx-auto">
-              <div className="flex items-center gap-2 mb-2 border-b pb-2 dark:border-slate-700">
-                <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-blue-500" />
-                <h5 className="font-semibold text-slate-700 dark:text-slate-200 text-base">Comments</h5>
-                <span className="ml-auto text-xs text-slate-400">{task.comments?.length || 0}</span>
-              </div>
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {task.comments?.length > 0 ? (
-                  task.comments.map(c => (
-                    <div key={c._id} className="flex items-start gap-2 bg-white dark:bg-slate-700 rounded-lg p-2 border border-slate-100 dark:border-slate-600 shadow-sm">
-                      {c.author.profilePicture ? (
-                        <img
-                          src={c.author.profilePicture}
-                          alt={c.author.name}
-                          className="h-8 w-8 rounded-full object-cover border border-blue-100"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
-                          {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{c.author.name}</span>
-                          <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="text-xs text-slate-700 mt-0.5 break-words">{c.text}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-8">
-                    <ChatBubbleLeftEllipsisIcon className="h-7 w-7 mb-2" />
-                    <p className="text-xs">No comments yet.</p>
-                  </div>
-                )}
-              </div>
-              <form
-                className="flex gap-2 pt-2 border-t mt-2"
-                onSubmit={e => { e.preventDefault(); handleAddComment(); }} 
-              >
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full text-xs border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200"
-                  disabled={isAddingComment}
-                  maxLength={300}
-                />
-                <button
-                  type="submit"
-                  disabled={isAddingComment || !comment.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
-                  title="Send"
-                >
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end">
-          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { TaskDetailsModal } from './TaskOverview.jsx';
+import * as XLSX from 'xlsx'; 
+import { Analytics, StatCard } from '../Employee/EmployeDashboard.jsx';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const DeleteReportModal = ({ isOpen, onClose, onConfirm, report, isDeleting }) => {
   if (!isOpen) return null;
@@ -173,7 +54,7 @@ const DeleteReportModal = ({ isOpen, onClose, onConfirm, report, isDeleting }) =
   );
 };
 
-const TeamReports = () => {
+export const TeamReports = ({ seniorId }) => {
   const { data: employees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
@@ -181,6 +62,7 @@ const TeamReports = () => {
   const [deletingReport, setDeletingReport] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
+  const user = useSelector(selectCurrentUser);
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
     skip: !selectedEmployee,
@@ -188,10 +70,35 @@ const TeamReports = () => {
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
-    return employees.filter(employee =>
+    
+    let employeesToShow = employees;
+
+    // If a seniorId is provided (Manager/Team Lead view), filter for their subordinates
+    if (seniorId) {
+      const getAllSubordinates = (managerId, allEmps) => {
+        const subordinates = [];
+        const queue = allEmps.filter(emp => emp.teamLead?._id === managerId);
+        const visited = new Set(queue.map(e => e._id));
+        while (queue.length > 0) {
+          const currentEmployee = queue.shift();
+          subordinates.push(currentEmployee);
+          const directReports = allEmps.filter(emp => emp.teamLead?._id === currentEmployee._id);
+          for (const report of directReports) {
+            if (!visited.has(report._id)) {
+              visited.add(report._id);
+              queue.push(report);
+            }
+          }
+        }
+        return subordinates;
+      };
+      employeesToShow = getAllSubordinates(seniorId, employees);
+    }
+
+    return employeesToShow.filter(employee =>
       employee.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [employees, searchTerm]);
+  }, [employees, searchTerm, seniorId]);
 
   const handleDownloadSheet = () => {
     if (!selectedEmployee || !reports || reports.length === 0) {
@@ -201,37 +108,32 @@ const TeamReports = () => {
 
     const dataForSheet = [];
     const headers = [
-      'Employee Name', 'Employee ID', 'Report Date', 'Report Status',
-      'Task Description', 'Time Spent', 'Task Status', 'Task Remark',
-      'Summary', 'Key Achievements', 'Pending for Next Day'
+      'Employee Name', 'Employee ID', 'Report Date', 'Report Status', 'Task Title', 'Task Description', 'Completion %'
     ];
 
     dataForSheet.push(headers);
 
-    reports.forEach((report, index) => {
+    reports.forEach(report => {
       let data = {};
-      if (typeof report.content === 'object' && report.content !== null) {
-        data = report.content;
-      } else if (typeof report.content === 'string') {
-        try { data = JSON.parse(report.content); } catch (e) { /* ignore */ }
-      }
+      try { data = JSON.parse(report.content); } catch (e) { /* ignore */ }
 
       const reportDate = new Date(report.reportDate).toLocaleDateString();
       const baseRow = [
         selectedEmployee.name, selectedEmployee.employeeId, reportDate, report.status,
       ];
 
-      if (data.tasks && data.tasks.length > 0) {
-        data.tasks.forEach(task => {
+      if (data.taskUpdates && data.taskUpdates.length > 0) {
+        data.taskUpdates.forEach(update => {
           const taskRow = [
-            task.description || '', task.timeSpent || '', task.status || '', task.remark || '',
-            data.summary || '', data.keyAchievements || '', data.pendingTasksNextDay || ''
+            update.taskId?.title || 'N/A',
+            update.taskId?.description || 'N/A',
+            update.completion || '0'
           ];
           dataForSheet.push([...baseRow, ...taskRow]);
         });
       } else {
-        // If no tasks, add a row with just the report info
-        const emptyTaskRow = ['', '', '', '', data.summary || '', data.keyAchievements || '', data.pendingTasksNextDay || ''];
+        // If no task updates, add a row with just the report info
+        const emptyTaskRow = ['No task updates in this report', '', ''];
         dataForSheet.push([...baseRow, ...emptyTaskRow]);
       }
     });
@@ -245,8 +147,7 @@ const TeamReports = () => {
     // 1. Set column widths
     const columnWidths = [
       { wch: 22 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, // Employee, ID, Date, Status
-      { wch: 55 }, { wch: 15 }, { wch: 15 }, { wch: 55 }, // Task fields
-      { wch: 55 }, { wch: 55 }, { wch: 55 }  // Summary, Achievements, Pending
+      { wch: 40 }, { wch: 55 }, { wch: 15 }  // Task Title, Description, Completion
     ];
     ws['!cols'] = columnWidths;
 
@@ -281,7 +182,7 @@ const TeamReports = () => {
         } else { // Data rows
           const isAltRow = R % 2 === 0;
           // Center align specific columns
-          if ([2, 3, 5, 6].includes(C)) {
+          if ([2, 3, 6].includes(C)) { // Date, Status, Completion %
             ws[address].s = centeredCellStyle(isAltRow);
           } else {
             ws[address].s = cellStyle(isAltRow);
@@ -359,7 +260,12 @@ const TeamReports = () => {
                   onClick={() => setSelectedEmployee(employee)}
                   className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
                 >
-                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
+                  <img 
+                    src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} 
+                    alt={employee.name} 
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
+                    className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" 
+                  />
                   <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
                   <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 font-mono">{employee.employeeId}</p>
@@ -401,9 +307,11 @@ const TeamReports = () => {
                   }`}>{report.status}</span>
                 </h3>
                 <div className="mb-4">{renderReportContent(report.content)}</div>
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-right">
-                  <button onClick={() => setDeletingReport(report)} className="inline-flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700"><TrashIcon className="h-4 w-4" /> Delete Report</button>
-                </div>
+                {user?.role === 'Admin' && (
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-right">
+                    <button onClick={() => setDeletingReport(report)} className="inline-flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700"><TrashIcon className="h-4 w-4" /> Delete Report</button>
+                  </div>
+                )}
               </div>
             )) : (
               <div className="text-center py-10 text-slate-400 dark:text-white">No reports found for this employee.</div>
@@ -432,250 +340,6 @@ const TeamReports = () => {
   );
 };
 
-const StatCard = ({ grade, count }) => {
-  const GRADE_COLORS = { 'Avg. Completion': '#10B981', 'Total Tasks': '#3B82F6', 'In Progress': '#F59E0B', 'In Verification': '#8B5CF6', 'Pending Verification': '#8B5CF6', 'Not Completed': '#f97316', 'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444' };
-  const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon, 'Total Tasks': ClipboardDocumentListIcon, 'Avg. Completion': CheckBadgeIcon, 'In Progress': ArrowPathIcon, 'In Verification': CheckBadgeIcon };
-  const Icon = GRADE_ICONS[grade] || InfoOutlineIcon;
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-4">
-      <div className={`p-3 rounded-full`} style={{ backgroundColor: `${GRADE_COLORS[grade]}20` }}>
-        <Icon className="h-6 w-6" style={{ color: GRADE_COLORS[grade] }} />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-slate-800">{count}</p>
-        <p className="text-sm font-semibold text-slate-500">{grade}</p>
-      </div>
-    </div>
-  );
-};
-
-const Analytics = () => {
-  const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery(); 
-  const { data: allTasks = [], isLoading: isLoadingTasks } = useGetAllTasksQuery();
-  const [selectedManager, setSelectedManager] = useState(null);
-  const [view, setView] = useState('team_stats'); // 'team_stats' or 'manager_stats'
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [dateRange, setDateRange] = useState({
-    startDate: '',
-    endDate: '',
-  });
-
-  const managers = useMemo(() => {
-    return allEmployees.filter(emp => emp.dashboardAccess === 'Manager Dashboard');
-  }, [allEmployees]);
-
-  const teamMemberIds = useMemo(() => { 
-    if (!selectedManager || !allEmployees) return new Set();
-    
-    const queue = allEmployees.filter(emp => emp.teamLead?._id === selectedManager._id);
-    const visited = new Set(queue.map(e => e._id));
-    const teamIds = new Set(queue.map(e => e._id));
-    
-    while (queue.length > 0) {
-      const currentEmployee = queue.shift();
-      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
-      for (const report of directReports) {
-        if (!visited.has(report._id)) {
-          visited.add(report._id);
-          teamIds.add(report._id);
-          queue.push(report);
-        }
-      }
-    }
-    return teamIds;
-  }, [allEmployees, selectedManager]);
-
-  const { performanceStats, title } = useMemo(() => {
-    const stats = {
-      totalGradedTasks: 0,
-      totalProgress: 0,
-      averageCompletion: 0,
-      tasksInProgress: 0,
-      tasksInVerification: 0,
-      pending: 0,
-      inProgress: 0,
-      pendingVerification: 0,
-      completed: 0,
-      notCompleted: 0,
-    };
-    if (!selectedManager) return { performanceStats: stats, title: "Manager & Team Analytics" };
-
-    let relevantTasks = [];
-    let viewTitle = '';
-
-    if (selectedEmployee) {
-      relevantTasks = allTasks.filter(task => task.assignedTo?._id === selectedEmployee._id);
-      viewTitle = `Analytics for ${selectedEmployee.name}`;
-    } else {
-      if (view === 'manager_stats') {
-        relevantTasks = allTasks.filter(task => task.assignedTo?._id === selectedManager._id);
-        viewTitle = `Analytics for ${selectedManager.name}`;
-      } else { // team_stats
-        relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
-        viewTitle = `Analytics for ${selectedManager.name}'s Team`;
-      }
-    }
-    
-    let dateFilteredTasks = relevantTasks;
-
-    // Apply date range filter if dates are selected
-    if (dateRange.startDate && dateRange.endDate) {
-      const start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-      end.setHours(23, 59, 59, 999); // Include the whole end day
-
-      dateFilteredTasks = relevantTasks.filter(task => {
-        const assignedDate = new Date(task.createdAt);
-        return assignedDate >= start && assignedDate <= end;
-      });
-    }
-
-    const gradedTasks = dateFilteredTasks.filter(task => task.status === 'Completed' || task.status === 'Not Completed');
-    stats.totalGradedTasks = dateFilteredTasks.length;
-    gradedTasks.forEach(task => {
-      stats.totalProgress += task.progress || 0;
-    });
-    stats.averageCompletion = gradedTasks.length > 0 ? (stats.totalProgress / gradedTasks.length) : 0;
-    stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress' && !t.rejectionReason).length;
-    stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
-
-    relevantTasks.forEach(task => {
-      switch(task.status) {
-        case 'Pending': stats.pending++; break;
-        case 'In Progress': stats.inProgress++; break;
-        case 'Pending Verification': stats.pendingVerification++; break;
-        case 'Completed': stats.completed++; break;
-        case 'Not Completed': stats.notCompleted++; break;
-      }
-    });
-
-    return { performanceStats: stats, title: viewTitle };
-  }, [allTasks, selectedManager, selectedEmployee, teamMemberIds, view, dateRange]);
-
-  const chartData = useMemo(() => {
-    if (!performanceStats) return [];
-    const { pending, inProgress, pendingVerification, completed, notCompleted } = performanceStats;
-    return [
-      { name: 'Pending', value: pending },
-      { name: 'In Progress', value: inProgress },
-      { name: 'Pending Verification', value: pendingVerification },
-      { name: 'Completed', value: completed },
-      { name: 'Not Completed', value: notCompleted },
-    ].filter(item => item.value > 0);
-  }, [performanceStats]);
-
-  const GRADE_COLORS = {
-    'Avg. Completion': '#10B981', // Green
-    'Graded Tasks': '#3B82F6', // Blue
-    'In Progress': '#F59E0B', // Amber
-    'In Verification': '#8B5CF6', // Purple
-    'Pending Verification': '#8B5CF6', // Purple
-    'Not Completed': '#f97316', // Orange
-    'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444'
-  };
-  const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
-
-  if (isLoadingTasks || isLoadingEmployees) {
-    return <div className="p-8 text-center">Loading analytics...</div>;
-  }
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-10">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
-          <p className="text-slate-500 mt-2">Select a manager to view their team's performance.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative">
-            <select
-              onChange={(e) => {
-                const manager = managers.find(m => m._id === e.target.value);
-                setSelectedManager(manager); 
-                setSelectedEmployee(null); // Reset employee when manager changes
-                setView('team_stats'); // Default to team view when manager changes
-              }} 
-              className="w-full sm:w-64 text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-white pr-8"
-              value={selectedManager?._id || ''}
-            >
-              <option value="">-- Select a Manager --</option>
-              {managers.map(manager => (
-                <option key={manager._id} value={manager._id}>{manager.name}</option>
-              ))}
-            </select>
-            <ChevronDownIcon className="h-5 w-5 text-slate-400 dark:text-slate-300 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
-          </div>
-          {selectedManager && (
-            <div className="relative">
-              <select
-                onChange={(e) => {
-                  const employee = allEmployees.find(emp => emp._id === e.target.value);
-                  setSelectedEmployee(employee);
-                }}
-                className="w-full sm:w-64 text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white dark:bg-slate-900 dark:text-white pr-8"
-                value={selectedEmployee?._id || ''}
-              >
-                <option value="">-- Select an Employee (Optional) --</option>
-                {allEmployees.filter(e => teamMemberIds.has(e._id) || e._id === selectedManager._id).map(emp => <option key={emp._id} value={emp._id}>{emp.name}</option>)}
-              </select>
-              <ChevronDownIcon className="h-5 w-5 text-slate-400 dark:text-slate-300 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <input 
-              type="date" 
-              value={dateRange.startDate}
-              onChange={e => setDateRange(prev => ({...prev, startDate: e.target.value}))}
-              className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-white"
-            />
-            <input 
-              type="date" 
-              value={dateRange.endDate}
-              onChange={e => setDateRange(prev => ({...prev, endDate: e.target.value}))}
-              className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-      </div>
-
-      {selectedManager ? (
-        <>
-          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-1 mb-8 w-fit mx-auto sm:mx-0">
-            <button onClick={() => setView('manager_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'manager_stats' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}>Manager Stats</button>
-            <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}>Team Stats</button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-            <StatCard grade="Avg. Completion" count={`${performanceStats.averageCompletion.toFixed(1)}%`} />
-            <StatCard grade="Total Tasks" count={performanceStats.totalGradedTasks} />
-            <StatCard grade="In Progress" count={performanceStats.tasksInProgress} />
-            <StatCard grade="In Verification" count={performanceStats.tasksInVerification} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 dark:text-white">
-            <div className="lg:col-span-2 bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Task Status Overview</h3>
-              {chartData.length > 0 ? (
-                <div className="w-full h-[400px]"><GooglePieChart data={chartData} title="Grade Distribution" colors={GRADE_COLORS} /></div>
-              ) : <div className="flex items-center justify-center h-full text-slate-500">No graded tasks to display for this team.</div>}
-            </div>
-            <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">How Grades Are Calculated</h3>
-              <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <li className="flex gap-3"><strong className="font-semibold text-emerald-600 w-20">Average:</strong><span>Calculated from the final progress percentage of all approved or rejected tasks.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-blue-600 w-20">Total Tasks:</strong><span>Includes all tasks assigned to the selected view, regardless of status.</span></li>
-                <li className="flex gap-3"><strong className="font-semibold text-amber-600 w-20">In Progress:</strong><span>Tasks currently being worked on by employees.</span></li>
-              </ul>
-            </div>
-          </div>
-        </>
-      ) : ( 
-        <div className="text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed">
-          <p className="font-semibold">Please select a manager to view their analytics.</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen, isCollapsed, setIsCollapsed }) => {
   const user = useSelector(selectCurrentUser);
   const [isHovering, setIsHovering] = useState(false);
@@ -686,6 +350,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'assign', icon: ClipboardDocumentCheckIcon, label: 'Assign Employee' },
     { id: 'team-reports', icon: UserGroupIcon, label: 'Team Reports' },
     { id: 'holidays', icon: CalendarDaysIcon, label: 'Holidays' }, { id: 'assign-task', icon: ClipboardDocumentListIcon, label: 'Assign Task' },
+    { id: 'assign-to-managers', icon: BriefcaseIcon, label: 'Assign to Managers' },
     { id: 'all-attendance', icon: CalendarDaysIcon, label: 'All Attendance' },
     { id: 'view-tasks', icon: EyeIcon, label: 'View All Tasks' },
     { id: 'task-overview', icon: ListBulletIcon, label: 'Task Overview' },
@@ -699,7 +364,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
 
   return (
     <div 
-      className={`fixed md:sticky top-0 z-20 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
+      className={`fixed md:sticky top-0 z-50 h-screen flex-shrink-0 transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isExpanded ? 'w-64' : 'w-20'}`}
       onMouseEnter={() => isCollapsed && setIsHovering(true)}
       onMouseLeave={() => isCollapsed && setIsHovering(false)}
     >
@@ -746,162 +411,6 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
   );
 };
 
-const AppHeader = ({ pageTitle, user, setActiveComponent, onMenuClick }) => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileRef = useRef(null);
-  const notificationRef = useRef(null);
-  const [logout] = useLogoutMutation();
-  const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 30000 });
-  const dispatch = useDispatch();
-  const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
-  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
-
-  useEffect(() => {
-    // Close profile dropdown on outside click
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [profileRef]);
-
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  useEffect(() => {
-    // Close notification dropdown on outside click
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setIsNotificationOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [notificationRef]);
-
-  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
-
-  const handleBellClick = () => {
-    setIsNotificationOpen(!isNotificationOpen);
-    // When opening the notifications, mark them as read after a short delay
-    if (!isNotificationOpen && unreadCount > 0) {
-      setTimeout(() => {
-        markNotificationsAsRead();
-      }, 2000);
-    }
-  };
-
-  const handleNotificationClick = (notification) => {
-    setIsNotificationOpen(false); // Close dropdown on click
-    if (notification.type === 'task_approval') {
-      setActiveComponent('task-approvals');
-    } else if (notification.type === 'info') {
-      // Assuming 'info' notifications about tasks should lead to the task list
-      setActiveComponent('view-tasks'); 
-    }
-  };
-
-  const handleRefresh = () => {
-    // Invalidate specific tags to refetch data without a full state reset
-    dispatch(apiSlice.util.invalidateTags([
-      { type: 'Employee', id: 'LIST' },
-      'Task',
-      'Notification',
-      'Report',
-      'Settings'
-    ]));
-    toast.success("Dashboard data refreshed!");
-  };
-
-  const handleClearRead = async () => {
-    try {
-      await deleteReadNotifications().unwrap();
-      toast.success('Read notifications cleared.');
-    } catch {
-      toast.error('Failed to clear notifications.');
-    }
-  };
-
-  return (
-    <header className="fixed top-0 left-0 right-0 md:relative z-30 h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700/50 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow dark:bg-black/80">
-      <div className="flex items-center gap-2">
-        <button onClick={onMenuClick} className="md:hidden text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700">
-          <Bars3Icon className="h-6 w-6" />
-        </button>
-        <h1 className="text-lg sm:text-xl font-semibold text-indigo-900 drop-shadow dark:text-white truncate">{pageTitle}</h1>
-      </div>
-      <div className="flex items-center gap-4">
-        <ThemeToggle />
-        <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-        <button onClick={handleRefresh} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700" title="Refresh Data">
-          <span className="sr-only">Refresh data</span>
-          <ArrowPathIcon className="h-6 w-6" />
-        </button>
-        <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-        <div className="relative" ref={notificationRef}>
-          <button onClick={handleBellClick} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 dark:text-white dark:hover:bg-slate-700 relative group">
-            <span className="sr-only">View notifications</span>
-            <BellIcon className="h-6 w-6" />
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
-            )}
-          </button>
-          {isNotificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-black rounded-md shadow-lg border border-gray-200 dark:border-slate-700 z-60">
-            <div className="p-3 font-semibold text-sm border-b dark:border-slate-700 text-slate-800 dark:text-white">Notifications</div>
-            <div className="max-h-80 overflow-y-auto">
-              {notifications.length > 0 ? notifications.map(n => (
-                <div 
-                  key={n._id} 
-                  onClick={() => handleNotificationClick(n)}
-                  className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                >
-                  <p className="text-slate-700 dark:text-white">{n.message}</p>
-                  <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                </div>
-              )) : (
-                <p className="p-4 text-center text-sm text-gray-500 dark:text-white">No notifications</p>
-              )}
-            </div>
-            <div className="p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-black text-center">
-              <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
-            </div>
-          </div>
-          )}
-        </div>
-        <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-        <div className="relative" ref={profileRef}>
-          <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
-            <img
-              src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
-              alt="Admin"
-              className="h-9 w-9 rounded-full object-cover"
-            />
-            <div className="text-left hidden sm:block">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || 'Admin'}</div>
-              <div className="text-xs text-gray-500 dark:text-slate-300">{user?.role || 'Administrator'}</div>
-            </div>
-            <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-white transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
-              <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800">
-                <UserCircleIcon className="h-5 w-5" />
-                My Profile
-              </button>
-              <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10">
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-};
-
 const ManagePermissionsModal = ({ isOpen, onClose, employee, permissions, onChange, onSave, isSaving }) => {
   if (!isOpen || !employee) return null;
 
@@ -923,6 +432,7 @@ const ManagePermissionsModal = ({ isOpen, onClose, employee, permissions, onChan
             <img
               src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
               alt={employee.name}
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
               className="h-10 w-10 rounded-full border border-blue-200 object-cover"
             />
             <div>
@@ -1020,12 +530,9 @@ const ManagePermissionsModal = ({ isOpen, onClose, employee, permissions, onChan
 
 export default function AdminPageLayout() {
   const [activeView, setActiveView] = useState({ component: 'dashboard', props: {} });
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileRef = useRef(null);
   const user = useSelector(selectCurrentUser);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
   const [processPastDueTasks] = useProcessPastDueTasksMutation();
 
   useEffect(() => {
@@ -1044,6 +551,7 @@ export default function AdminPageLayout() {
     'team-reports': 'Team Reports',
     'assign-task': 'Assign Task',
     holidays: 'Holiday Management',
+    'assign-to-managers': 'Assign Tasks to Managers',
     profile: 'My Profile',
     'view-tasks': 'All Tasks Overview',
     'task-overview': 'Task Status Overview',
@@ -1071,12 +579,13 @@ export default function AdminPageLayout() {
       case 'team-reports': return <TeamReports />;
       case 'holidays': return <HolidayManagement />; 
       case 'assign-task': return <AssignTask />;
+      case 'assign-to-managers': return <SeniorAssignTask assignToManagers={true} />;
       case 'view-tasks': return <ViewAllTasks {...activeView.props} />;
       case 'task-overview': return <TaskOverview />;
       case 'task-approvals': return <TaskApprovals />;
       case 'employee-of-the-month': return <EmployeeOfTheMonth />; // New component
       case 'hall-of-fame': return <HallOfFame />;
-      case 'analytics': return <Analytics />;
+      case 'analytics': return <Analytics user={user} />;
       case 'announcements': return <ManageAnnouncements />;
       case 'all-attendance': return <AllEmployeeAttendance />;
       case 'profile': return <AdminProfile user={user} onNavigate={handleNavigation} />;
@@ -1096,8 +605,8 @@ export default function AdminPageLayout() {
       </style>
       <Sidebar activeComponent={activeView.component} setActiveComponent={handleNavigation} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-        <AppHeader pageTitle={pageTitles[activeView.component]} user={user} setActiveComponent={handleNavigation} onMenuClick={() => setSidebarOpen(true)} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AppHeader pageTitle={pageTitles[activeView.component]} setActiveComponent={handleNavigation} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto dark:bg-slate-900">{renderActiveComponent()}</main>
       </div>
     </div>

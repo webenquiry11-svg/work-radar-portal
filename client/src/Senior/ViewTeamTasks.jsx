@@ -97,7 +97,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, task, isDeleting 
 };
 
 const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
-  const { data: allTasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery();
+  const { data: allTasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery(undefined, { pollingInterval: 30000 });
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
@@ -108,9 +108,11 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
 
+  const { status: initialStatus, priority: initialPriority } = initialFilters;
+
   useEffect(() => {
-    setFilters({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
-  }, [initialFilters]);
+    setFilters({ status: initialStatus || '', priority: initialPriority || '' });
+  }, [initialStatus, initialPriority]);
 
   const handleSelectEmployee = (employee) => {
     setSelectedEmployee(employee);
@@ -130,13 +132,14 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
     if (!allEmployees || !teamLeadId) return new Set();
 
     const subordinates = [];
-    const queue = allEmployees.filter(emp => emp.teamLead?._id === teamLeadId);
+    const getTeamLeadId = (emp) => emp.teamLead?._id || emp.teamLead;
+    const queue = allEmployees.filter(emp => getTeamLeadId(emp) === teamLeadId);
     const visited = new Set(queue.map(e => e._id));
 
     while (queue.length > 0) {
       const currentEmployee = queue.shift();
       subordinates.push(currentEmployee);
-      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+      const directReports = allEmployees.filter(emp => getTeamLeadId(emp) === currentEmployee._id);
       for (const report of directReports) {
         if (!visited.has(report._id)) {
           visited.add(report._id);
@@ -235,7 +238,12 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
               onClick={() => handleSelectEmployee(employee)}
               className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
             >
-              <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100" />
+              <img 
+                src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} 
+                alt={employee.name} 
+                onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
+                className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100" 
+              />
               <p className="font-bold text-slate-800">{employee.name}</p>
               <p className="text-sm text-blue-600 font-medium">{employee.role}</p>
               <p className="text-xs text-slate-500 mt-1 font-mono">{employee.employeeId}</p>
@@ -292,8 +300,8 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto rounded-b-xl">
-          <table className="w-full text-sm text-left text-slate-600">
+        <div className="flex-1 overflow-auto rounded-b-xl">
+          <table className="w-full text-sm text-left text-slate-600 min-w-[900px]">
             <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="px-6 py-3">Task Title</th>
@@ -316,7 +324,15 @@ const ViewTeamTasks = ({ teamLeadId, initialFilters = {} }) => {
                     </td>
                     <td className="px-6 py-4">{task.assignedBy?.name || 'N/A'}</td>
                     <td className="px-6 py-4">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}</td>
-                    <td className="px-6 py-4">{task.completionDate ? new Date(task.completionDate).toLocaleDateString() : <span className="text-slate-400 text-xs">--</span>}</td>
+                    <td className="px-6 py-4">
+                      {task.status === 'Not Completed' ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                          Incomplete
+                        </span>
+                      ) : task.status === 'Completed' && task.completionDate ? (
+                        new Date(task.completionDate).toLocaleDateString()
+                      ) : <span className="text-slate-400 dark:text-slate-500 text-xs">--</span>}
+                    </td>
                     <td className="px-6 py-4"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[task.status]}`}>{task.status}</span></td>
                     <td className="px-6 py-4"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${priorityStyles[task.priority]}`}>{task.priority}</span></td>
                     <td className="px-6 py-4">

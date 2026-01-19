@@ -37,7 +37,7 @@ function App() {
         } />} />
         <Route
           path="/employee-dashboard"
-          element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard employeeId={user._id} /> : <Navigate to="/login" />}
+          element={user && user.dashboardAccess === 'Employee Dashboard' ? <EmployeeDashboard /> : <Navigate to="/login" />}
         />
         <Route
           path="/manager-dashboard"

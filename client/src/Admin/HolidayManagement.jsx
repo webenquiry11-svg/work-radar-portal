@@ -148,16 +148,10 @@ const HolidayManagement = () => {
 
   const tileContent = ({ date, view }) => {
     if (view === 'month') {
-      const dateString = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toDateString();
+      const dateString = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toDateString();
       const holiday = holidayDates.get(dateString);
       if (holiday) {
-        return (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-full px-1 text-center">
-            <p className="text-white bg-red-500 rounded-full text-[8px] font-bold truncate leading-tight">
-              {holiday.name}
-            </p>
-          </div>
-        );
+        return <p className="tile-label text-amber-800 dark:text-amber-200">{holiday.name}</p>;
       }
     }
     return null;
@@ -165,7 +159,7 @@ const HolidayManagement = () => {
 
   const tileClassName = ({ date, view }) => {
     if (view === 'month') {
-      const dateString = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toDateString();
+      const dateString = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toDateString();
       if (date.getDay() === 0) {
         return 'sunday-tile';
       }
@@ -183,39 +177,6 @@ const HolidayManagement = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
-      <style>{`
-        .react-calendar {
-          width: 100%;
-          border: none;
-          border-radius: 1rem;
-          font-family: 'Manrope', sans-serif;
-        }
-        .dark .react-calendar { background: #1e293b; color: #e2e8f0; }
-        .dark .react-calendar__navigation button { color: #94a3b8; }
-        .dark .react-calendar__month-view__weekdays__weekday { color: #cbd5e1; }
-        .dark .react-calendar__month-view__days__day--neighboringMonth { color: #475569 !important; }
-        .react-calendar__tile { 
-          border-radius: 0.5rem;
-          position: relative;
-          height: 80px;
-        }
-        .react-calendar__tile:enabled:hover,
-        .react-calendar__tile:enabled:focus {
-          background-color: #dbeafe;
-        }
-        .holiday-tile {
-          background-color: #fecaca !important;
-          color: #b91c1c;
-          font-weight: bold;
-        }
-        .holiday-tile:enabled:hover, .holiday-tile:enabled:focus {
-          background-color: #fca5a5 !important;
-        }
-        .sunday-tile {
-          background-color: #fee2e2 !important;
-          color: #991b1b;
-        }
-      `}</style>
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">Holiday Management</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2">Manage your company's holiday calendar. Click on a date to add or remove a holiday.</p>
@@ -227,6 +188,7 @@ const HolidayManagement = () => {
             <p>Loading holidays...</p>
           ) : (
             <Calendar
+              className="custom-calendar"
               onChange={setDate}
               value={date}
               onClickDay={handleDateClick}

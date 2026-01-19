@@ -61,11 +61,12 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
         </div>
         <div className="px-6 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            {employee.profilePicture ? (
-              <img src={employee.profilePicture} alt={employee.name} className="h-10 w-10 rounded-full border border-blue-200" />
-            ) : (
-              <UserCircleIcon className="h-10 w-10 text-blue-200" />
-            )}
+            <img 
+              src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} 
+              alt={employee.name} 
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
+              className="h-10 w-10 rounded-full border border-blue-200" 
+            />
             <div>
               <div className="font-semibold text-slate-800 dark:text-white">{employee.name}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{employee.role} &middot; {employee.department || 'N/A'}</div>
@@ -154,13 +155,17 @@ const AssignTaskModal = ({ isOpen, onClose, employee, isAssigning, onAssign }) =
   );
 };
 
-const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a prop
+const AssignTask = ({ teamLeadId, assignToManagers = false }) => { // Added assignToManagers prop
   const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [createMultipleTasks, { isLoading: isAssigning }] = useCreateMultipleTasksMutation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const teamMembers = useMemo(() => {
+    if (assignToManagers) {
+      // Filter employees who have manager dashboard access (canViewTeam is true), excluding Admins
+      return employees.filter(emp => emp.canViewTeam && emp.role !== 'Admin');
+    }
     // This logic finds all direct and indirect reports for the given team lead.
     const getAllSubordinates = (managerId, allEmployees) => {
       const subordinates = [];
@@ -180,7 +185,7 @@ const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a p
       return subordinates;
     };
     return getAllSubordinates(teamLeadId, employees);
-  }, [employees, teamLeadId]);
+  }, [employees, teamLeadId, assignToManagers]);
 
   const filteredEmployees = useMemo(() => {
     return teamMembers.filter(employee =>
@@ -209,8 +214,8 @@ const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a p
         <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-lg mb-4 dark:from-blue-600 dark:to-indigo-700">
           <ClipboardDocumentListIcon className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Task Assignment</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">Delegate tasks to your team members. Click "Assign Task" to add one or more tasks.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">{assignToManagers ? 'Assign to Managers' : 'Task Assignment'}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">{assignToManagers ? 'Delegate tasks to managers across the organization.' : 'Delegate tasks to your team members. Click "Assign Task" to add one or more tasks.'}</p>
       </div>
       <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg flex-1 flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-6 border-b border-slate-200 dark:border-slate-700">
@@ -218,7 +223,7 @@ const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a p
             <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 dark:text-slate-500 absolute top-1/2 left-3 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search team members by name or ID..."
+              placeholder={assignToManagers ? "Search managers..." : "Search team members by name or ID..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 w-full text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
@@ -227,7 +232,7 @@ const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a p
         </div>
         <div className="flex-1 overflow-y-auto rounded-b-2xl p-4">
           {filteredEmployees.length === 0 ? (
-            <div className="text-center text-slate-400 dark:text-slate-500 py-16">No team members found.</div>
+            <div className="text-center text-slate-400 dark:text-slate-500 py-16">{assignToManagers ? 'No managers found.' : 'No team members found.'}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEmployees.map(employee => (
@@ -235,6 +240,7 @@ const AssignTask = ({ teamLeadId }) => { // Assuming teamLeadId is passed as a p
                   <img
                     src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`}
                     alt={employee.name}
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
                     className="h-16 w-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 mb-3"
                   />
                   <div className="text-center">

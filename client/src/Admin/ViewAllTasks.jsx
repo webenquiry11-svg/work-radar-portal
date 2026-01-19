@@ -5,10 +5,18 @@ import { selectCurrentUser } from '../app/authSlice';
 import toast from 'react-hot-toast';
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
+import { TaskDetailsModal } from './TaskOverview.jsx';
 
 const EditTaskModal = ({ isOpen, onClose, task, onUpdate }) => {
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
-  const [taskData, setTaskData] = useState({});
+  const [taskData, setTaskData] = useState({
+    title: '',
+    description: '',
+    startDate: '',
+    dueDate: '',
+    priority: 'Medium',
+    status: 'Pending',
+  });
 
   useEffect(() => {
     if (task) {
@@ -101,126 +109,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, task, isDeleting 
   );
 };
 
-const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
-  const [comment, setComment] = useState('');
-  const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
-  if (!isOpen || !task) return null;
-
-  const InfoField = ({ label, value, icon: Icon }) => (
-    <div className="flex items-start gap-3 dark:text-white">
-      <Icon className="h-5 w-5 text-slate-400 dark:text-slate-300 mt-0.5" />
-      <div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
-
-  const handleAddComment = async () => {
-    if (!comment.trim()) return;
-    try {
-      await addComment({ taskId: task._id, text: comment }).unwrap();
-      setComment('');
-      toast.success('Comment added!');
-    } catch (err) {
-      toast.error('Failed to add comment.');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-40 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-black rounded-lg shadow-xl w-full max-w-3xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
-              <h4 className="font-bold text-xl text-blue-700 dark:text-blue-400">
-                {task.title} 
-                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400 dark:text-slate-300">(Task {taskNumber})</span>}
-              </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
-                <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
-                <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-                <InfoField label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-              </div>
-            </div>
-            <div className="md:col-span-1 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col h-[350px] w-full max-w-xs mx-auto">
-              <div className="flex items-center gap-2 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-                <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-blue-500" />
-                <h5 className="font-semibold text-slate-700 dark:text-white text-base">Comments</h5>
-                <span className="ml-auto text-xs text-slate-400 dark:text-slate-300">{task.comments?.length || 0}</span>
-              </div>
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {task.comments?.length > 0 ? (
-                  task.comments.map((c) => (
-                    <div key={c._id} className="flex items-start gap-2 bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700 shadow-sm">
-                      {c.author.profilePicture ? (
-                        <img
-                          src={c.author.profilePicture}
-                          alt={c.author.name}
-                          className="h-8 w-8 rounded-full object-cover border border-blue-100"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-sm border border-blue-100">
-                          {c.author.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold text-xs text-slate-800 dark:text-white truncate">{c.author.name}</span>
-                          <span className="text-[10px] text-slate-400 ml-auto">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 break-words">{c.text}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-8">
-                    <ChatBubbleLeftEllipsisIcon className="h-7 w-7 mb-2" />
-                    <p className="text-xs">No comments yet.</p>
-                  </div>
-                )}
-              </div>
-              <form
-                className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-700 mt-2"
-                onSubmit={e => { e.preventDefault(); handleAddComment(); }}
-              >
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full text-xs border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200"
-                  disabled={isAddingComment}
-                  maxLength={300}
-                />
-                <button
-                  type="submit"
-                  disabled={isAddingComment || !comment.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
-                  title="Send"
-                >
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50 dark:bg-black rounded-b-lg flex justify-end"><button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button></div>
-      </div>
-    </div>
-  );
-};
-
 const ViewAllTasks = ({ initialFilters = {} }) => {
-  const { data: tasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery();
+  const { data: tasks = [], isLoading: isLoadingTasks, refetch } = useGetAllTasksQuery(undefined, { pollingInterval: 30000 });
   const { data: employees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -235,9 +125,11 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
 
   const isLoading = isLoadingTasks || isLoadingEmployees;
 
+  const { status: initialStatus, priority: initialPriority } = initialFilters;
+
   useEffect(() => {
-    setFilters({ status: initialFilters.status || '', priority: initialFilters.priority || '' });
-  }, [initialFilters]);
+    setFilters({ status: initialStatus || '', priority: initialPriority || '' });
+  }, [initialStatus, initialPriority]);
 
   const handleSelectEmployee = (employee) => {
     setSelectedEmployee(employee);
@@ -348,7 +240,12 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
               onClick={() => handleSelectEmployee(employee)}
             className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
             >
-            <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
+            <img 
+              src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} 
+              alt={employee.name} 
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${employee.name}&background=random`; }}
+              className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" 
+            />
             <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
               <p className="text-sm text-blue-600 font-medium">{employee.role}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
@@ -420,8 +317,8 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto rounded-b-xl">
-          <table className="w-full text-sm text-left text-slate-600">
+        <div className="flex-1 overflow-auto rounded-b-xl">
+          <table className="w-full text-sm text-left text-slate-600 min-w-[900px]">
             <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="px-6 py-3">Task Title</th>
@@ -444,7 +341,15 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                     </td>
                     <td className="px-6 py-4">{task.assignedBy?.name || 'N/A'}</td>
                     <td className="px-6 py-4">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}</td>
-                    <td className="px-6 py-4">{task.completionDate ? new Date(task.completionDate).toLocaleDateString() : <span className="text-slate-400 dark:text-slate-500 text-xs">--</span>}</td>
+                    <td className="px-6 py-4">
+                      {task.status === 'Not Completed' ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                          Incomplete
+                        </span>
+                      ) : task.status === 'Completed' && task.completionDate ? (
+                        new Date(task.completionDate).toLocaleDateString()
+                      ) : <span className="text-slate-400 dark:text-slate-500 text-xs">--</span>}
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[task.status]} dark:bg-opacity-20`}>
                         {task.status}

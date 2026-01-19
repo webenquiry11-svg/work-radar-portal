@@ -1,114 +1,26 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetReportsByEmployeeQuery, useUpdateEmployeeMutation, useGetHolidaysQuery, useGetLeavesQuery, useGetMyTasksQuery, useUpdateTaskMutation, useGetNotificationsQuery, useMarkNotificationsAsReadMutation, useGetAllTasksQuery, useAddTaskCommentMutation, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useDeleteReadNotificationsMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi';
-import { useLogoutMutation } from '../services/apiSlice'; 
+import React, { useState, useEffect, useMemo } from 'react';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetHolidaysQuery, useGetMyTasksQuery, useGetAllTasksQuery, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useProcessPastDueTasksMutation, useUpdateEmployeeMutation } from '../services/EmployeApi';
 import { apiSlice } from '../services/apiSlice';
 import toast from 'react-hot-toast';
-import { ArrowPathIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, BookmarkIcon, PlusIcon, TrashIcon, DocumentTextIcon, UserCircleIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, ChevronDownIcon, UserGroupIcon, InformationCircleIcon, CakeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, BellIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChatBubbleLeftEllipsisIcon, Bars3Icon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { EyeIcon, XMarkIcon, CalendarDaysIcon as CalendarOutlineIcon, InformationCircleIcon as InfoOutlineIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, PaperAirplaneIcon, DocumentTextIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, UserGroupIcon, InformationCircleIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChevronDoubleLeftIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectCurrentUser, setCredentials } from '../app/authSlice';
+import { selectCurrentUser } from '../app/authSlice';
 import PastReportsList from './PastReports';
 import AttendanceCalendar from '../services/AttendanceCalendar';
-import TaskApprovals from '../Admin/TaskApprovals.jsx';
+import TaskApprovals from '../Admin/TaskApprovals';
 import ThemeToggle from '../ThemeToggle.jsx';
-import AssignTask from './AssignTask.jsx'; 
+import AssignTask from '../Senior/AssignTask.jsx'; 
 import AnnouncementWidget from '../services/AnnouncementWidget.jsx';
 import starPublicityLogo from '../assets/starpublicity.png';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
-import ViewTeamTasks from './ViewTeamTasks.jsx';
+import ViewTeamTasks from '../Senior/ViewTeamTasks.jsx';
+import { TaskDetailsModal } from '../Admin/TaskOverview.jsx';
+import { TeamReports } from '../Admin/AdminDashboard.jsx';
+import GooglePieChart from '../Admin/GooglePieChart.jsx';
+import AppHeader from '../app/AppHeader.jsx';
 
-const TaskDetailsModal = ({ isOpen, onClose, task, taskNumber }) => {
-  const [comment, setComment] = useState('');
-  const [addComment, { isLoading: isAddingComment }] = useAddTaskCommentMutation();
-  if (!isOpen || !task) return null;
-
-  const InfoField = ({ label, value, icon: Icon }) => ( 
-    <div className="flex items-start gap-3">
-      <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
-      <div>
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
-
-  const handleAddComment = async () => {
-    if (!comment.trim()) return;
-    try {
-      await addComment({ taskId: task._id, text: comment }).unwrap();
-      setComment('');
-      toast.success('Comment added!');
-    } catch (err) {
-      toast.error('Failed to add comment.');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full md:max-w-2xl h-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
-              <h4 className="font-bold text-xl text-blue-700">
-                {task.title}
-                {taskNumber && <span className="ml-2 text-sm font-medium text-slate-400">(Task {taskNumber})</span>}
-              </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t dark:border-slate-700">
-                <InfoField label="Priority" value={task.priority} icon={InfoOutlineIcon} />
-                <InfoField label="Status" value={task.status} icon={CheckCircleIcon} />
-                <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-                <InfoField label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'} icon={CalendarOutlineIcon} />
-              </div>
-            </div>
-            <div className="md:col-span-1 bg-slate-50 p-4 rounded-lg border flex flex-col h-full">
-              <h5 className="font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2 flex-shrink-0"><ChatBubbleLeftEllipsisIcon className="h-5 w-5" /> Comments</h5>
-              <div className="flex-1 space-y-5 overflow-y-auto mb-4 pr-2 -mr-2 relative">
-                {task.comments?.map(c => (
-                  <div key={c._id} className="relative flex items-start gap-4">
-                    <div className="absolute top-0 left-4 h-full w-px bg-slate-200"></div>
-                    <img src={c.author.profilePicture || `https://ui-avatars.com/api/?name=${c.author.name}`} alt={c.author.name} className="relative z-10 h-8 w-8 rounded-full flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{c.author.name}</span>
-                        <span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <p className="text-sm text-slate-700 mt-0.5">{c.text}</p>
-                    </div>
-                  </div>
-                ))}
-                {task.comments?.length === 0 && <p className="text-xs text-slate-400 text-center">No comments yet.</p>}
-              </div>
-              <div className="flex gap-2 flex-shrink-0 mt-auto pt-2 border-t border-slate-200 dark:border-slate-700">
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment..." 
-                  className="w-full text-xs border-slate-300 dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-700 dark:text-white"
-                />
-                <button onClick={handleAddComment} disabled={isAddingComment} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300">
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg flex justify-end">
-          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Dashboard = ({ user, onNavigate }) => {
+export const Dashboard = ({ user, onNavigate }) => {
   const { data: tasks = [], isLoading } = useGetMyTasksQuery(undefined, { pollingInterval: 30000 });
   const { data: announcement } = useGetActiveAnnouncementQuery();
 
@@ -188,7 +100,7 @@ const Dashboard = ({ user, onNavigate }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 -mt-24 sm:-mt-20 z-20 relative">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200">
           <ClipboardDocumentListIcon className="h-10 w-10 text-blue-500 mb-2" /> 
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.taskStats.active}</p>
@@ -279,48 +191,7 @@ const Dashboard = ({ user, onNavigate }) => {
   );
 };
 
-const GooglePieChart = ({ data, title, colors }) => {
-  const chartRef = useRef(null);
-  const isDarkMode = document.documentElement.classList.contains('dark');
-
-  useEffect(() => {
-    const drawChart = () => {
-      if (!window.google || !window.google.visualization) {
-        console.error("Google Charts library not loaded.");
-        return;
-      }
-      const chartData = google.visualization.arrayToDataTable([
-        ['Task Status', 'Count'],
-        ...data.map(item => [item.name, item.value])
-      ]);
-
-      const options = {
-        title: title,
-        is3D: true,
-        backgroundColor: 'transparent',
-        legend: { textStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' } },
-        titleTextStyle: { color: isDarkMode ? '#E2E8F0' : '#334155' },
-        colors: colors ? data.map(item => colors[item.name]) : undefined,
-      };
-
-      if (chartRef.current) {
-        const chart = new google.visualization.PieChart(chartRef.current);
-        chart.draw(chartData, options);
-      }
-    };
-
-    if (window.google && window.google.charts) {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawChart);
-    }
-  }, [data, title, colors, isDarkMode]);
-
-  return (
-    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
-  );
-};
-
-const StatCard = ({ grade, count }) => {
+export const StatCard = ({ grade, count }) => {
   const GRADE_COLORS = { 'Avg. Completion': '#10B981', 'Total Tasks': '#3B82F6', 'In Progress': '#F59E0B', 'In Verification': '#8B5CF6', 'Not Completed': '#f97316', 'Completed': '#10B981', 'Moderate': '#3B82F6', 'Low': '#F59E0B', 'Pending': '#EF4444', 'Pending Verification': '#8B5CF6' };
   const GRADE_ICONS = { Completed: TrophyIcon, Moderate: ShieldCheckIcon, Low: StarIcon, Pending: ExclamationTriangleIcon };
   const Icon = GRADE_ICONS[grade] || InformationCircleIcon;
@@ -337,9 +208,22 @@ const StatCard = ({ grade, count }) => {
   );
 };
 
-const Analytics = ({ user }) => {
-  const [view, setView] = useState('my_stats'); // 'my_stats' or 'team_stats'
-  const { data: allTasks = [], isLoading: isLoadingAllTasks } = useGetAllTasksQuery();
+export const Analytics = ({ user }) => {
+  const [view, setView] = useState('my_stats');
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'Admin') {
+        setView('org_stats');
+      } else if (user.canViewTeam) {
+        setView('team_stats');
+      } else {
+        setView('my_stats');
+      }
+    }
+  }, [user?.role, user?.canViewTeam]);
+
+  const { data: allTasks = [], isLoading: isLoadingAllTasks } = useGetAllTasksQuery(undefined, { pollingInterval: 30000 });
   const { data: allEmployees = [], isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [dateRange, setDateRange] = useState({
     startDate: '',
@@ -349,12 +233,13 @@ const Analytics = ({ user }) => {
   const teamMemberIds = useMemo(() => {
     if (!allEmployees || !user?._id) return new Set();
     const subordinates = [];
-    const queue = allEmployees.filter(emp => emp.teamLead?._id === user._id);
+    const getTeamLeadId = (emp) => emp.teamLead?._id || emp.teamLead;
+    const queue = allEmployees.filter(emp => getTeamLeadId(emp) === user._id);
     const visited = new Set(queue.map(e => e._id));
     while (queue.length > 0) {
       const currentEmployee = queue.shift();
       subordinates.push(currentEmployee);
-      const directReports = allEmployees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+      const directReports = allEmployees.filter(emp => getTeamLeadId(emp) === currentEmployee._id);
       for (const report of directReports) {
         if (!visited.has(report._id)) {
           visited.add(report._id);
@@ -382,11 +267,14 @@ const Analytics = ({ user }) => {
     let viewTitle = '';
 
     if (view === 'my_stats') {
-      relevantTasks = allTasks.filter(task => task.assignedTo?._id === user._id);
+      relevantTasks = allTasks.filter(task => task.assignedTo?._id === user?._id);
       viewTitle = "My Performance Analytics";
     } else if (view === 'team_stats') {
       relevantTasks = allTasks.filter(task => teamMemberIds.has(task.assignedTo?._id));
       viewTitle = "Team Performance Analytics";
+    } else if (view === 'org_stats') {
+      relevantTasks = allTasks;
+      viewTitle = "Organization Performance Analytics";
     }
 
     let dateFilteredTasks = relevantTasks;
@@ -407,10 +295,10 @@ const Analytics = ({ user }) => {
       stats.totalProgress += task.progress || 0;
     });
     stats.averageCompletion = gradedTasks.length > 0 ? (stats.totalProgress / gradedTasks.length) : 0;
-    stats.tasksInProgress = relevantTasks.filter(t => t.status === 'In Progress').length;
-    stats.tasksInVerification = relevantTasks.filter(t => t.status === 'Pending Verification').length;
+    stats.tasksInProgress = dateFilteredTasks.filter(t => t.status === 'In Progress').length;
+    stats.tasksInVerification = dateFilteredTasks.filter(t => t.status === 'Pending Verification').length;
 
-    relevantTasks.forEach(task => {
+    dateFilteredTasks.forEach(task => {
       switch(task.status) {
         case 'Pending': stats.pending++; break;
         case 'In Progress': stats.inProgress++; break;
@@ -458,12 +346,15 @@ const Analytics = ({ user }) => {
           <p className="text-slate-500 mt-2">An overview of task completion and progress.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
-          {user?.canViewTeam && (
             <div className="flex items-center bg-slate-200 rounded-lg p-1">
+              {user?.role === 'Admin' && (
+                <button onClick={() => setView('org_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'org_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Org</button>
+              )}
+              {user?.canViewTeam && (
+                <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team</button>
+              )}
               <button onClick={() => setView('my_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'my_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>My Stats</button>
-              <button onClick={() => setView('team_stats')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${view === 'team_stats' ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}`}>Team Stats</button>
             </div>
-          )}
           <div className="flex items-center gap-2">
             <input 
               type="date" 
@@ -510,8 +401,8 @@ const Analytics = ({ user }) => {
   );
 };
 
-const MyTasks = () => {
-  const { data: myTasks = [], isLoading } = useGetMyTasksQuery();
+export const MyTasks = () => {
+  const { data: myTasks = [], isLoading } = useGetMyTasksQuery(undefined, { pollingInterval: 30000 });
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [activeTab, setActiveTab] = useState('Active');
@@ -631,8 +522,8 @@ const MyTasks = () => {
             <ul className="space-y-4">
               {tasksToShow.map((task, index) => {
                 const priorityStyles = { High: 'bg-red-500', Medium: 'bg-amber-500', Low: 'bg-green-500' };
-                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800' };
-                
+                const statusStyles = { Pending: 'bg-slate-100 text-slate-800', 'In Progress': 'bg-blue-100 text-blue-800', Completed: 'bg-emerald-100 text-emerald-800', 'Pending Verification': 'bg-purple-100 text-purple-800', 'Not Completed': 'bg-orange-100 text-orange-800' };
+
                 const now = new Date();
                 const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
                 const isOverdue = !['Completed', 'Not Completed', 'Pending Verification'].includes(task.status) && task.dueDate && new Date(task.dueDate) < todayUTCStart;
@@ -641,10 +532,18 @@ const MyTasks = () => {
                     <span className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${priorityStyles[task.priority]}`} title={`${task.priority} Priority`}></span>
                     <div className="flex-1">
                       <h3 className="font-bold text-slate-800">{task.title}</h3>
-                      <p className={`text-xs mt-1 ${isOverdue ? 'font-bold text-red-600' : 'text-slate-500'}`}
-                      >
+                      <p className={`text-xs mt-1 ${isOverdue ? 'font-bold text-red-600' : 'text-slate-500'}`}>
                         Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
                       </p>
+                      {['Completed', 'Not Completed'].includes(task.status) && (
+                        <p className="text-xs mt-1 text-slate-500">
+                          {task.status === 'Not Completed' ? (
+                            <span className="font-bold text-orange-600">Incomplete</span>
+                          ) : (
+                            <span>Completed: {task.completionDate ? new Date(task.completionDate).toLocaleDateString() : 'N/A'}</span>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="w-full sm:w-auto md:w-1/4 flex items-center gap-2">
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
@@ -676,7 +575,7 @@ const MyTasks = () => {
   );
 };
 
-const MyReportHistory = ({ employeeId }) => {
+export const MyReportHistory = ({ employeeId }) => {
   const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId);
   const [expandedReportId, setExpandedReportId] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
@@ -754,7 +653,7 @@ const MyReportHistory = ({ employeeId }) => {
   );
 };
 
-const TeamInformation = ({ seniorId }) => {
+export const TeamInformation = ({ seniorId }) => {
   const { data: allEmployees, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -764,14 +663,15 @@ const TeamInformation = ({ seniorId }) => {
 
     const getAllSubordinates = (managerId, employees) => {
       const subordinates = [];
-      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
+      const getTeamLeadId = (emp) => emp.teamLead?._id || emp.teamLead;
+      const queue = employees.filter(emp => getTeamLeadId(emp) === managerId);
       const visited = new Set(queue.map(e => e._id));
 
       while (queue.length > 0) {
         const currentEmployee = queue.shift();
         subordinates.push(currentEmployee);
 
-        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
+        const directReports = employees.filter(emp => getTeamLeadId(emp) === currentEmployee._id);
         for (const report of directReports) {
           if (!visited.has(report._id)) {
             visited.add(report._id);
@@ -856,166 +756,7 @@ const TeamInformation = ({ seniorId }) => {
   );
 };
 
-const TeamReports = ({ seniorId }) => {
-  const { data: allEmployees, isLoading: isLoadingEmployees, isError: isErrorEmployees } = useGetEmployeesQuery();
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [viewingTask, setViewingTask] = useState(null); 
-  const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const teamMembers = useMemo(() => {
-    if (!allEmployees || !seniorId) return [];
-
-    const getAllSubordinates = (managerId, employees) => {
-      const subordinates = [];
-      const queue = employees.filter(emp => emp.teamLead?._id === managerId);
-      const visited = new Set(queue.map(e => e._id));
-
-      while (queue.length > 0) {
-        const currentEmployee = queue.shift();
-        subordinates.push(currentEmployee);
-
-        const directReports = employees.filter(emp => emp.teamLead?._id === currentEmployee._id);
-        for (const report of directReports) {
-          if (!visited.has(report._id)) {
-            visited.add(report._id);
-            queue.push(report);
-          }
-        }
-      }
-      return subordinates;
-    };
-
-    return getAllSubordinates(seniorId, allEmployees);
-  }, [allEmployees, seniorId]);
-
-  const filteredEmployees = useMemo(() => {
-    if (!teamMembers) return [];
-    return teamMembers.filter(employee =>
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [teamMembers, searchTerm]);
-
-  const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
-    skip: !selectedEmployee,
-  });
-
-  const renderReportContent = (content) => {
-    try {
-      const data = JSON.parse(content);
-      // Handle new progress-based reports
-      if (data.taskUpdates) {
-        return (
-          <div className="space-y-3">
-            {data.taskUpdates.map((update, i) => (
-              <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
-                <div>
-                  <p className="font-semibold text-slate-800">{update.taskId?.title || 'Unknown Task'}</p>
-                  <p className="text-sm text-slate-600">Progress Submitted: <span className="font-bold text-blue-600">{update.completion}%</span></p>
-                </div>
-                {update.taskId && (
-                  <button onClick={() => {
-                    setViewingTask(update.taskId);
-                    setViewingTaskNumber(i + 1);
-                  }} className="text-xs font-semibold text-blue-600 hover:text-blue-700">Details</button>
-                )}
-              </div>
-            ))}
-          </div>
-        );
-      }
-      // Fallback for any old report format
-      return (
-        <div className="space-y-6 text-sm">
-          <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
-        </div>
-      );
-    } catch (e) {
-      return <p className="whitespace-pre-line break-words">{content}</p>;
-    }
-  };
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full">
-      {!selectedEmployee ? (
-        <>
-          <div className="mb-8">
-            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Team Reports</h1>
-            <p className="text-slate-500 mt-2">Select an employee to view their submitted reports.</p>
-          </div>
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search employees..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full max-w-md text-sm border border-slate-300 dark:border-slate-600 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:text-white"
-            />
-          </div>
-          {isLoadingEmployees ? (
-            <p className="p-4 text-slate-500 dark:text-slate-400">Loading employees...</p>
-          ) : isErrorEmployees ? (
-            <p className="p-4 text-red-500">Failed to load employees.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredEmployees.map(employee => (
-                <div
-                  key={employee._id}
-                  onClick={() => setSelectedEmployee(employee)}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-blue-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
-                >
-                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}&background=random`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-600" />
-                  <p className="font-bold text-slate-800 dark:text-slate-200">{employee.name}</p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{employee.role}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{employee.employeeId}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSelectedEmployee(null)} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
-                <ArrowLeftIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-              </button>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Reports for {selectedEmployee.name}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Review all submitted reports for this employee.</p>
-              </div>
-            </div>
-          </div>
-
-          {isLoadingReports && <p>Loading reports...</p>}
-          <div className="space-y-6">
-            {reports?.length > 0 ? reports.map(report => (
-              <div key={report._id} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200 mb-4 flex flex-col sm:flex-row justify-between gap-2">
-                  <span>{new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}</span>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    report.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>{report.status}</span>
-                </h3>
-                <div className="mb-4">{renderReportContent(report.content)}</div>
-              </div>
-            )) : (
-              <div className="text-center py-10 text-slate-400 dark:text-slate-500">No reports found for this employee.</div>
-            )}
-          </div>
-        </div>
-      )}
-      <TaskDetailsModal
-        isOpen={!!viewingTask}
-        onClose={() => setViewingTask(null)}
-        task={viewingTask}
-        taskNumber={viewingTaskNumber}
-      />
-    </div>
-  );
-};
-
-const MyDailyReport = ({ employeeId }) => {
+export const MyDailyReport = ({ employeeId }) => {
   const { data: assignedTasks = [], isLoading: isLoadingTasks } = useGetMyTasksQuery(undefined, { refetchOnMountOrArgChange: true });
   const { data: todaysReport, isLoading: isLoadingReport } = useGetTodaysReportQuery(employeeId);
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
@@ -1029,8 +770,9 @@ const MyDailyReport = ({ employeeId }) => {
   }, [todaysReport]);
 
   const isTaskReadOnly = (task) => {
-    // A task is read-only if the main report is read-only, or if the task itself was rejected.
-    return isReadOnly || (task.rejectionReason && task.status === 'In Progress');
+    // A task is read-only if the main report is read-only.
+    // We allow editing rejected tasks (which are In Progress) so the employee can correct them.
+    return isReadOnly;
   };
 
   useEffect(() => {
@@ -1164,7 +906,7 @@ const MyDailyReport = ({ employeeId }) => {
   );
 };
 
-const MyAttendance = ({ employeeId }) => {
+export const MyAttendance = ({ employeeId }) => {
   const { data: holidays = [], isLoading: isLoadingHolidays } = useGetHolidaysQuery(); 
 
   const legendItems = [
@@ -1226,7 +968,7 @@ const MyAttendance = ({ employeeId }) => {
   );
 };
 
-const EmployeeProfile = ({ user }) => {
+export const EmployeeProfile = ({ user }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
   const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
@@ -1320,7 +1062,7 @@ const EmployeeProfile = ({ user }) => {
       <div className="flex justify-between items-start mb-8 pb-8 border-b border-gray-200 dark:border-slate-700">
         <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
         <img
-          src={user.profilePicture || `https://i.pravatar.cc/150?u=${user.email}`}
+          src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
           alt="Profile"
           className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
         />
@@ -1403,19 +1145,12 @@ const EmployeeProfile = ({ user }) => {
   );
 };
 
-const EmployeeDashboard = ({ employeeId }) => {
+const EmployeeDashboard = () => {
   const user = useSelector(selectCurrentUser);
-  const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const [activeComponent, setActiveComponent] = useState('dashboard');
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileRef = useRef(null);
-  const notificationRef = useRef(null);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSidebarHovering, setIsSidebarHovering] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const { data: notifications = [] } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const [processPastDueTasks] = useProcessPastDueTasksMutation();
 
   useEffect(() => {
@@ -1426,7 +1161,6 @@ const EmployeeDashboard = ({ employeeId }) => {
 
 
   const { data: allEmployees = [] } = useGetEmployeesQuery();
-  const [deleteReadNotifications] = useDeleteReadNotificationsMutation();
   const pageTitles = {
     dashboard: 'Dashboard',
     'my-report': "Today's Report",
@@ -1459,73 +1193,19 @@ const EmployeeDashboard = ({ employeeId }) => {
     }
   }, [hasTeam, activeComponent]);
 
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [profileRef]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setIsNotificationOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [profileRef]);
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
   const handleRefresh = () => {
-    dispatch(apiSlice.util.invalidateTags([// Invalidate specific tags to refetch data without a full state reset
+    // Invalidate specific tags to refetch data without a full state reset
+    dispatch(apiSlice.util.invalidateTags([
       'Task',
       'Notification',
       'Report',
       'Leave',
-      'Holiday'
+      'Holiday',
+      'Announcement',
+      'EOMHistory',
+      'Employee'
     ]));
     toast.success("Dashboard data refreshed!");
-  };
-
-  const [markNotificationsAsRead] = useMarkNotificationsAsReadMutation();
-  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
-
-  const handleBellClick = () => {
-    setIsNotificationOpen(!isNotificationOpen);
-    if (unreadCount > 0) {
-      setTimeout(() => {
-        markNotificationsAsRead();
-      }, 2000);
-    }
-  };
-
-  const handleNotificationClick = (notification) => {
-    if (notification.type === 'task_approval') {
-      setActiveComponent('task-approvals');setIsNotificationOpen(false);
-    } else if (notification.type === 'info') {
-      // Info notifications for employees are usually about their own tasks
-      setActiveComponent('my-tasks');
-      setIsNotificationOpen(false);
-    }
-  };
-
-  const handleClearRead = async () => {
-    try {
-      await deleteReadNotifications().unwrap();
-      toast.success('Read notifications cleared.');
-    } catch {
-      toast.error('Failed to clear notifications.');
-    }
   };
 
   const renderContent = () => {
@@ -1573,11 +1253,7 @@ const EmployeeDashboard = ({ employeeId }) => {
       </style>
       <aside className={`fixed z-50 top-0 left-0 h-full flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg flex flex-col transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}>
         <div className={`h-16 flex items-center border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4 gap-3'}`}>
-          {user?.company === 'Volga Infosys' ? (
-            <img src={volgaInfosysLogo} alt="Logo" className={`transition-all ${isSidebarCollapsed ? 'h-12 w-12' : 'h-10 w-auto'}`} />
-          ) : (
-            <img src={starPublicityLogo} alt="Logo" className={`transition-all ${isSidebarCollapsed ? 'h-12 w-12' : 'h-10 w-auto'}`} />
-          )}
+          <img src={user?.company === 'Volga Infosys' ? volgaInfosysLogo : starPublicityLogo} alt="Logo" className={`transition-all ${isSidebarCollapsed ? 'h-12 w-12' : 'h-10 w-auto'}`} />
           {!isSidebarCollapsed && (
             <span className="text-lg font-bold text-blue-800 dark:text-slate-200 truncate" title={user?.company}>
               {user?.company || 'Company Portal'}
@@ -1653,81 +1329,8 @@ const EmployeeDashboard = ({ employeeId }) => {
           </div>
         </aside> 
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-      <div className={`flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-72'}`}>
-          <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 h-16 flex-shrink-0 shadow z-30 fixed top-0 left-0 right-0 md:relative md:left-auto">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600 dark:text-slate-300">
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-800 dark:text-slate-200 md:text-xl">
-              {pageTitles[activeComponent] || 'Dashboard'}
-            </h1>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <button onClick={handleRefresh} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Data">
-                <ArrowPathIcon className="h-6 w-6" />
-              </button>
-              <div className="relative" ref={notificationRef}>
-                <button onClick={handleBellClick} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 relative">
-                  <BellIcon className="h-6 w-6" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
-                  )}
-                </button>
-                {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-60">
-                    <div className="p-3 font-semibold text-sm border-b dark:border-slate-700">Notifications</div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length > 0 ? notifications.map(n => (
-                        <div 
-                          key={n._id} 
-                          onClick={() => { handleNotificationClick(n); setIsNotificationOpen(false); }}
-                          className={`p-3 border-b dark:border-slate-700 text-xs cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50 dark:bg-blue-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                        >
-                          <p className="text-slate-700 dark:text-slate-300">{n.message}</p>
-                          <p className="text-slate-400 dark:text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                        </div>
-                      )) : (
-                        <p className="p-4 text-center text-sm text-gray-500">No notifications</p>
-                      )}
-                    </div>
-                      <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 text-center">
-                        <button onClick={handleClearRead} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Clear Read Notifications</button>
-                      </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-              <div className="relative" ref={profileRef}>
-                <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                  <img
-                    src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || 'A'}&background=random`}
-                    alt="Employee"
-                    className="h-9 w-9 rounded-full object-cover"
-                  />
-                  <div className="text-right hidden sm:block">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-slate-200">{user?.name || 'Employee'}</div>
-                    <div className="text-xs text-gray-500 dark:text-slate-400">{user?.role || 'Employee'}</div>
-                  </div>
-                  <ChevronDownIcon className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-60 border border-gray-200 dark:border-slate-700">
-                    {user?.canEditProfile && (
-                      <button onClick={() => { setActiveComponent('profile'); setIsProfileOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
-                        <UserCircleIcon className="h-5 w-5" />
-                        My Profile
-                      </button>
-                    )}
-                    <button onClick={handleLogout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </header>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-72'}`}>
+          <AppHeader pageTitle={pageTitles[activeComponent]} onMenuClick={() => setSidebarOpen(true)} setActiveComponent={setActiveComponent} />
           <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900">
             {renderContent()}
           </main>

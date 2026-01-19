@@ -24,8 +24,8 @@ app.use(express.json());
 
 // --- API Routes ---
 // This is the ONLY job of this server. It handles all requests that start with /api.
-// Nginx sends /workradar/api/... here as /api/...
-app.use('/api', webRoutes);
+// The client is configured to make requests to '/workradar/api', so we mount the routes here.
+app.use('/workradar/api', webRoutes);
 
 // --- All static file logic has been REMOVED ---
 // Nginx is now 100% responsible for serving your React app.
@@ -35,4 +35,7 @@ const PORT = process.env.PORT || 2000;
 
 connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}).catch((err) => {
+  console.error('Failed to connect to database. Server failed to start:', err);
+  process.exit(1);
 });

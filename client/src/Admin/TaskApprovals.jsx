@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useGetTasksForApprovalQuery, useApproveTaskMutation, useRejectTaskMutation } from '../services/EmployeApi.js';
 import toast from 'react-hot-toast';
-import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, CalendarDaysIcon, InformationCircleIcon, InboxIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { CheckIcon, XMarkIcon, ArrowPathIcon, EyeIcon, InformationCircleIcon, InboxIcon, ArrowLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
+import { TaskDetailsModal } from './TaskOverview';
 
 const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
   const [reason, setReason] = useState('');
@@ -18,21 +19,30 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
 
   return (
     !isOpen ? null : (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-slate-800">Review and Reject Task</h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md border border-gray-100 dark:border-slate-700 transform transition-all scale-100">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reject Task</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+            <XMarkIcon className="h-6 w-6" />
+          </button>
         </div>
-        <div className="p-6">
+        <div className="p-6 space-y-4">
+          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800/30">
+             <p className="text-sm text-red-800 dark:text-red-300 font-medium flex items-center gap-2">
+               <InformationCircleIcon className="h-5 w-5" />
+               This action will return the task to the employee.
+             </p>
+          </div>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Please provide a clear reason for the grade given..."
-            className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Please provide a clear reason for rejection..."
+            className="w-full text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
             rows="4"
           />
           <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Set Final Progress Percentage</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Set Final Progress Percentage</label>
             <div className="flex items-center gap-4">
               <input
                 type="range"
@@ -41,21 +51,21 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
                 step="10"
                 value={finalPercentage}
                 onChange={(e) => setFinalPercentage(parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-600"
               />
-              <span className="font-semibold w-12 text-right text-blue-700">{finalPercentage}%</span>
+              <span className="font-bold w-12 text-right text-gray-700 dark:text-white">{finalPercentage}%</span>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-slate-50 flex justify-end gap-3">
-          <button onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
+        <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 rounded-b-xl flex justify-end gap-3 border-t border-gray-100 dark:border-slate-800">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-gray-600 dark:text-slate-300 font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-sm">Cancel</button>
           <button onClick={() => {
             if (finalPercentage === 100) {
               toast.error("Cannot reject with 100% progress. Please use the 'Approve' flow.");
               return;
             }
             onConfirm(reason, finalPercentage);
-          }} disabled={!reason || isRejecting} className="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-red-300">
+          }} disabled={!reason || isRejecting} className="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg text-sm disabled:bg-red-400 shadow-sm transition-all">
             {isRejecting ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" /> : <XMarkIcon className="h-4 w-4 mr-2" />}
             Submit Grade
           </button>
@@ -88,23 +98,26 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, initialProgress
 
   return (
     !isOpen ? null : (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-slate-800">Approve Task Completion</h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md border border-gray-200 dark:border-slate-700 transform transition-all scale-100">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Approve Task</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+            <XMarkIcon className="h-6 w-6" />
+          </button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Final Progress</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Final Progress</label>
             <div className="flex items-center gap-4">
               <input
                 type="range" min="0" max="100" step="10"
                 value={finalPercentage}
                 onChange={(e) => setFinalPercentage(parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-600"
               />
               <div className="text-right w-24">
-                <span className="font-semibold text-blue-700">{finalPercentage}%</span>
+                <span className="font-bold text-gray-800 dark:text-white text-lg">{finalPercentage}%</span>
                 <span className={`block text-xs font-bold ${currentGrade.color}`}>{currentGrade.label}</span>
               </div>
             </div>
@@ -113,13 +126,13 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, initialProgress
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Add an optional comment... (e.g., Great work!)"
-            className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
             rows="3"
           />
         </div>
-        <div className="p-4 bg-slate-50 flex justify-end gap-3">
-          <button onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
-          <button onClick={() => onConfirm(finalPercentage, comment)} disabled={isApproving} className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm disabled:bg-green-300">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 rounded-b-xl flex justify-end gap-3 border-t border-gray-100 dark:border-slate-800">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-gray-600 dark:text-slate-300 font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-sm">Cancel</button>
+          <button onClick={() => onConfirm(finalPercentage, comment)} disabled={isApproving} className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg text-sm disabled:bg-green-400 shadow-sm transition-all">
             {isApproving && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
             Confirm Approval
           </button>
@@ -127,46 +140,6 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, initialProgress
       </div>
     </div>
     )
-  );
-};
-
-const TaskDetailsModal = ({ isOpen, onClose, task }) => {
-  if (!isOpen || !task) return null;
-
-  const InfoField = ({ label, value, icon: Icon }) => (
-    <div className="flex items-start gap-3">
-      <Icon className="h-5 w-5 text-slate-400 mt-0.5" />
-      <div>
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-sm font-medium text-slate-800">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Task Details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <h4 className="font-bold text-lg text-blue-700">{task.title}</h4>
-          <p className="text-sm text-slate-600">{task.description}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
-            <InfoField label="Priority" value={task.priority} icon={InformationCircleIcon} />
-            <InfoField label="Status" value={task.status} icon={CheckIcon} />
-            <InfoField label="Start Date" value={task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A'} icon={CalendarDaysIcon} />
-            <InfoField label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'} icon={CalendarDaysIcon} />
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50 rounded-b-lg flex justify-end">
-          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Close</button>
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -235,36 +208,67 @@ const pendingApprovalsByEmployee = useMemo(() => {
   // Main view showing team members with pending approvals
   if (!selectedEmployeeData) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Task Completion Approvals</h1>
-          <p className="text-slate-500 dark:text-white mt-2">Select a team member to review their submitted tasks.</p>
+      <div className="p-6 lg:p-10 h-full flex flex-col bg-gray-50 dark:bg-black/50 font-manrope">
+        <div className="mb-10 bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full blur-3xl -mr-16 -mt-16 transition-transform duration-700 group-hover:scale-110"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <CheckIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Pending Approvals</h1>
+            </div>
+            <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl">
+              Select an employee to review their task submissions.
+            </p>
+          </div>
         </div>
         {employeesWithPendingApprovals.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {employeesWithPendingApprovals.map(({ employee, tasks }) => (
               <div
                 key={employee._id}
                 onClick={() => setSelectedEmployeeData({ employee, tasks })}
-                className="bg-white dark:bg-black rounded-2xl shadow-xl p-6 flex flex-col items-center text-center border-t-4 border-purple-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-slate-200 dark:border-slate-700 overflow-hidden"
               >
-                <div className="relative">
-                  <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}`} alt={employee.name} className="h-20 w-20 rounded-full object-cover mb-4 border-4 border-slate-100 dark:border-slate-800" />
-                  <span className="absolute top-0 right-0 block h-6 w-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center ring-2 ring-white dark:ring-black">
-                    {tasks.length}
-                  </span>
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top"></div>
+                
+                <div className="flex items-start justify-between mb-6">
+                   <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <img src={employee.profilePicture || `https://ui-avatars.com/api/?name=${employee.name}`} alt={employee.name} className="h-16 w-16 rounded-full object-cover border-2 border-slate-100 dark:border-slate-700 group-hover:border-blue-200 transition-colors shadow-sm" />
+                        <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-0.5">
+                            <div className="bg-green-500 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-800"></div>
+                        </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors">{employee.name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{employee.role}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{employee.department || 'Team Member'}</p>
+                    </div>
+                   </div>
                 </div>
-                <p className="font-bold text-slate-800 dark:text-white">{employee.name}</p>
-                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">{employee.role}</p>
+                
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700 group-hover:border-blue-100 dark:group-hover:border-blue-900/30 transition-colors">
+                   <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Pending Tasks</span>
+                      <span className="text-2xl font-extrabold text-slate-800 dark:text-white">{tasks.length}</span>
+                   </div>
+                   <div className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <ChevronRightIcon className="h-5 w-5" />
+                   </div>
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-24 text-slate-500 dark:text-white bg-white dark:bg-black rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 w-full">
-              <InboxIcon className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-              <h3 className="text-lg font-semibold">All Caught Up!</h3>
-              <p className="text-sm">There are no pending task approvals from your team at this time.</p>
+            <div className="text-center py-24 text-gray-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-gray-300 dark:border-slate-700 w-full max-w-2xl">
+              <div className="bg-slate-50 dark:bg-slate-800 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <InboxIcon className="h-10 w-10 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">All Caught Up!</h3>
+              <p className="text-slate-500 dark:text-slate-400">There are no pending task approvals from your team at this time.</p>
             </div>
           </div>
         )}
@@ -274,45 +278,50 @@ const pendingApprovalsByEmployee = useMemo(() => {
 
   // Detailed view showing tasks for the selected employee
   return (
-    <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col bg-slate-50/50 dark:bg-black/50">
-      <div className="mb-8">
-        <button onClick={() => setSelectedEmployeeData(null)} className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white mb-4">
-          <ArrowLeftIcon className="h-4 w-4" />
-          Back to Team View
-        </button>
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Approvals for {selectedEmployeeData.employee.name}</h1>
-        <p className="text-slate-500 dark:text-white mt-2">Review and approve or reject tasks marked as complete.</p>
+    <div className="p-6 lg:p-10 h-full flex flex-col bg-gray-50 dark:bg-black/50 font-manrope">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setSelectedEmployeeData(null)} className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-gray-500 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+            <ArrowLeftIcon className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedEmployeeData.employee.name}</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Reviewing {selectedEmployeeData.tasks.length} pending tasks</p>
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div className="space-y-4">
         {selectedEmployeeData.tasks.map(task => (
-          <div key={task._id} className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-5 flex flex-col justify-between hover:shadow-xl transition-shadow">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <img src={task.assignedTo.profilePicture || `https://ui-avatars.com/api/?name=${task.assignedTo.name}`} alt={task.assignedTo.name} className="h-10 w-10 rounded-full object-cover" />
-                <div>
-                  <p className="font-bold text-slate-800 dark:text-white">{task.assignedTo.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Submitted for approval</p>
-                </div>
+          <div key={task._id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col lg:flex-row lg:items-center gap-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-300">Pending Review</span>
+                <span className="text-xs text-gray-400">• Submitted {new Date(task.submittedForCompletionDate).toLocaleDateString()}</span>
               </div>
-              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400 my-2">"{task.title}"</p>
-              <p className="text-xs text-slate-400">Submitted on: {new Date(task.submittedForCompletionDate).toLocaleString()}</p>
-              <div className="mt-3">
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Submitted Progress:</p>
-                <p className="text-2xl font-bold text-blue-600">{task.progress}%</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{task.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-1">{task.description}</p>
+            </div>
+
+            <div className="w-full lg:w-48">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-500 dark:text-slate-400">Progress</span>
+                <span className="font-medium text-gray-900 dark:text-white">{task.progress}%</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 rounded-full" style={{ width: `${task.progress}%` }}></div>
               </div>
             </div>
-            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <button onClick={() => setViewingTask(task)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
-                <EyeIcon className="h-4 w-4" /> View Details
+            <div className="flex items-center gap-3 w-full lg:w-auto pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-100 dark:border-slate-700">
+              <button onClick={() => setViewingTask(task)} className="flex-1 lg:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
+                <EyeIcon className="h-4 w-4" /> View
               </button>
-              <div className="flex items-center gap-2">
-                <button onClick={() => handleReject(task)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
-                  <XMarkIcon className="h-4 w-4" /> Reject
-                </button>
-                <button onClick={() => handleApprove(task)} disabled={isApproving || isRejecting} className="inline-flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">
-                  {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />} Approve
-                </button>
-              </div>
+              <button onClick={() => handleReject(task)} disabled={isApproving || isRejecting} className="flex-1 lg:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 dark:bg-slate-800 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20">
+                <XMarkIcon className="h-4 w-4" /> Reject
+              </button>
+              <button onClick={() => handleApprove(task)} disabled={isApproving || isRejecting} className="flex-1 lg:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm">
+                {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />} Approve
+              </button>
             </div>
           </div>
         ))}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { UsersIcon, BriefcaseIcon, ClockIcon, TrophyIcon, CheckBadgeIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMonthCandidatesQuery, useGetActiveAnnouncementQuery } from '../services/EmployeApi';
 import GooglePieChart from './GooglePieChart.jsx';
@@ -19,7 +19,7 @@ const formatDueDate = (dateString) => {
 };
 
 const Countdown = ({ toDate }) => {
-  const calculateTimeLeft = () => {
+  const calculateTimeLeft = useCallback(() => {
     const difference = +new Date(toDate) - +new Date();
     let timeLeft = {};
 
@@ -30,14 +30,19 @@ const Countdown = ({ toDate }) => {
       };
     }
     return timeLeft;
-  };
+  }, [toDate]);
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    const timer = setTimeout(() => setTimeLeft(calculateTimeLeft()), 1000 * 60); // Update every minute
-    return () => clearTimeout(timer);
-  });
+    // Set up an interval to update the countdown every minute
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 60000); // 60000 ms = 1 minute
+
+    // Clear the interval when the component unmounts or toDate changes
+    return () => clearInterval(timer);
+  }, [calculateTimeLeft]);
 
   if (!timeLeft.days && !timeLeft.hours) return <span className="text-yellow-300">Expires soon</span>;
 

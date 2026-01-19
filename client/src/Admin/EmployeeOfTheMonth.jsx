@@ -110,6 +110,7 @@ const EmployeeOfTheMonth = () => {
             <img
               src={candidate.employee.profilePicture || `https://ui-avatars.com/api/?name=${candidate.employee.name}&background=random`}
               alt={candidate.employee.name}
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${candidate.employee.name}&background=random`; }}
               className={`h-24 w-24 rounded-full object-cover border-4 ${isOfficialWinner ? 'border-amber-400' : 'border-blue-200'}`}
             />
             {isOfficialWinner && (

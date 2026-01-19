@@ -28,6 +28,13 @@ class AuthController {
     res.status(200).json(req.user);
   };
 
+  static logout = (req, res) => {
+    // This is a stateless JWT setup. The client is responsible for clearing the token.
+    // This endpoint simply provides a formal way for the client to "log out"
+    // and can be used for logging or other server-side cleanup if needed in the future.
+    res.status(200).json({ message: 'Logged out successfully.' });
+  };
+
   /**
    * @description Handle forgot password request
    * @route POST /api/auth/forgot-password

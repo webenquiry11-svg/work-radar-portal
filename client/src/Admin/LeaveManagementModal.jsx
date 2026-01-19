@@ -86,14 +86,7 @@ const LeaveManagementModal = ({ isOpen, onClose, employee }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
-        <style>{`
-          .react-calendar { width: 100%; border: none; }
-          .react-calendar__tile { border-radius: 0.5rem; }
-          .leave-tile { background-color: #a7f3d0 !important; color: #065f46; font-weight: bold; }
-          .holiday-tile { background-color: #fecaca !important; color: #b91c1c; }
-          .sunday-tile { background-color: #fee2e2 !important; color: #991b1b; }
-        `}</style>
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-xl">
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">Manage Leave for {employee.name}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -105,6 +98,7 @@ const LeaveManagementModal = ({ isOpen, onClose, employee }) => {
             <p>Loading leave data...</p>
           ) : (
             <Calendar
+              className="custom-calendar"
               onChange={setDate}
               value={date}
               onClickDay={handleDateClick}

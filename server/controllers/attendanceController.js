@@ -13,13 +13,9 @@ class AttendanceController {
     }
 
     // Use ISO date strings to ensure timezone-agnostic queries.
-    // This creates a range from the first moment of the first day to the last moment of the last day in UTC.
     const startDate = new Date(`${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`);
-    // Correctly and reliably calculate the last day of the month in UTC by getting the 0th day of the *next* month.
-    // The month argument in Date.UTC is 0-indexed (0-11), so we subtract 1 from the 1-based month from the query.
-    // By setting day to 0 for the *next* month, we get the last day of the current month.
     const intYear = parseInt(year, 10);
-    const intMonth = parseInt(month, 10); // This is 1-based (e.g., 9 for September)
+    const intMonth = parseInt(month, 10);
     const endDate = new Date(Date.UTC(intYear, intMonth, 0, 23, 59, 59, 999));
 
     try {
@@ -27,49 +23,91 @@ class AttendanceController {
       const holidays = await Holiday.find({ date: { $gte: startDate, $lte: endDate } });
       const leaves = await Leave.find({ employee: employeeId, date: { $gte: startDate, $lte: endDate } });
 
+      // Fetch all tasks that could possibly be active during this month
+      const tasksForMonth = await Task.find({
+        assignedTo: employeeId,
+        $or: [
+            { startDate: { $lte: endDate } },
+            { createdAt: { $lte: endDate } }
+        ]
+      });
+
+      // Create a set of all days in the month where at least one task was "active" (visible in daily report).
+      const activeTaskDays = new Set();
+      
+      tasksForMonth.forEach(task => {
+        // Determine Start Date (Start of the task)
+        const startRaw = task.startDate || task.createdAt;
+        const taskStart = new Date(startRaw);
+        taskStart.setUTCHours(0, 0, 0, 0);
+
+        // Determine End Date (When the task stopped being active/visible)
+        let taskEnd = new Date(); // Default to now (still active)
+        taskEnd.setUTCHours(23, 59, 59, 999);
+
+        if (['Completed', 'Not Completed', 'Pending Verification'].includes(task.status)) {
+            // If finalized, it was active up until the completion day
+            const completionDate = task.completionDate || task.submittedForCompletionDate || task.updatedAt;
+            taskEnd = new Date(completionDate);
+            taskEnd.setUTCHours(23, 59, 59, 999);
+        } else {
+            // If not finalized (Pending/In Progress), it remains active.
+            // For the purpose of this month's calculation, we consider it active indefinitely (until today/future).
+            // We set it to a far future date to ensure it covers the rest of the month.
+            taskEnd = new Date(8640000000000000); 
+        }
+
+        // Loop through the requested month and mark days where this task was active
+        let loopDate = new Date(startDate);
+        while (loopDate <= endDate) {
+            if (loopDate >= taskStart && loopDate <= taskEnd) {
+                activeTaskDays.add(loopDate.toISOString().split('T')[0]);
+            }
+            loopDate.setUTCDate(loopDate.getUTCDate() + 1);
+        }
+      });
+
       const reportDates = new Set(reports.map(r => r.reportDate.toISOString().split('T')[0]));
       const holidayDates = new Set(holidays.map(h => h.date.toISOString().split('T')[0]));
       const leaveDates = new Set(leaves.map(l => l.date.toISOString().split('T')[0]));
 
       const attendanceData = [];
-      // Get today's date at midnight UTC to ensure accurate "past" vs "future" comparison
       const now = new Date();
       const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
       const d = new Date(startDate);
       while (d <= endDate) {
         const dateStr = d.toISOString().split('T')[0];
-        const dayOfWeek = d.getUTCDay(); // 0 for Sunday, 1 for Monday, etc.
+        const dayOfWeek = d.getUTCDay(); // 0 for Sunday
         let status = 'Future';
 
         if (d <= today) {
-          // It's today or a past date, so determine the status
-          // Priority 1: Check for company-wide holidays and Sundays first.
+          // Priority 1: Holidays and Sundays
           if (dayOfWeek === 0) {
             status = 'Holiday';
-          } else if (holidayDates.has(dateStr)) { // Company-wide holidays
+          } else if (holidayDates.has(dateStr)) {
             status = 'Holiday';
-          // Priority 2: If not a holiday, check for employee-specific leave.
+          // Priority 2: Leaves
           } else if (leaveDates.has(dateStr)) {
             status = 'On Leave';
-          // Priority 3: If it's a working day, check for report submission.
-          } else if (reportDates.has(dateStr)) { // Report was submitted
+          // Priority 3: Report Submitted
+          } else if (reportDates.has(dateStr)) {
             status = 'Present';
-          } else if (d.getTime() < today.getTime()) {
-            // It's a past working day with no report.
-            // Check if there were any active tasks for that day.
-            const dayStart = new Date(d);
-            const dayEnd = new Date(d);
-            dayEnd.setUTCHours(23, 59, 59, 999);
-            const activeTaskCount = await Task.countDocuments({
-              assignedTo: employeeId,
-              createdAt: { $lte: dayEnd }, // Task was created on or before this day
-              status: { $in: ['Pending', 'In Progress'] }
-            });
-            status = (activeTaskCount === 0) ? 'Present' : 'Absent';
           } else {
-            // It's the current working day with no report yet.
-            status = 'Pending';
+            // Priority 4: No Report Submitted. Check Task Assignment.
+            if (activeTaskDays.has(dateStr)) {
+              // Task was assigned/active on this day.
+              // If it's a past day, mark Absent. If today, mark Pending.
+              if (d.getTime() < today.getTime()) {
+                status = 'Absent';
+              } else {
+                status = 'Pending';
+              }
+            } else {
+              // No task was assigned/active on this day.
+              // Automatically mark as Present.
+              status = 'Present';
+            }
           }
         }
 
@@ -78,7 +116,6 @@ class AttendanceController {
           status: status,
         });
 
-        // Increment the day at the end of the loop
         d.setUTCDate(d.getUTCDate() + 1);
       }
 
