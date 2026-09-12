@@ -1477,6 +1477,7 @@ export const MyDailyReport = ({ employeeId }) => {
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
   const [updateTask] = useUpdateTaskMutation();
   const [requestingTaskId, setRequestingTaskId] = useState(null);
+  const [completionConfirmTasks, setCompletionConfirmTasks] = useState(null); // array of tasks
   const [taskNotes, setTaskNotes] = useState({});
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [reportNote, setReportNote] = useState('');
@@ -1535,6 +1536,17 @@ export const MyDailyReport = ({ employeeId }) => {
       toast.error(err.data?.message || 'Failed to send completion request.');
     } finally {
       setRequestingTaskId(null);
+    }
+  };
+
+  const handleRequestCompletionForSelected = async () => {
+    const tasksToRequest = tasksToDisplay.filter(t => selectedTasks.has(t._id));
+    if (tasksToRequest.length === 0) {
+      toast.error('Please select at least one task to request completion for.');
+      return;
+    }
+    for (const task of tasksToRequest) {
+      await handleRequestCompletion(task);
     }
   };
 
@@ -1609,6 +1621,7 @@ export const MyDailyReport = ({ employeeId }) => {
   }
 
   return (
+    <>
     <div className="min-h-screen p-6 lg:p-8 font-manrope" style={{ backgroundColor: '#DFCDFE' }}>
 
       {/* Header */}
@@ -1624,13 +1637,29 @@ export const MyDailyReport = ({ employeeId }) => {
             </p>
           )}
         </div>
-        {!isReadOnly && tasksToDisplay.length > 0 && (
-          <button onClick={handleSubmit} disabled={isUpdating}
-            className="flex items-center gap-2 font-bold py-2.5 px-6 rounded-xl text-white shadow-sm transition text-sm disabled:opacity-60 whitespace-nowrap"
-            style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
-            {isUpdating ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <FlagIcon className="h-4 w-4" />}
-            Request Completion
-          </button>
+        {tasksToDisplay.length > 0 && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Submit Progress — top right */}
+            {!isReadOnly && (
+              <button onClick={handleSubmit} disabled={isUpdating}
+                className="flex items-center gap-2 font-bold py-2.5 px-6 rounded-xl text-white shadow-sm transition text-sm disabled:opacity-60 whitespace-nowrap"
+                style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                {isUpdating ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                Submit Progress
+              </button>
+            )}
+            {/* Request Completion — top right */}
+            <button onClick={() => {
+              const selected = tasksToDisplay.filter(t => selectedTasks.has(t._id));
+              setCompletionConfirmTasks(selected.length > 0 ? selected : tasksToDisplay);
+            }}
+              disabled={requestingTaskId !== null}
+              className="flex items-center gap-2 font-bold py-2.5 px-6 rounded-xl text-white shadow-sm transition text-sm disabled:opacity-60 whitespace-nowrap"
+              style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
+              {requestingTaskId !== null ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <FlagIcon className="h-4 w-4" />}
+              Request Completion
+            </button>
+          </div>
         )}
       </div>
 
@@ -1748,20 +1777,6 @@ export const MyDailyReport = ({ employeeId }) => {
                     className="w-full text-sm border border-purple-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition resize-none disabled:opacity-60 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white text-slate-700 placeholder:text-slate-300 leading-relaxed"
                   />
                 </div>
-
-                {/* Submit Progress — moved inside card */}
-                {!isReadOnlyTask && (
-                  <div className="flex items-center justify-between pt-1 border-t border-purple-100 mt-1">
-                    <p className="text-xs text-slate-400">Submit today's progress for this task?</p>
-                    <button onClick={handleSubmit} disabled={isUpdating}
-                      className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white transition disabled:opacity-60"
-                      style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
-                      {isUpdating ? <ArrowPathIcon className="animate-spin h-3.5 w-3.5" /> : <PaperAirplaneIcon className="h-3.5 w-3.5" />}
-                      Submit Progress
-                    </button>
-                  </div>
-                )}
-
               </div>
             )}
           </div>
@@ -1792,6 +1807,71 @@ export const MyDailyReport = ({ employeeId }) => {
 
       </div>
     </div>
+
+    {/* Request Completion confirmation modal */}
+    {completionConfirmTasks && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 overflow-hidden">
+
+          {/* Icon + title */}
+          <div className="flex flex-col items-center pt-8 pb-4 px-6">
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
+              <FlagIcon className="h-7 w-7 text-white" />
+            </div>
+            <h3 className="text-lg font-extrabold text-slate-800 text-center">Request Completion?</h3>
+            <p className="text-sm text-slate-400 mt-1 text-center">
+              {completionConfirmTasks.length === 1
+                ? 'Confirm you have fully completed this task.'
+                : `Confirm you have fully completed all ${completionConfirmTasks.length} selected tasks.`}
+            </p>
+          </div>
+
+          {/* Task list */}
+          <div className="px-6 pb-4 space-y-2">
+            {completionConfirmTasks.map((task, i) => (
+              <div key={task._id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                <div className="h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black text-white"
+                  style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                  {i + 1}
+                </div>
+                <p className="text-sm font-semibold text-slate-700 leading-tight">{task.title}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-slate-400 text-center px-6 pb-4">
+            This will notify your admin/manager for approval.
+          </p>
+
+          {/* Actions */}
+          <div className="flex gap-3 px-6 pb-6">
+            <button onClick={() => setCompletionConfirmTasks(null)}
+              className="flex-1 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                const tasks = completionConfirmTasks;
+                setCompletionConfirmTasks(null);
+                for (const task of tasks) {
+                  await handleRequestCompletion(task);
+                }
+              }}
+              disabled={requestingTaskId !== null}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white rounded-xl disabled:opacity-50 transition"
+              style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
+              {requestingTaskId !== null
+                ? <ArrowPathIcon className="animate-spin h-4 w-4" />
+                : <CheckCircleIconSolid className="h-4 w-4" />
+              }
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
