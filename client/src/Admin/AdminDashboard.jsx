@@ -232,7 +232,11 @@ export const TeamReports = ({ seniorId }) => {
                   )}
                 </div>
                 {update.note ? (
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
+                  <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap px-4 py-3 text-white"
+                    style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                    <span className="inline-block text-[10px] font-bold bg-red-500 text-white px-2.5 py-0.5 rounded-full mr-2 uppercase tracking-wider align-middle">Task Update</span>
+                    {update.note}
+                  </div>
                 ) : (
                   <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                 )}
@@ -403,7 +407,11 @@ export const TeamReports = ({ seniorId }) => {
                                   )}
                                 </div>
                                 {update.note ? (
-                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
+                                  <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap px-4 py-3 text-white"
+                                    style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                                    <span className="inline-block text-[10px] font-bold bg-red-500 text-white px-2.5 py-0.5 rounded-full mr-2 uppercase tracking-wider align-middle">Task Update</span>
+                                    {update.note}
+                                  </div>
                                 ) : (
                                   <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                                 )}
