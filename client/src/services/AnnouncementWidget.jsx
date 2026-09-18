@@ -1,143 +1,112 @@
-import React, { useEffect, useState } from 'react';
-import { XMarkIcon, MegaphoneIcon } from '@heroicons/react/24/outline'; // Removed unused import of XMarkIcon
+import React from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { MegaphoneIcon } from '@heroicons/react/24/solid';
 import { useGetActiveAnnouncementQuery, useDismissAnnouncementMutation } from './EmployeApi';
 import toast from 'react-hot-toast';
+import EOMCelebration from './EOMCelebration';
 
+// ── Main ──────────────────────────────────────────────────────────────────
 const AnnouncementWidget = () => {
   const { data: announcement, isLoading, isError } = useGetActiveAnnouncementQuery();
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    if (announcement) {
-      const dismissed = sessionStorage.getItem(`announcementDismissed_session_${announcement._id}`);
-      setIsVisible(!dismissed);
-    }
-  }, [announcement]);
+  const id = announcement?._id;
+  const isEOM = !!announcement?.relatedEmployee;
 
   const [dismissAnnouncement] = useDismissAnnouncementMutation();
+
   const handleDismiss = () => {
-    if (!announcement?._id) return; // Ensure announcement ID exists
-    dismissAnnouncement(announcement._id) // Call the RTK Query mutation
-      .unwrap()
-      .then(() => {
-        sessionStorage.setItem(`announcementDismissed_session_${announcement._id}`, 'true'); // Mark as dismissed in session storage
-        setIsVisible(false); // Hide immediately
-        toast.success('Announcement dismissed.');
-      })
-      .catch(err => {
-        console.error('Failed to dismiss announcement:', err);
-        toast.error('Failed to dismiss announcement. Please try again.');
-      });
+    if (!id) return;
+    dismissAnnouncement(id).unwrap()
+      .then(() => toast.success('Announcement dismissed.'))
+      .catch(() => toast.error('Failed to dismiss announcement.'));
   };
+
+  const handleEOMDismiss = () => {
+    if (!id) return;
+    dismissAnnouncement(id);
+  };
+
+
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm mb-6 flex items-center gap-3 animate-pulse">
-        <div className="h-6 w-6 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+      <div className="rounded-2xl mb-6 p-4 flex items-center gap-3 animate-pulse"
+        style={{ background: 'rgba(142,95,208,0.08)', border: '1px solid rgba(142,95,208,0.15)' }}>
+        <div className="h-6 w-6 rounded-full bg-purple-200"/>
+        <div className="h-4 rounded bg-purple-100 w-3/4"/>
       </div>
     );
   }
 
-  if (isError || !announcement || !isVisible) {
-    return null; // Don't render if there's an error or no active announcement or dismissed this session
+  if (isError || !announcement) return null;
+
+  if (isEOM) {
+    return <EOMCelebration announcement={announcement} onDismiss={handleEOMDismiss} />;
   }
 
-  const isEOM = !!announcement.relatedEmployee;
-
-  const goldStyle = {
-    background: 'linear-gradient(135deg, #92600A 0%, #D4A017 30%, #F5C842 55%, #D4A017 80%, #92600A 100%)',
-    backgroundSize: '200% 100%',
-    animation: 'goldShimmer 3s ease-in-out infinite',
-    boxShadow: '0 4px 24px rgba(212,160,23,0.45), 0 1px 4px rgba(146,96,10,0.3)',
-    border: '1.5px solid rgba(245,200,66,0.6)',
-    textColor: '#1C0A00',
-    subTextColor: '#2d1200',
-  };
-
-  const silverStyle = {
-    background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 30%, #d1d5db 55%, #9ca3af 80%, #6b7280 100%)',
-    backgroundSize: '200% 100%',
-    animation: 'goldShimmer 3s ease-in-out infinite',
-    boxShadow: '0 4px 24px rgba(107,114,128,0.4), 0 1px 4px rgba(75,85,99,0.25)',
-    border: '1.5px solid rgba(209,213,219,0.6)',
-    textColor: '#111827',
-    subTextColor: '#1f2937',
-  };
-
-  const theme = isEOM ? goldStyle : silverStyle;
-
+  // ── Regular announcement banner ───────────────────────────────────
   return (
-    <div style={{
-      background: theme.background,
-      backgroundSize: theme.backgroundSize,
-      animation: theme.animation,
-      borderRadius: '16px',
-      padding: '16px 20px',
-      marginBottom: '32px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '16px',
-      boxShadow: theme.boxShadow,
-      border: theme.border,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <div style={{ marginBottom: '28px', animation: 'annIn 0.4s ease-out' }}>
       <style>{`
-        @keyframes goldShimmer {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes megaphonePulse {
-          0%, 100% { transform: rotate(-8deg) scale(1); }
-          50%       { transform: rotate(8deg) scale(1.15); }
-        }
+        @keyframes annIn { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes annPulse { 0%,100%{transform:rotate(-8deg) scale(1);} 50%{transform:rotate(8deg) scale(1.18);} }
+        @keyframes annShimmer { 0%,100%{opacity:0;} 50%{opacity:1;} }
       `}</style>
-
-      {/* Shimmer overlay */}
       <div style={{
-        position: 'absolute', inset: 0, borderRadius: 'inherit',
-        background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)',
-        animation: 'goldShimmer 2.5s ease-in-out infinite',
-        pointerEvents: 'none',
-      }} />
+        borderRadius: '16px', overflow: 'hidden',
+        background: 'linear-gradient(135deg,#48306A 0%,#6b3fa0 50%,#8E5FD0 100%)',
+        boxShadow: '0 4px 24px rgba(72,48,106,0.35)',
+        border: '1px solid rgba(142,95,208,0.4)',
+        position: 'relative',
+      }}>
+        {/* Shimmer line */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
+          background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)',
+          animation: 'annShimmer 2.5s ease-in-out infinite',
+        }}/>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', zIndex: 1 }}>
-        <MegaphoneIcon style={{
-          width: '28px', height: '28px', flexShrink: 0,
-          color: theme.textColor,
-          animation: 'megaphonePulse 1.8s ease-in-out infinite',
-          filter: 'drop-shadow(0 1px 2px rgba(255,255,255,0.2))',
-        }} />
-        <div>
-          <h3 style={{ fontWeight: 800, fontSize: '17px', color: theme.textColor, marginBottom: '3px', letterSpacing: '-0.01em' }}>
-            {announcement.title}
-          </h3>
-          <p style={{ fontSize: '14px', color: theme.subTextColor, fontWeight: 500 }}>{announcement.content}</p>
-          {announcement.relatedEmployee && (
-            <p style={{ fontSize: '12px', color: theme.subTextColor, fontWeight: 600, marginTop: '4px' }}>
-              — {announcement.relatedEmployee.name}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px' }}>
+          {/* Icon */}
+          <div style={{
+            flexShrink: 0, width: '42px', height: '42px', borderRadius: '12px',
+            background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <MegaphoneIcon style={{ width: '22px', height: '22px', color: '#fff', animation: 'annPulse 2s ease-in-out infinite' }}/>
+          </div>
+
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', margin: '0 0 3px' }}>
+              Announcement
             </p>
+            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {announcement.title}
+            </h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {announcement.content}
+            </p>
+          </div>
+
+          {/* Related employee avatar */}
+          {announcement.relatedEmployee && (
+            <img
+              src={announcement.relatedEmployee.profilePicture || `https://ui-avatars.com/api/?name=${announcement.relatedEmployee.name}&background=8E5FD0&color=fff`}
+              alt={announcement.relatedEmployee.name}
+              style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)', flexShrink: 0 }}
+            />
           )}
+
+          {/* Dismiss */}
+          <button onClick={handleDismiss} style={{
+            flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }} aria-label="Dismiss">
+            <XMarkIcon style={{ width: '16px', height: '16px', color: 'rgba(255,255,255,0.8)' }}/>
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={handleDismiss}
-        style={{
-          padding: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.12)',
-          border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative', zIndex: 1, transition: 'background 0.2s',
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.22)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.12)'}
-        aria-label="Dismiss announcement"
-      >
-        <XMarkIcon style={{ width: '18px', height: '18px', color: theme.textColor }} />
-      </button>
     </div>
   );
 };

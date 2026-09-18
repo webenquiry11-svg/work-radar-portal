@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useGetTasksForApprovalQuery, useApproveTaskMutation, useRejectTaskMutation, useGetReportsByEmployeeQuery } from '../services/EmployeApi.js';
+import { useGetTasksForApprovalQuery, useApproveTaskMutation, useRejectTaskMutation, useGetReportsByEmployeeQuery, useUpdateTaskMutation, useGetEmployeesQuery } from '../services/EmployeApi.js';
 import toast from 'react-hot-toast';
 import {
   CheckIcon,
@@ -14,10 +14,147 @@ import {
   MagnifyingGlassIcon,
   ClockIcon,
   DocumentTextIcon,
+  ArrowUturnLeftIcon,
 } from '@heroicons/react/24/outline';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import { TaskDetailsModal } from './TaskOverview';
+
+// ── Reassign Modal ─────────────────────────────────────────────────────────
+
+const ReassignModal = ({ isOpen, onClose, onConfirm, isReassigning, task }) => {
+  const { data: employees = [] } = useGetEmployeesQuery(undefined, { skip: !isOpen });
+  const [assignedTo, setAssignedTo] = useState('');
+  const [dueDate, setDueDate]       = useState('');
+  const [search, setSearch]         = useState('');
+
+  useEffect(() => {
+    if (isOpen && task) {
+      setAssignedTo(task.assignedTo?._id || '');
+      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
+      setSearch('');
+    }
+  }, [isOpen, task]);
+
+  const filtered = useMemo(() =>
+    employees.filter(e =>
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      (e.employeeId && e.employeeId.toLowerCase().includes(search.toLowerCase()))
+    ).slice(0, 20),
+  [employees, search]);
+
+  if (!isOpen || !task) return null;
+
+  const isSamePerson = assignedTo === (task.assignedTo?._id || '');
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-purple-100 overflow-hidden flex flex-col max-h-[85vh]">
+
+        {/* Header */}
+        <div className="px-6 py-4 flex items-center gap-3 flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#0f766e,#14b8a6)' }}>
+          <ArrowUturnLeftIcon className="h-5 w-5 text-white flex-shrink-0" />
+          <div className="min-w-0">
+            <h3 className="text-base font-bold text-white leading-tight">Reassign Task</h3>
+            <p className="text-xs text-white/60 truncate">{task.title}</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition ml-auto flex-shrink-0">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+
+          {/* Option: same or different person */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAssignedTo(task.assignedTo?._id || '')}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-xl border transition ${isSamePerson ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'}`}>
+              Same Person
+            </button>
+            <button
+              onClick={() => setAssignedTo('')}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-xl border transition ${!isSamePerson ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'}`}>
+              Different Person
+            </button>
+          </div>
+
+          {/* Employee picker — shown when "Different Person" */}
+          {!isSamePerson && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Employee</label>
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50"
+              />
+              <div className="max-h-40 overflow-y-auto space-y-1 border border-purple-100 rounded-xl p-1">
+                {filtered.length === 0
+                  ? <p className="text-xs text-slate-400 text-center py-4">No employees found</p>
+                  : filtered.map(emp => (
+                    <button key={emp._id}
+                      onClick={() => setAssignedTo(emp._id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition ${assignedTo === emp._id ? 'text-white' : 'text-slate-700 hover:bg-slate-50'}`}
+                      style={assignedTo === emp._id ? { background:'linear-gradient(135deg,#0f766e,#14b8a6)' } : {}}>
+                      <img src={emp.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=14b8a6&color=fff`}
+                        alt={emp.name} className="h-7 w-7 rounded-full object-cover flex-shrink-0"/>
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs truncate">{emp.name}</p>
+                        <p className={`text-[10px] truncate ${assignedTo === emp._id ? 'text-white/70' : 'text-slate-400'}`}>{emp.role}</p>
+                      </div>
+                      {assignedTo === emp._id && <CheckIcon className="h-4 w-4 ml-auto flex-shrink-0"/>}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Due date */}
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">New Due Date</label>
+            <input
+              type="date"
+              value={dueDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => setDueDate(e.target.value)}
+              className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50"
+            />
+          </div>
+
+          {/* Info box */}
+          <div className="bg-teal-50 border border-teal-100 rounded-xl p-3 flex items-start gap-2">
+            <InformationCircleIcon className="h-4 w-4 text-teal-500 flex-shrink-0 mt-0.5"/>
+            <p className="text-xs text-teal-700 font-medium">
+              The task will be reset to <strong>Pending</strong> status with 0% progress and reassigned.
+              {!isSamePerson && assignedTo && ' The new assignee will be notified.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-purple-100 flex justify-end gap-3 flex-shrink-0">
+          <button onClick={onClose}
+            className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-purple-200 rounded-xl hover:bg-slate-50 transition">
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm({ assignedTo, dueDate })}
+            disabled={isReassigning || !assignedTo || !dueDate}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-xl disabled:opacity-50 transition"
+            style={{ background:'linear-gradient(135deg,#0f766e,#14b8a6)' }}>
+            {isReassigning && <ArrowPathIcon className="animate-spin h-4 w-4"/>}
+            <ArrowUturnLeftIcon className="h-4 w-4"/>
+            Reassign Task
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── Task History Drawer ────────────────────────────────────────────────────
 
@@ -416,10 +553,12 @@ const TaskApprovals = () => {
   const { data: tasksForApproval = [], isLoading } = useGetTasksForApprovalQuery(undefined, { pollingInterval: 30000 });
   const [approveTask, { isLoading: isApproving }] = useApproveTaskMutation();
   const [rejectTask,  { isLoading: isRejecting  }] = useRejectTaskMutation();
+  const [updateTask,  { isLoading: isReassigning }] = useUpdateTaskMutation();
   const [rejectingTask, setRejectingTask]         = useState(null);
   const [viewingTask, setViewingTask]             = useState(null);
   const [approvingTask, setApprovingTask]         = useState(null);
   const [historyTask, setHistoryTask]             = useState(null);
+  const [reassigningTask, setReassigningTask]     = useState(null);
   const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
   const [searchTerm, setSearchTerm]               = useState('');
 
@@ -460,6 +599,16 @@ const TaskApprovals = () => {
       setRejectingTask(null);
       if (selectedEmployeeData?.tasks.length === 1) setSelectedEmployeeData(null);
     } catch (err) { toast.error(err.data?.message || 'Failed to reject task.'); }
+  };
+
+  const handleConfirmReassign = async ({ assignedTo, dueDate }) => {
+    if (!reassigningTask) return;
+    try {
+      await updateTask({ id: reassigningTask._id, assignedTo, dueDate, status: 'Pending' }).unwrap();
+      toast.success('Task reassigned successfully!');
+      setReassigningTask(null);
+      if (selectedEmployeeData?.tasks.length === 1) setSelectedEmployeeData(null);
+    } catch (err) { toast.error(err.data?.message || 'Failed to reassign task.'); }
   };
 
   if (isLoading) {
@@ -605,11 +754,15 @@ const TaskApprovals = () => {
                 className="h-9 px-3 flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition">
                 <EyeIcon className="h-4 w-4" /> View
               </button>
-              <button onClick={() => setRejectingTask(task)} disabled={isApproving || isRejecting}
+              <button onClick={() => setReassigningTask(task)} disabled={isApproving || isRejecting || isReassigning}
+                className="h-9 px-3 flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition disabled:opacity-50">
+                <ArrowUturnLeftIcon className="h-4 w-4" /> Reassign
+              </button>
+              <button onClick={() => setRejectingTask(task)} disabled={isApproving || isRejecting || isReassigning}
                 className="h-9 px-3 flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition disabled:opacity-50">
                 <XMarkIcon className="h-4 w-4" /> Reject
               </button>
-              <button onClick={() => setApprovingTask(task)} disabled={isApproving || isRejecting}
+              <button onClick={() => setApprovingTask(task)} disabled={isApproving || isRejecting || isReassigning}
                 className="h-9 px-4 flex items-center gap-1.5 text-xs font-bold text-white rounded-xl transition disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
                 {isApproving ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <CheckIcon className="h-4 w-4" />}
@@ -628,6 +781,13 @@ const TaskApprovals = () => {
         onClose={() => setHistoryTask(null)}
         task={historyTask}
         employeeId={selectedEmployeeData?.employee?._id}
+      />
+      <ReassignModal
+        isOpen={!!reassigningTask}
+        onClose={() => setReassigningTask(null)}
+        onConfirm={handleConfirmReassign}
+        isReassigning={isReassigning}
+        task={reassigningTask}
       />
     </div>
   );

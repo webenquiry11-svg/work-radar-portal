@@ -18,6 +18,7 @@ import AttendanceCalendar from '../services/AttendanceCalendar.jsx';
 import AllEmployeeAttendance from '../Admin/AllEmployeeAttendance.jsx';
 import ViewTeamTasks from './ViewTeamTasks.jsx';
 import { TeamReports } from '../Admin/AdminDashboard.jsx';
+import HallOfFame from '../Admin/HallOfFame.jsx';
 import { Dashboard as EmployeeDashboardHome, MyTasks, MyReportHistory, MyDailyReport, MyAttendance, EmployeeProfile as ManagerProfile, TeamInformation, Analytics } from '../Employee/EmployeDashboard.jsx';
 import starPublicityLogo from '../assets/starpublicity.png';
 import volgaInfosysLogo from '../assets/volgainfosys.png';
@@ -25,6 +26,7 @@ import GooglePieChart from '../Admin/GooglePieChart.jsx';
 import GoogleAreaChart from '../Admin/GoogleAreaChart.jsx';
 import AppHeader from '../app/AppHeader.jsx';
 import StatCard from '../shared/StatCard.jsx';
+import DurationFilter from '../shared/DurationFilter.jsx';
 import Sidebar from '../shared/Sidebar.jsx';
 
 const safeDate = (dateVal) => {
@@ -396,39 +398,7 @@ const ManagerDashboardContent = ({ user, onNavigate }) => {
           <p className="text-sm mt-2 text-purple-200">Monitor Your Team's Performance, Task Progress And Activities From One Place</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          {/* Week/Month/Custom toggle */}
-          <div className="flex items-center bg-white/10 rounded-xl p-1">
-            {['week','month','custom'].map(t => (
-              <button key={t} onClick={() => setFilterType(t)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
-                  filterType === t
-                    ? 'bg-white text-purple-800 shadow-sm'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* Date range */}
-          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2.5">
-            <CalendarIcon className="h-4 w-4 text-purple-200 flex-shrink-0" />
-            <input
-              type="date"
-              value={dateRange.startDate}
-              onChange={e => { setDateRange(p => ({ ...p, startDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-1 py-0.5 rounded outline-none [color-scheme:dark]"
-            />
-            <span className="text-purple-300 font-bold">-</span>
-            <input
-              type="date"
-              value={dateRange.endDate}
-              onChange={e => { setDateRange(p => ({ ...p, endDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-1 py-0.5 rounded outline-none [color-scheme:dark]"
-            />
-          </div>
+          <DurationFilter filterType={filterType} setFilterType={setFilterType} dateRange={dateRange} setDateRange={setDateRange} />
 
           {/* Assign Task */}
           <button onClick={() => onNavigate('assign-task')}
@@ -686,9 +656,14 @@ const ManagerDashboard = () => {
 
   const pageTitles = {
     dashboard: 'Dashboard',
+    'my-tasks': 'My Tasks',
+    'my-report': "Today's Progress Report",
+    'my-history': 'My Report History',
+    'attendance': 'My Attendance',
     'assign-task': 'Assign Task',
     'view-team-tasks': 'View Team Tasks',
     'task-approvals': 'Pending Approvals',
+    'hall-of-fame': 'Hall of Fame',
     'team-reports': 'Team Reports',
     'team-info': 'Team Information',
     'analytics': 'Team Performance Analytics',
@@ -707,15 +682,17 @@ const ManagerDashboard = () => {
     // If the active component is a team-only component and the user has no team,
     // default back to the dashboard.
     const teamComponents = ['team-reports', 'team-info', 'task-approvals', 'assign-task', 'view-team-tasks'];
-    // The 'setIsNotificationOpen' variable is not defined in this component.
-    // If you intended to manage a notification state here, you need to declare it using useState.
-    // For now, removing the problematic line to resolve the ReferenceError.
     if (!hasTeam && teamComponents.includes(activeView.component)) { setActiveView({ component: 'dashboard', props: {} }); }
   }, [hasTeam, activeView.component]);
 
     const renderActiveComponent = () => {
       switch (activeView.component) {
-        case 'dashboard': return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />; // This is the manager-specific one
+        case 'dashboard': return <ManagerDashboardContent user={user} onNavigate={handleNavigation} />;
+        case 'my-tasks': return <MyTasks employeeId={user?._id} onNavigate={handleNavigation} />;
+        case 'my-report': return <MyDailyReport employeeId={user?._id} />;
+        case 'my-history': return <MyReportHistory employeeId={user?._id} />;
+        case 'attendance': return <MyAttendance employeeId={user?._id} />;
+        case 'hall-of-fame': return <HallOfFame />;
         case 'team-reports': return <TeamReports seniorId={user._id} />;
         case 'team-info': return <TeamInformation seniorId={user?._id} />;
         case 'profile': return <ManagerProfile user={user} />;

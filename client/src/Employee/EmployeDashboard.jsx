@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetHolidaysQuery, useGetMyTasksQuery, useGetAllTasksQuery, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useProcessPastDueTasksMutation, useUpdateEmployeeMutation, useCreateMultipleTasksMutation, useUpdateTaskMutation, useGetReportsByEmployeeQuery } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetHolidaysQuery, useGetMyTasksQuery, useGetAllTasksQuery, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useProcessPastDueTasksMutation, useUpdateEmployeeMutation, useCreateMultipleTasksMutation, useUpdateTaskMutation, useGetReportsByEmployeeQuery, useCreateTaskMutation } from '../services/EmployeApi';
 import { apiSlice, useLogoutMutation } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, PaperAirplaneIcon, DocumentTextIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, UserGroupIcon, InformationCircleIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChevronDoubleLeftIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, ArrowDownTrayIcon, ChevronRightIcon, CameraIcon, TrashIcon, UserIcon, EnvelopeIcon, MapPinIcon, BuildingOfficeIcon, AcademicCapIcon, GlobeAltIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
@@ -20,6 +20,8 @@ import GooglePieChart from '../Admin/GooglePieChart.jsx';
 import GoogleAreaChart from '../Admin/GoogleAreaChart.jsx';
 import AppHeader from '../app/AppHeader.jsx';
 import StatCard from '../shared/StatCard.jsx';
+import DurationFilter from '../shared/DurationFilter.jsx';
+import HallOfFame from '../Admin/HallOfFame.jsx';
 import Sidebar from '../shared/Sidebar.jsx';
 
 const safeDate = (dateVal) => {
@@ -379,28 +381,7 @@ export const Dashboard = ({ user, onNavigate }) => {
           <p className="text-base mt-3 text-purple-200">Track Your Tasks, Performance And Daily Progress From One Place</p>
         </div>
         <div className="hidden md:block w-px self-stretch bg-white/20" />
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center bg-white/10 rounded-lg p-1.5">
-            {['week', 'month'].map(t => (
-              <button key={t} onClick={() => setFilterType(t)}
-                className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filterType === t ? 'bg-white text-purple-800' : 'text-white hover:bg-white/10'}`}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-            <CalendarIcon className="h-4 w-4 text-purple-200 flex-shrink-0" />
-            <input type="date" value={dateRange.startDate}
-              onChange={e => { setDateRange(p => ({ ...p, startDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-1 py-0.5 rounded outline-none [color-scheme:dark]" />
-            <span className="text-purple-300 font-bold">-</span>
-            <input type="date" value={dateRange.endDate}
-              onChange={e => { setDateRange(p => ({ ...p, endDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-1 py-0.5 rounded outline-none [color-scheme:dark]" />
-          </div>
-        </div>
+        <DurationFilter filterType={filterType} setFilterType={setFilterType} dateRange={dateRange} setDateRange={setDateRange} />
       </div>
 
       {/* Stat Cards */}
@@ -997,10 +978,33 @@ export const Analytics = ({ user }) => {
 
 export const MyTasks = () => {
   const { data: myTasks = [], isLoading } = useGetMyTasksQuery(undefined, { pollingInterval: 30000 });
+  const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [activeTab, setActiveTab] = useState('Active');
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'Medium', dueDate: '' });
+  const currentUser = useSelector(selectCurrentUser);
+
+  const handleCreateTask = async () => {
+    if (!newTask.title.trim()) { toast.error('Task title is required.'); return; }
+    if (!newTask.dueDate) { toast.error('Due date is required.'); return; }
+    try {
+      await createTask({
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        priority: newTask.priority,
+        dueDate: newTask.dueDate,
+        assignedTo: currentUser._id,
+      }).unwrap();
+      toast.success('Add on task added!');
+      setNewTask({ title: '', description: '', priority: 'Medium', dueDate: '' });
+      setShowAddTask(false);
+    } catch (err) {
+      toast.error(err.data?.message || 'Failed to create task.');
+    }
+  };
 
   useEffect(() => {
     // Set default date range to the current week
@@ -1072,10 +1076,98 @@ export const MyTasks = () => {
     <div className="min-h-screen p-6 lg:p-8 font-manrope" style={{ backgroundColor: '#DFCDFE' }}>
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-extrabold text-slate-800 uppercase tracking-wide">My Tasks</h1>
-        <p className="text-sm text-slate-500 mt-1">Stay on top of your assigned tasks and deadlines</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-800 uppercase tracking-wide">My Tasks</h1>
+          <p className="text-sm text-slate-500 mt-1">Stay on top of your assigned tasks and deadlines</p>
+        </div>
+        <button
+          onClick={() => setShowAddTask(true)}
+          className="flex items-center gap-2 font-bold py-2.5 px-5 rounded-xl text-white shadow-sm transition text-sm whitespace-nowrap flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#0f766e,#14b8a6)' }}>
+          <PlusIcon className="h-4 w-4" />
+          Add On Task
+        </button>
       </div>
+
+      {/* Add Extra Task Modal */}
+      {showAddTask && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-purple-100 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center gap-3"
+              style={{ background: 'linear-gradient(135deg,#0f766e,#14b8a6)' }}>
+              <PlusIcon className="h-5 w-5 text-white" />
+              <h3 className="text-base font-bold text-white">Add On Task</h3>
+              <button onClick={() => setShowAddTask(false)} className="ml-auto text-white/70 hover:text-white transition">
+                <XCircleIcon className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Task Title <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  placeholder="What do you need to do?"
+                  value={newTask.title}
+                  onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
+                  className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Description <span className="font-normal normal-case">(optional)</span></label>
+                <textarea
+                  placeholder="Describe the task..."
+                  value={newTask.description}
+                  onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
+                  rows={3}
+                  className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50 resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Priority</label>
+                  <select
+                    value={newTask.priority}
+                    onChange={e => setNewTask(p => ({ ...p, priority: e.target.value }))}
+                    className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50">
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Due Date <span className="text-red-500">*</span></label>
+                  <input
+                    type="date"
+                    value={newTask.dueDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={e => setNewTask(p => ({ ...p, dueDate: e.target.value }))}
+                    className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-teal-300 outline-none bg-slate-50"
+                  />
+                </div>
+              </div>
+              <div className="bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
+                <p className="text-xs text-teal-700 font-medium">This task will be assigned to yourself and visible to your admin and manager for approval when completed.</p>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-6 pb-6 flex justify-end gap-3">
+              <button onClick={() => setShowAddTask(false)}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-purple-200 rounded-xl hover:bg-slate-50 transition">
+                Cancel
+              </button>
+              <button onClick={handleCreateTask} disabled={isCreating}
+                className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-xl disabled:opacity-50 transition"
+                style={{ background: 'linear-gradient(135deg,#0f766e,#14b8a6)' }}>
+                {isCreating ? <ArrowPathIcon className="animate-spin h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+                Add Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -2385,6 +2477,8 @@ const EmployeeDashboard = () => {
         return <MyAttendance employeeId={user._id} />;
       case 'my-tasks':
         return <MyTasks />;
+      case 'hall-of-fame':
+        return <HallOfFame />;
       case 'assign-task':
         return <EmployeeAssignTask />;
       default:

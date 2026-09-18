@@ -172,6 +172,31 @@ class TaskController {
       task.priority = priority || task.priority;
       task.status = status || task.status;
 
+      // Allow admin/assigner to reassign to a different employee
+      if (req.body.assignedTo && (isAdmin || canUpdate)) {
+        const newAssignee = req.body.assignedTo;
+        if (newAssignee.toString() !== task.assignedTo._id.toString()) {
+          task.assignedTo = newAssignee;
+          // Reset task back to Pending when reassigned
+          task.status = 'Pending';
+          task.progress = 0;
+          task.rejectionReason = '';
+          task.submittedForCompletionDate = null;
+          // Notify the new assignee
+          try {
+            await Notification.create({
+              recipient: newAssignee,
+              subjectEmployee: updaterId,
+              message: `You have been assigned a task: "${task.title}"`,
+              type: 'info',
+              relatedTask: task._id,
+            });
+            // Delete any pending approval notifications for the old assignee
+            await Notification.deleteMany({ relatedTask: task._id, type: 'task_approval' });
+          } catch (e) { console.error('Reassign notification error:', e); }
+        }
+      }
+
       // If an employee manually sets status to 'Pending Verification',
       // it implies they believe the task is 100% complete.
       if (isAssignee && status === 'Pending Verification') {

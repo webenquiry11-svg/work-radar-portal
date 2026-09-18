@@ -5,6 +5,7 @@ import { useGetDashboardStatsQuery, useGetAllTasksQuery, useGetEmployeeOfTheMont
 import GooglePieChart from './GooglePieChart.jsx';
 import GoogleAreaChart from './GoogleAreaChart.jsx';
 import StatCard from '../shared/StatCard.jsx';
+import DurationFilter from '../shared/DurationFilter.jsx';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 
@@ -210,40 +211,7 @@ const Dashboard = ({ onNavigate = () => {} }) => {
           <p className="text-base mt-4 text-purple-200">Monitor Platform Performance, Employee Activities And Task Progress From One Place</p>
         </div>
         <div className="hidden md:block w-px self-stretch bg-white/20" />
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center bg-white/10 rounded-lg p-2">
-            {['week','month'].map(t => (
-              <button key={t} onClick={() => setFilterType(t)}
-                className={`px-5 py-2.5 rounded-md text-sm font-bold capitalize transition-all ${filterType === t ? 'bg-white text-purple-800' : 'text-white hover:bg-white/10'}`}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3 bg-white/10 rounded-lg px-3 py-2">
-            <CalendarIcon className="h-5 w-5 text-purple-200 flex-shrink-0" />
-            <input
-              type="date"
-              value={dateRange.startDate}
-              onChange={e => { setDateRange(p => ({ ...p, startDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-2 py-1 rounded-md outline-none"
-            />
-            <span className="text-purple-300">-</span>
-            <input
-              type="date"
-              value={dateRange.endDate}
-              onChange={e => { setDateRange(p => ({ ...p, endDate: e.target.value })); setFilterType('custom'); }}
-              onFocus={() => setFilterType('custom')}
-              className="text-sm font-semibold text-white bg-transparent px-2 py-1 rounded-md outline-none"
-            />
-          </div>
-
-          <button onClick={() => setFilterType('custom')}
-            className="flex items-center gap-1.5 bg-white text-purple-800 hover:bg-purple-50 transition px-5 py-2 rounded-lg text-sm font-bold">
-            Apply <ArrowRightIcon className="h-4 w-4" />
-          </button>
-        </div>
+        <DurationFilter filterType={filterType} setFilterType={setFilterType} dateRange={dateRange} setDateRange={setDateRange} />
       </div>
 
       {/* Stat Cards */}
