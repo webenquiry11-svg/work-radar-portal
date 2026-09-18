@@ -374,11 +374,29 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredTasks.length > 0 ? filteredTasks.map((task, index) => (
-                <tr key={task._id} className="hover:bg-purple-50/40 transition-colors">
+              {filteredTasks.length > 0 ? filteredTasks.map((task, index) => {
+                const isSelfAssigned =
+                  task.assignedBy?._id && task.assignedTo?._id &&
+                  String(task.assignedBy._id) === String(task.assignedTo._id);
+                return (
+                <tr key={task._id} className={`hover:bg-purple-50/40 transition-colors ${isSelfAssigned ? 'bg-teal-50/40' : ''}`}>
                   <td className="px-6 py-3">
-                    <p className="font-semibold text-slate-800 leading-tight">{task.title}</p>
-                    <p className="text-[11px] text-slate-400 truncate max-w-[200px] mt-0.5">{task.description}</p>
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-slate-800 leading-tight">{task.title}</p>
+                          {isSelfAssigned && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 border border-teal-200 whitespace-nowrap flex-shrink-0">
+                              <svg className="h-2.5 w-2.5" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 9a5 5 0 0 0-5 5h10a5 5 0 0 0-5-5Z"/>
+                              </svg>
+                              Self Assigned
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate max-w-[200px] mt-0.5">{task.description}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-3 text-slate-600 text-xs">{task.assignedBy?.name || 'N/A'}</td>
                   <td className="px-6 py-3 text-slate-600 text-xs whitespace-nowrap">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</td>
@@ -460,7 +478,8 @@ const ViewAllTasks = ({ initialFilters = {} }) => {
                     </div>
                   </td>
                 </tr>
-              )) : (
+                );
+              }) : (
                 <tr>
                   <td colSpan="9" className="text-center p-16 text-slate-400">
                     <MagnifyingGlassIcon className="h-12 w-12 mx-auto text-purple-200 mb-4" />

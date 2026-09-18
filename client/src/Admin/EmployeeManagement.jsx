@@ -507,49 +507,49 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employeeToEdit, isSaving }
 };
 
 const EmployeeTable = ({ users, onEdit, onDelete, onView, onPermissions, onLeave }) => (
-  <div className="overflow-x-auto rounded-xl shadow border border-gray-200 bg-white">
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
-          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
-          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Department</th>
-          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-          <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+  <div className="overflow-x-auto rounded-2xl border border-purple-100 bg-white shadow-sm">
+    <table className="min-w-full divide-y divide-purple-50">
+      <thead>
+        <tr className="border-b border-purple-100">
+          <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">#</th>
+          <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
+          <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
+          <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Department</th>
+          <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
+          <th className="px-6 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
-      <tbody className="bg-white divide-y divide-gray-100">
+      <tbody className="divide-y divide-slate-50">
         {users.map((user, idx) => (
-          <tr key={user._id} className="hover:bg-blue-50 transition">
-            <td className="px-6 py-4 text-sm text-gray-500">{idx + 1}</td>
+          <tr key={user._id} className="hover:bg-purple-50/40 transition-colors">
+            <td className="px-6 py-4 text-sm text-slate-400">{idx + 1}</td>
             <td className="px-6 py-4 flex items-center gap-3">
               <img
-                src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=8E5FD0&color=fff`}
                 alt={user.name}
-                className="h-9 w-9 rounded-full border border-gray-200 object-cover"
+                className="h-9 w-9 rounded-full border-2 border-purple-100 object-cover"
               />
-              <span className="font-medium text-gray-800">{user.name}</span>
+              <span className="font-semibold text-slate-800">{user.name}</span>
             </td>
-            <td className="px-6 py-4 text-sm text-blue-700">{user.role}</td>
-            <td className="px-6 py-4 text-sm text-gray-700">{user.department || 'N/A'}</td>
-            <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+            <td className="px-6 py-4 text-sm text-purple-600 font-semibold">{user.role}</td>
+            <td className="px-6 py-4 text-sm text-slate-600">{user.department || 'N/A'}</td>
+            <td className="px-6 py-4 text-sm text-slate-500">{user.email}</td>
             <td className="px-6 py-4 text-center">
               <div className="flex items-center justify-center gap-2">
-                <button onClick={() => onView(user)} className="p-2 rounded hover:bg-blue-100" title="View">
-                  <EyeIcon className="h-5 w-5 text-blue-600" />
+                <button onClick={() => onView(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-blue-50 hover:bg-blue-100 transition" title="View">
+                  <EyeIcon className="h-4 w-4 text-blue-500" />
                 </button>
-                <button onClick={() => onPermissions(user)} className="p-2 rounded hover:bg-indigo-100" title="Permissions">
-                  <KeyIcon className="h-5 w-5 text-indigo-600" />
+                <button onClick={() => onPermissions(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 transition" title="Permissions">
+                  <KeyIcon className="h-4 w-4 text-amber-500" />
                 </button>
-                <button onClick={() => onLeave(user)} className="p-2 rounded hover:bg-green-100" title="Leave">
-                  <CalendarIcon className="h-5 w-5 text-green-600" />
+                <button onClick={() => onLeave(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-green-50 hover:bg-green-100 transition" title="Leave">
+                  <CalendarIcon className="h-4 w-4 text-green-500" />
                 </button>
-                <button onClick={() => onEdit(user)} className="p-2 rounded hover:bg-amber-100" title="Edit">
-                  <PencilIcon className="h-5 w-5 text-amber-600" />
+                <button onClick={() => onEdit(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 transition" title="Edit">
+                  <PencilIcon className="h-4 w-4 text-purple-500" />
                 </button>
-                <button onClick={() => onDelete(user)} className="p-2 rounded hover:bg-red-100" title="Delete">
-                  <TrashIcon className="h-5 w-5 text-red-600" />
+                <button onClick={() => onDelete(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 transition" title="Delete">
+                  <TrashIcon className="h-4 w-4 text-red-500" />
                 </button>
               </div>
             </td>

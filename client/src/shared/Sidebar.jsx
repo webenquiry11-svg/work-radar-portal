@@ -59,14 +59,25 @@ const adminMenuGroups = [
 
 const managerMenuGroups = [
   { title: 'General', items: [{ id: 'dashboard', icon: HomeIcon, label: 'Dashboard' }] },
+  { title: 'My Work', items: [
+    { id: 'my-tasks', icon: ClipboardDocumentListIcon, label: 'My Tasks' },
+    { id: 'my-report', icon: DocumentTextIcon, label: "Today's Progress Report" },
+    { id: 'my-history', icon: ArchiveBoxIcon, label: 'My Report History' },
+    { id: 'attendance', icon: CalendarDaysIcon, label: 'My Attendance' },
+  ]},
   { title: 'Task Management', items: [{ id: 'assign-task', icon: PencilSquareIcon, label: 'Assign Task' }, { id: 'view-team-tasks', icon: EyeIcon, label: 'View Team Tasks' }, { id: 'task-approvals', icon: CheckBadgeIcon, label: 'Pending Approvals' }] },
-  { title: 'Team & Reports', items: [{ id: 'team-info', icon: InformationCircleIcon, label: 'Team Information' }, { id: 'team-reports', icon: DocumentTextIcon, label: 'Team Reports' }, { id: 'analytics', icon: ChartBarIcon, label: 'Team Performance Analytics' }] },
+  { title: 'Team & Reports', items: [{ id: 'team-info', icon: InformationCircleIcon, label: 'Team Information' }, { id: 'team-reports', icon: DocumentTextIcon, label: 'Team Reports' }, { id: 'analytics', icon: ChartBarIcon, label: 'Team Performance Analytics' }, { id: 'hall-of-fame', icon: BuildingLibraryIcon, label: 'Hall of Fame' }] },
 ];
 
 const employeeMenuGroups = [
   { title: 'General', items: [{ id: 'dashboard', icon: HomeIcon, label: 'Dashboard' }] },
-  { title: 'My Work', items: [{ id: 'my-tasks', icon: ClipboardDocumentListIcon, label: 'My Tasks' }, { id: 'my-report', icon: DocumentTextIcon, label: "Today's Progress Report" }, { id: 'my-history', icon: ArchiveBoxIcon, label: 'My Report History' }] },
-  { title: 'Analytics', items: [{ id: 'attendance', icon: CalendarDaysIcon, label: 'My Attendance' }, { id: 'analytics', icon: ChartBarIcon, label: 'My Performance Analytics' }] },
+  { title: 'My Work', items: [
+    { id: 'my-tasks', icon: ClipboardDocumentListIcon, label: 'My Tasks' },
+    { id: 'my-report', icon: DocumentTextIcon, label: "Today's Progress Report" },
+    { id: 'my-history', icon: ArchiveBoxIcon, label: 'My Report History' },
+    { id: 'attendance', icon: CalendarDaysIcon, label: 'My Attendance' },
+  ]},
+  { title: 'Analytics', items: [{ id: 'analytics', icon: ChartBarIcon, label: 'My Performance Analytics' }, { id: 'hall-of-fame', icon: BuildingLibraryIcon, label: 'Hall of Fame' }] },
 ];
 function CollapsedGroupPopover({ group, activeComponent, setActiveComponent, setSidebarOpen, anchorRef }) {
   const [pos, setPos] = useState({ top: 0 });
