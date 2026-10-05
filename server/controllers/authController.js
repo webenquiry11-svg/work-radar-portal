@@ -78,14 +78,18 @@ class AuthController {
         });
         console.log(`Password Reset Link Sent to: ${user.email}`);
       } catch (emailError) {
-        console.error('Email sending failed:', emailError);
-        // Still return success to prevent user enumeration, but log the error
+        console.error('Email sending failed:', emailError.message);
+        // Clear the reset token since email failed — don't leave a dangling token
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save({ validateBeforeSave: false });
+        return res.status(500).json({ message: 'Failed to send reset email. Please try again later.' });
       }
 
       res.status(200).json({ message: 'If an account with that email exists, a reset link has been sent.' });
     } catch (error) {
-      console.error('Forgot password error:', error);
-      res.status(500).json({ message: 'Server error while processing forgot password request.' });
+      console.error('Forgot password error:', error.message);
+      res.status(500).json({ message: 'Something went wrong. Please try again later.' });
     }
   };
 

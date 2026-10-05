@@ -33,13 +33,21 @@ class SettingsController {
     }
 
     try {
+      const { taskCompletionWeight, attendanceWeight, reportSubmissionWeight, bonusWeight } = req.body;
+      const allowedUpdate = {};
+      if (taskCompletionWeight !== undefined) allowedUpdate.taskCompletionWeight = taskCompletionWeight;
+      if (attendanceWeight !== undefined) allowedUpdate.attendanceWeight = attendanceWeight;
+      if (reportSubmissionWeight !== undefined) allowedUpdate.reportSubmissionWeight = reportSubmissionWeight;
+      if (bonusWeight !== undefined) allowedUpdate.bonusWeight = bonusWeight;
+
       const updatedSettings = await ScoringSettings.findOneAndUpdate(
         { key: 'main' },
-        { $set: req.body },
+        { $set: allowedUpdate },
         { new: true, upsert: true, runValidators: true }
       );
       res.status(200).json({ message: 'Scoring settings updated successfully.', settings: updatedSettings });
     } catch (error) {
+      console.error('Error updating scoring settings:', error.message);
       res.status(500).json({ message: 'Server error while updating settings.' });
     }
   };

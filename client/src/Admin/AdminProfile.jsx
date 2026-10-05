@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useUpdateEmployeeMutation, useForgotPasswordMutation } from '../services/EmployeApi';
-import { setCredentials, selectCurrentToken } from '../app/authSlice';
+import { setCredentials, selectCurrentToken, selectCurrentUser } from '../app/authSlice';
 import { ArrowPathIcon, CameraIcon, TrashIcon, LockClosedIcon, UserIcon, EnvelopeIcon, PhoneIcon, MapPinIcon, BuildingOfficeIcon, AcademicCapIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon: Icon, placeholder }) => (
@@ -30,9 +30,12 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon: Icon, p
   </div>
 );
 
-const AdminProfile = ({ user = {} }) => {
+const AdminProfile = ({ user: userProp = {} }) => {
   const dispatch = useDispatch();
   const token = useSelector(selectCurrentToken);
+  // Always use the latest user from Redux — so profile reflects saves immediately
+  const reduxUser = useSelector(selectCurrentUser);
+  const user = reduxUser || userProp;
   const fileInputRef = useRef(null);
   const [updateProfile, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
   const [forgotPassword, { isLoading: isSendingReset }] = useForgotPasswordMutation();
@@ -44,13 +47,14 @@ const AdminProfile = ({ user = {} }) => {
   });
 
   useEffect(() => {
+    if (!user?._id) return;
     setFormData({
       name: user.name || '', email: user.email || '', profilePicture: null,
       address: user.address || '', gender: user.gender || '', country: user.country || '',
       city: user.city || '', qualification: user.qualification || '', phone: user.phone || '',
     });
     setPreviewUrl(null);
-  }, [user]);
+  }, [user?._id, user?.email, user?.name]);
 
   const handleChange = useCallback((e) => {
     if (e.target.type === 'file') {
@@ -87,7 +91,12 @@ const AdminProfile = ({ user = {} }) => {
       const toastId = toast.loading('Updating profile...');
       const result = await updateProfile({ id: user._id, formData: data }).unwrap();
       toast.success('Profile updated!', { id: toastId });
-      if (result.employee) dispatch(setCredentials({ user: result.employee, token: result.token || token }));
+      if (result.employee) {
+        dispatch(setCredentials({ 
+          user: result.employee, 
+          token: result.token || token 
+        }));
+      }
     } catch {
       toast.error('Failed to update profile.');
     }

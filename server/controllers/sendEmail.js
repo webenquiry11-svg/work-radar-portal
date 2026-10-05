@@ -9,14 +9,14 @@ const sendEmail = async (options) => {
       port: 587,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.EMAIL_USER || 'webenquiry11@gmail.com',
-        pass: process.env.EMAIL_PASS || 'jagrnaovvpvyvdqa',
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     // 2) Define the email options
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'Work Radar Support <support@workradar.com>',
+      from: process.env.EMAIL_FROM,
       to: options.email,
       subject: options.subject,
       text: options.message,
@@ -29,7 +29,7 @@ const sendEmail = async (options) => {
     return info;
   } catch (error) {
     console.error('Error sending email:', error.message);
-    throw new Error(`Failed to send email: ${error.message}`);
+    throw new Error('Failed to send email. Please check the server email configuration.');
   }
 };
 

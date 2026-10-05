@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon, CalendarIcon, DocumentTextIcon, Cog8ToothIcon, ArrowRightOnRectangleIcon
+  HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon, CalendarIcon, DocumentTextIcon, Cog8ToothIcon, ArrowRightOnRectangleIcon, ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
@@ -66,6 +66,7 @@ export const TeamReports = ({ seniorId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingReport, setDeletingReport] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [expandedReportId, setExpandedReportId] = useState(null);
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
@@ -206,17 +207,17 @@ export const TeamReports = ({ seniorId }) => {
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
-      if (data.taskUpdates) { // Handle new progress-based reports
+      if (data.taskUpdates) {
         return (
           <div className="space-y-3">
             {data.reportNote ? (
-              <div className="mb-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Employee Notes</h4>
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{data.reportNote}</p>
+              <div className="mb-4 bg-purple-50 border border-purple-100 rounded-xl p-4">
+                <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">Employee Notes</h4>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">{data.reportNote}</p>
               </div>
             ) : null}
             {data.taskUpdates.map((update, i) => (
-              <div key={i} className="bg-slate-50 border border-purple-100 rounded-xl overflow-hidden">
+              <div key={i} className="bg-white border border-purple-100 rounded-xl overflow-hidden">
                 <div className="flex justify-between items-center px-4 py-2.5 bg-purple-50 border-b border-purple-100">
                   <p className="font-bold text-slate-800 text-sm">
                     Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
@@ -232,11 +233,7 @@ export const TeamReports = ({ seniorId }) => {
                   )}
                 </div>
                 {update.note ? (
-                  <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap px-4 py-3 text-white"
-                    style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
-                    <span className="inline-block text-[10px] font-bold bg-red-500 text-white px-2.5 py-0.5 rounded-full mr-2 uppercase tracking-wider align-middle">Task Update</span>
-                    {update.note}
-                  </div>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
                 ) : (
                   <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                 )}
@@ -245,11 +242,9 @@ export const TeamReports = ({ seniorId }) => {
           </div>
         );
       }
-      return (
-        <p className="whitespace-pre-line break-words">{JSON.stringify(data, null, 2)}</p>
-      );
+      return <p className="whitespace-pre-line break-words text-sm text-slate-700">{JSON.stringify(data, null, 2)}</p>;
     } catch {
-      return <p className="whitespace-pre-line break-words">{content}</p>;
+      return <p className="whitespace-pre-line break-words text-sm text-slate-700">{content}</p>;
     }
   };
 
@@ -358,88 +353,121 @@ export const TeamReports = ({ seniorId }) => {
             <p className="text-slate-500 font-medium mb-4">Loading reports...</p>
           )}
 
-          {/* Report cards */}
-          <div className="space-y-4 pb-8">
-            {reports?.length > 0 ? reports.map(report => (
-              <div key={report._id} className="bg-white rounded-2xl border border-purple-100 shadow-sm p-6">
-                {/* Report header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                  <h3 className="text-base font-bold text-slate-800">
-                    {new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
-                  </h3>
-                  <span className={`self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full ${
-                    report.status === 'Submitted'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    {report.status}
-                  </span>
-                </div>
+          {/* Report accordion cards */}
+          <div className="space-y-3 pb-8">
+            {reports?.length > 0 ? reports.map(report => {
+              let taskUpdates = [];
+              let reportNote = '';
+              try {
+                const data = JSON.parse(report.content);
+                taskUpdates = data.taskUpdates || [];
+                reportNote = data.reportNote || '';
+              } catch { /* ignore */ }
 
-                {/* Report content */}
-                <div className="space-y-3">
-                  {(() => {
-                    try {
-                      const data = JSON.parse(report.content);
-                      if (data.taskUpdates) {
-                        return (
-                          <div className="space-y-3">
-                            {data.reportNote && (
-                              <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-                                <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">Employee Notes</h4>
-                                <p className="text-sm text-slate-700 whitespace-pre-wrap">{data.reportNote}</p>
-                              </div>
+              const isOpen = expandedReportId === report._id;
+              const taskCount = taskUpdates.length;
+
+              return (
+                <div key={report._id} className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
+
+                  {/* Date card header — always visible */}
+                  <button
+                    onClick={() => setExpandedReportId(isOpen ? null : report._id)}
+                    className="w-full flex items-center justify-between px-6 py-4 hover:bg-purple-50/50 transition"
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Calendar icon block */}
+                      <div className="flex-shrink-0 h-11 w-11 rounded-xl flex flex-col items-center justify-center border border-purple-100"
+                        style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                        <span className="text-[10px] font-bold text-purple-200 uppercase leading-none">
+                          {new Date(report.reportDate).toLocaleDateString('en-US', { month: 'short' })}
+                        </span>
+                        <span className="text-lg font-extrabold text-white leading-tight">
+                          {new Date(report.reportDate).getUTCDate()}
+                        </span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-slate-800 text-sm">
+                          {new Date(report.reportDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {taskCount} task{taskCount !== 1 ? 's' : ''} reported
+                          {reportNote ? ' · has notes' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                        report.status === 'Submitted'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {report.status}
+                      </span>
+                      <ChevronDownIcon className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+
+                  {/* Expanded content */}
+                  {isOpen && (
+                    <div className="border-t border-purple-100 px-6 py-4 space-y-3 bg-slate-50/40">
+
+                      {/* Notes */}
+                      {reportNote && (
+                        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                          <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">Employee Notes</h4>
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{reportNote}</p>
+                        </div>
+                      )}
+
+                      {/* Task cards */}
+                      {taskUpdates.map((update, i) => (
+                        <div key={i} className="bg-white border border-purple-100 rounded-xl overflow-hidden">
+                          <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-purple-100">
+                            <p className="font-bold text-slate-800 text-sm truncate">
+                              Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
+                            </p>
+                            {update.taskId && (
+                              <button
+                                onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }}
+                                className="text-xs font-bold px-3 py-1 rounded-lg text-white transition flex-shrink-0 ml-2"
+                                style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
+                              >
+                                Details
+                              </button>
                             )}
-                            {data.taskUpdates.map((update, i) => (
-                              <div key={i} className="bg-slate-50 border border-purple-100 rounded-xl overflow-hidden">
-                                <div className="flex justify-between items-center px-4 py-2.5 bg-purple-50 border-b border-purple-100">
-                                  <p className="font-bold text-slate-800 text-sm">
-                                    Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
-                                  </p>
-                                  {update.taskId && (
-                                    <button
-                                      onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }}
-                                      className="text-xs font-bold px-3 py-1 rounded-lg text-white transition flex-shrink-0 ml-2"
-                                      style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
-                                    >
-                                      Details
-                                    </button>
-                                  )}
-                                </div>
-                                {update.note ? (
-                                  <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap px-4 py-3 text-white"
-                                    style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
-                                    <span className="inline-block text-[10px] font-bold bg-red-500 text-white px-2.5 py-0.5 rounded-full mr-2 uppercase tracking-wider align-middle">Task Update</span>
-                                    {update.note}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
-                                )}
-                              </div>
-                            ))}
                           </div>
-                        );
-                      }
-                      return <p className="text-sm text-slate-700 whitespace-pre-line">{JSON.stringify(data, null, 2)}</p>;
-                    } catch {
-                      return <p className="text-sm text-slate-700 whitespace-pre-line">{report.content}</p>;
-                    }
-                  })()}
-                </div>
+                          {update.note ? (
+                            <div className="flex items-center gap-3 px-4 py-3" style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white uppercase tracking-wide flex-shrink-0">Task Update</span>
+                              <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{update.note}</p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
+                          )}
+                        </div>
+                      ))}
 
-                {/* Delete action */}
-                {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
-                  <div className="pt-4 mt-4 border-t border-purple-50 flex justify-end">
-                    <button
-                      onClick={() => setDeletingReport(report)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-600 transition"
-                    >
-                      <TrashIcon className="h-4 w-4" /> Delete Report
-                    </button>
-                  </div>
-                )}
-              </div>
-            )) : (
+                      {taskUpdates.length === 0 && !reportNote && (
+                        <p className="text-sm text-slate-400 italic text-center py-4">No content in this report.</p>
+                      )}
+
+                      {/* Delete action */}
+                      {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
+                        <div className="pt-3 flex justify-end">
+                          <button
+                            onClick={() => setDeletingReport(report)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-600 transition"
+                          >
+                            <TrashIcon className="h-4 w-4" /> Delete Report
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            }) : (
               <div className="bg-white rounded-2xl border border-purple-100 p-16 text-center">
                 <DocumentTextIcon className="h-12 w-12 mx-auto text-purple-200 mb-4" />
                 <p className="font-bold text-slate-600">No Reports Found</p>

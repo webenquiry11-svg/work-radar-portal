@@ -1295,8 +1295,17 @@ export const MyTasks = () => {
   );
 };
 
+const statusConfig = {
+  'Completed':            { label: 'Approved',          bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  'Not Completed':        { label: 'Rejected',          bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     dot: 'bg-red-500' },
+  'Pending Verification': { label: 'Awaiting Approval', bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-400' },
+  'In Progress':          { label: 'In Progress',       bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    dot: 'bg-blue-500' },
+  'Pending':              { label: 'Pending',           bg: 'bg-slate-50',   text: 'text-slate-500',   border: 'border-slate-200',   dot: 'bg-slate-400' },
+};
+
 export const MyReportHistory = ({ employeeId }) => {
   const { data: reports = [], isLoading } = useGetAllMyReportsQuery(employeeId);
+  const [expandedId, setExpandedId] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
 
@@ -1308,11 +1317,11 @@ export const MyReportHistory = ({ employeeId }) => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-slate-800 uppercase tracking-wide">My Report History</h1>
-        <p className="text-sm text-slate-500 mt-1">Review your previously submitted daily progress reports</p>
+        <p className="text-sm text-slate-500 mt-1">Click on a date card to view tasks for that day</p>
       </div>
 
-      {/* Report list */}
-      <div className="space-y-4 pb-8">
+      {/* Report accordion list */}
+      <div className="space-y-3 pb-8">
         {reports.length > 0 ? reports.map(report => {
           let taskUpdates = [];
           let reportNote = '';
@@ -1322,127 +1331,151 @@ export const MyReportHistory = ({ employeeId }) => {
             reportNote = data.reportNote || '';
           } catch { /* ignore */ }
 
+          const isOpen = expandedId === report._id;
+          const taskCount = taskUpdates.length;
+
           return (
-            <div key={report._id} className="bg-white rounded-2xl border border-purple-100 shadow-sm p-6">
+            <div key={report._id} className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
 
-              {/* Report header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <h3 className="text-base font-bold text-slate-800">
-                  {new Date(report.reportDate).toLocaleDateString('en-US', { dateStyle: 'full' })}
-                </h3>
-                <span className={`self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full ${
-                  report.status === 'Submitted'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {report.status}
-                </span>
-              </div>
-
-              {/* Report content */}
-              <div className="space-y-3">
-                {reportNote && (
-                  <div className="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3">
-                    <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">My Notes</h4>
-                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{reportNote}</p>
+              {/* ── Date card (always visible, clickable) ── */}
+              <button
+                onClick={() => setExpandedId(isOpen ? null : report._id)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-purple-50/50 transition group"
+              >
+                <div className="flex items-center gap-4">
+                  {/* Calendar icon block */}
+                  <div className="flex-shrink-0 h-11 w-11 rounded-xl flex flex-col items-center justify-center border border-purple-100"
+                    style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                    <span className="text-[10px] font-bold text-purple-200 uppercase leading-none">
+                      {new Date(report.reportDate).toLocaleDateString('en-US', { month: 'short' })}
+                    </span>
+                    <span className="text-lg font-extrabold text-white leading-tight">
+                      {new Date(report.reportDate).getUTCDate()}
+                    </span>
                   </div>
-                )}
-                {taskUpdates.map((update, i) => {
-                  const task = update.taskId;
-                  const isCompleted = task?.status === 'Completed';
-                  const isNotCompleted = task?.status === 'Not Completed';
-                  const isPendingVerification = task?.status === 'Pending Verification';
-                  const isFinalized = isCompleted || isNotCompleted;
+                  <div className="text-left">
+                    <p className="font-bold text-slate-800 text-sm">
+                      {new Date(report.reportDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {taskCount} task{taskCount !== 1 ? 's' : ''} reported
+                      {reportNote ? ' · has notes' : ''}
+                    </p>
+                  </div>
+                </div>
 
-                  // Status display config
-                  const statusConfig = {
-                    'Completed':            { label: 'Approved',          bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
-                    'Not Completed':        { label: 'Rejected',          bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     dot: 'bg-red-500' },
-                    'Pending Verification': { label: 'Awaiting Approval', bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-400' },
-                    'In Progress':          { label: 'In Progress',       bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    dot: 'bg-blue-500' },
-                    'Pending':              { label: 'Pending',           bg: 'bg-slate-50',   text: 'text-slate-500',   border: 'border-slate-200',   dot: 'bg-slate-400' },
-                  };
-                  const sc = task?.status ? (statusConfig[task.status] || statusConfig['Pending']) : null;
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    report.status === 'Submitted'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    {report.status}
+                  </span>
+                  <ChevronDownIcon className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
 
-                  return (
-                  <div key={i} className="bg-slate-50 border border-purple-100 rounded-xl overflow-hidden">
-                    {/* Task header */}
-                    <div className="flex justify-between items-center px-4 py-2.5 bg-purple-50 border-b border-purple-100 gap-2">
-                      <p className="font-bold text-slate-800 text-sm truncate">
-                        Task {i + 1}: {task?.title || 'Unknown Task'}
-                      </p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {sc && (
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${sc.bg} ${sc.text} ${sc.border}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${sc.dot}`} />
-                            {sc.label}
-                          </span>
-                        )}
-                        {task && (
-                          <button
-                            onClick={() => { setViewingTask(task); setViewingTaskNumber(i + 1); }}
-                            className="text-xs font-bold px-3 py-1 rounded-lg text-white transition"
-                            style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
-                          >
-                            Details
-                          </button>
-                        )}
-                      </div>
+              {/* ── Expanded task content ── */}
+              {isOpen && (
+                <div className="border-t border-purple-100 px-6 py-4 space-y-3 bg-slate-50/40">
+
+                  {/* Notes */}
+                  {reportNote && (
+                    <div className="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3">
+                      <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">My Notes</h4>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{reportNote}</p>
                     </div>
+                  )}
 
-                    {/* Description */}
-                    {update.note ? (
-                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
-                    )}
+                  {/* Task cards */}
+                  {taskUpdates.map((update, i) => {
+                    const task = update.taskId;
+                    const isCompleted = task?.status === 'Completed';
+                    const isNotCompleted = task?.status === 'Not Completed';
+                    const isPendingVerification = task?.status === 'Pending Verification';
+                    const isFinalized = isCompleted || isNotCompleted;
+                    const sc = task?.status ? (statusConfig[task.status] || statusConfig['Pending']) : null;
 
-                    {/* Approval / Rejection info */}
-                    {isFinalized && (
-                      <div className={`flex items-center justify-between px-4 py-2.5 border-t ${isCompleted ? 'border-emerald-100 bg-emerald-50/60' : 'border-red-100 bg-red-50/60'}`}>
-                        <div className="flex items-center gap-2">
-                          {isCompleted ? (
-                            <CheckCircleIcon className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                          ) : (
-                            <XCircleIcon className="h-4 w-4 text-red-500 flex-shrink-0" />
-                          )}
-                          <span className={`text-xs font-bold ${isCompleted ? 'text-emerald-700' : 'text-red-700'}`}>
-                            {isCompleted ? 'Approved' : 'Rejected'}
-                            {task?.approvedBy?.name ? (
-                              <span className="font-normal text-slate-500"> by {task.approvedBy.name}
-                                {task.approvedBy.role && <span className="text-slate-400"> ({task.approvedBy.role})</span>}
+                    return (
+                      <div key={i} className="bg-white border border-purple-100 rounded-xl overflow-hidden">
+                        {/* Task header */}
+                        <div className="flex justify-between items-center px-4 py-2.5 bg-purple-50 border-b border-purple-100 gap-2">
+                          <p className="font-bold text-slate-800 text-sm truncate">
+                            Task {i + 1}: {task?.title || 'Unknown Task'}
+                          </p>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {sc && (
+                              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${sc.bg} ${sc.text} ${sc.border}`}>
+                                <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${sc.dot}`} />
+                                {sc.label}
                               </span>
-                            ) : task?.assignedBy?.name ? (
-                              <span className="font-normal text-slate-500"> by {task.assignedBy.name}</span>
-                            ) : null}
-                          </span>
+                            )}
+                            {task && (
+                              <button
+                                onClick={() => { setViewingTask(task); setViewingTaskNumber(i + 1); }}
+                                className="text-xs font-bold px-3 py-1 rounded-lg text-white transition"
+                                style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
+                              >
+                                Details
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        {isCompleted && task?.progress !== undefined && (
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                            {task.progress}% · {task.completionCategory || 'Completed'}
-                          </span>
-                        )}
-                        {isNotCompleted && task?.rejectionReason && (
-                          <span className="text-xs text-red-600 italic max-w-[200px] truncate" title={task.rejectionReason}>
-                            "{task.rejectionReason}"
-                          </span>
-                        )}
-                      </div>
-                    )}
 
-                    {isPendingVerification && (
-                      <div className="flex items-center gap-2 px-4 py-2.5 border-t border-amber-100 bg-amber-50/60">
-                        <ClockIcon className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                        <span className="text-xs font-semibold text-amber-700">Waiting for admin/manager approval</span>
+                        {/* Description */}
+                        {update.note ? (
+                          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
+                        ) : (
+                          <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
+                        )}
+
+                        {/* Approval / Rejection info */}
+                        {isFinalized && (
+                          <div className={`flex items-center justify-between px-4 py-2.5 border-t ${isCompleted ? 'border-emerald-100 bg-emerald-50/60' : 'border-red-100 bg-red-50/60'}`}>
+                            <div className="flex items-center gap-2">
+                              {isCompleted
+                                ? <CheckCircleIcon className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                                : <XCircleIcon className="h-4 w-4 text-red-500 flex-shrink-0" />}
+                              <span className={`text-xs font-bold ${isCompleted ? 'text-emerald-700' : 'text-red-700'}`}>
+                                {isCompleted ? 'Approved' : 'Rejected'}
+                                {task?.approvedBy?.name ? (
+                                  <span className="font-normal text-slate-500"> by {task.approvedBy.name}
+                                    {task.approvedBy.role && <span className="text-slate-400"> ({task.approvedBy.role})</span>}
+                                  </span>
+                                ) : task?.assignedBy?.name ? (
+                                  <span className="font-normal text-slate-500"> by {task.assignedBy.name}</span>
+                                ) : null}
+                              </span>
+                            </div>
+                            {isCompleted && task?.progress !== undefined && (
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                                {task.progress}% · {task.completionCategory || 'Completed'}
+                              </span>
+                            )}
+                            {isNotCompleted && task?.rejectionReason && (
+                              <span className="text-xs text-red-600 italic max-w-[200px] truncate" title={task.rejectionReason}>
+                                "{task.rejectionReason}"
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {isPendingVerification && (
+                          <div className="flex items-center gap-2 px-4 py-2.5 border-t border-amber-100 bg-amber-50/60">
+                            <ClockIcon className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                            <span className="text-xs font-semibold text-amber-700">Waiting for admin/manager approval</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  );
-                })}
-                {taskUpdates.length === 0 && !reportNote && (
-                  <p className="text-sm text-slate-400 italic">No content in this report.</p>
-                )}
-              </div>
+                    );
+                  })}
+
+                  {taskUpdates.length === 0 && !reportNote && (
+                    <p className="text-sm text-slate-400 italic text-center py-4">No content in this report.</p>
+                  )}
+                </div>
+              )}
             </div>
           );
         }) : (
