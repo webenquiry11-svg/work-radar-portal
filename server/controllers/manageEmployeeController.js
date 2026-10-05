@@ -147,19 +147,30 @@ class ManageEmployeeController {
     try {
       // Check if the email is already in use by another employee
       if (updateData.email) {
-        const existingEmployee = await Employee.findOne({ 
+        const existingByEmail = await Employee.findOne({ 
           email: updateData.email,
-          _id: { $ne: id } // Exclude the current employee
+          _id: { $ne: id }
         });
-        if (existingEmployee) {
+        if (existingByEmail) {
           return res.status(409).json({ message: 'An employee with this email already exists.' });
+        }
+      }
+
+      // Check if the employeeId is already in use by another employee
+      if (updateData.employeeId) {
+        const existingById = await Employee.findOne({
+          employeeId: updateData.employeeId,
+          _id: { $ne: id }
+        });
+        if (existingById) {
+          return res.status(409).json({ message: 'An employee with this Employee ID already exists.' });
         }
       }
 
       const updatedEmployee = await Employee.findByIdAndUpdate(
         id,
         updateData,
-        { new: true, runValidators: true } // Return the updated document and run validators
+        { new: true, runValidators: true, context: 'query' }
       ).select('-password');
 
       if (!updatedEmployee) {
