@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetHolidaysQuery, useGetMyTasksQuery, useGetAllTasksQuery, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useProcessPastDueTasksMutation, useUpdateEmployeeMutation, useCreateMultipleTasksMutation, useUpdateTaskMutation, useGetReportsByEmployeeQuery, useCreateTaskMutation } from '../services/EmployeApi';
+import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployeesQuery, useGetHolidaysQuery, useGetMyTasksQuery, useGetAllTasksQuery, useGetAllMyReportsQuery, useGetActiveAnnouncementQuery, useGetEmployeeEOMHistoryQuery, useProcessPastDueTasksMutation, useUpdateEmployeeMutation, useCreateMultipleTasksMutation, useUpdateTaskMutation, useGetReportsByEmployeeQuery, useCreateTaskMutation, useUploadScreenshotMutation } from '../services/EmployeApi';
 import { apiSlice, useLogoutMutation } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, PaperAirplaneIcon, DocumentTextIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, UserGroupIcon, InformationCircleIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChevronDoubleLeftIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, ArrowDownTrayIcon, ChevronRightIcon, CameraIcon, TrashIcon, UserIcon, EnvelopeIcon, MapPinIcon, BuildingOfficeIcon, AcademicCapIcon, GlobeAltIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
@@ -1308,6 +1308,26 @@ export const MyReportHistory = ({ employeeId }) => {
   const [expandedId, setExpandedId] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
+
+  const renderScreenshots = (update) => {
+    const urls = update.screenshotUrls?.length ? update.screenshotUrls
+      : update.screenshotUrl ? [update.screenshotUrl] : [];
+    if (!urls.length) return null;
+    return (
+      <div className="px-4 py-3 border-t border-purple-100">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Screenshots ({urls.length})</p>
+        <div className="flex flex-wrap gap-2">
+          {urls.map((url, idx) => (
+            <button key={idx} onClick={() => setLightboxUrl(url)}
+              className="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden border border-purple-100 hover:ring-2 hover:ring-purple-400 transition focus:outline-none">
+              <img src={url} alt={`screenshot-${idx+1}`} className="w-full h-full object-cover"/>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   if (isLoading) return <div className="p-8 text-center text-slate-500">Loading report history...</div>;
 
@@ -1429,6 +1449,7 @@ export const MyReportHistory = ({ employeeId }) => {
                         ) : (
                           <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                         )}
+                        {renderScreenshots(update)}
 
                         {/* Approval / Rejection info */}
                         {isFinalized && (
@@ -1488,6 +1509,25 @@ export const MyReportHistory = ({ employeeId }) => {
       </div>
 
       <TaskDetailsModal isOpen={!!viewingTask} onClose={() => setViewingTask(null)} task={viewingTask} taskNumber={viewingTaskNumber} />
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}>
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center"
+            onClick={e => e.stopPropagation()}>
+            <img src={lightboxUrl} alt="Screenshot" className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain"/>
+            <button onClick={() => setLightboxUrl(null)}
+              className="absolute -top-4 -right-4 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-slate-100 transition">
+              <XMarkIcon className="h-5 w-5 text-slate-700"/>
+            </button>
+            <a href={lightboxUrl} target="_blank" rel="noreferrer"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-black/50 rounded-full px-4 py-1.5 hover:bg-black/70 transition">
+              Open full size
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1600,16 +1640,22 @@ export const MyDailyReport = ({ employeeId }) => {
   const { data: assignedTasks = [], isLoading: isLoadingTasks } = useGetMyTasksQuery(undefined, { refetchOnMountOrArgChange: true });
   const { data: todaysReport, isLoading: isLoadingReport } = useGetTodaysReportQuery(employeeId);
   const [updateTodaysReport, { isLoading: isUpdating }] = useUpdateTodaysReportMutation();
+  const [uploadScreenshot] = useUploadScreenshotMutation();
   const [updateTask] = useUpdateTaskMutation();
   const [requestingTaskId, setRequestingTaskId] = useState(null);
-  const [completionConfirmTasks, setCompletionConfirmTasks] = useState(null); // array of tasks
+  const [completionConfirmTasks, setCompletionConfirmTasks] = useState(null);
   const [taskNotes, setTaskNotes] = useState({});
+  const [taskScreenshots, setTaskScreenshots] = useState({}); // { taskId: File[] }
+  const [taskScreenshotUrls, setTaskScreenshotUrls] = useState({}); // { taskId: string[] }
+  const [uploadingTaskId, setUploadingTaskId] = useState(null);
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [reportNote, setReportNote] = useState('');
+  const currentUser = useSelector(selectCurrentUser);
+  const requiresScreenshot = currentUser?.requiresScreenshot || false;
   
   const isReadOnly = useMemo(() => {
     const now = new Date();
-    const isPastCutoff = now.getHours() >= 19; // 7:00 PM
+    const isPastCutoff = now.getHours() >= 21; // 9:00 PM
     const isSubmitted = todaysReport?.status === 'Submitted';
     return isPastCutoff || isSubmitted;
   }, [todaysReport]);
@@ -1625,19 +1671,20 @@ export const MyDailyReport = ({ employeeId }) => {
     const initialNotes = {};
     const initialSelected = new Set();
     if (todaysReport?.status === 'Submitted') {
-      // If already submitted, try to parse and show the submitted values
       try {
         const content = JSON.parse(todaysReport.content);
         if (content.taskUpdates) {
+          const urls = {};
           content.taskUpdates.forEach(update => {
             initialNotes[update.taskId] = update.note || '';
             initialSelected.add(update.taskId);
+            if (update.screenshotUrls?.length) urls[update.taskId] = update.screenshotUrls;
+            else if (update.screenshotUrl) urls[update.taskId] = [update.screenshotUrl]; // backward compat
           });
+          setTaskScreenshotUrls(urls);
         }
-        if (content.reportNote) {
-          setReportNote(content.reportNote);
-        }
-      } catch { /* ignore parsing errors */ }
+        if (content.reportNote) setReportNote(content.reportNote);
+      } catch { /* ignore */ }
     } else {
       // If not submitted or reopened, initialize empty notes, nothing pre-selected
       assignedTasks.forEach(task => {
@@ -1687,13 +1734,11 @@ export const MyDailyReport = ({ employeeId }) => {
   const handleSubmit = async () => {
     const tasksToSubmit = tasksToDisplay.filter(t => selectedTasks.has(t._id));
 
-    // Must select at least one task (unless there are no tasks — attendance only)
     if (tasksToDisplay.length > 0 && tasksToSubmit.length === 0) {
       toast.error('Please select at least one task to report on.');
       return;
     }
 
-    // Validate every selected task has a note with at least 10 words
     for (const task of tasksToSubmit) {
       const note = taskNotes[task._id] || '';
       if (!note.trim()) {
@@ -1704,12 +1749,39 @@ export const MyDailyReport = ({ employeeId }) => {
         toast.error(`The description for "${task.title}" must be at least 10 words.`);
         return;
       }
+      // Screenshot is optional — no validation needed
+
     }
+
+    // Upload any pending screenshots to Cloudinary
+    const finalUrls = {};
+    Object.entries(taskScreenshotUrls).forEach(([id, arr]) => { finalUrls[id] = [...(arr || [])]; });
+
+    for (const task of tasksToSubmit) {
+      const files = taskScreenshots[task._id] || [];
+      for (const file of files) {
+        setUploadingTaskId(task._id);
+        try {
+          const fd = new FormData();
+          fd.append('screenshot', file);
+          const result = await uploadScreenshot(fd).unwrap();
+          if (!finalUrls[task._id]) finalUrls[task._id] = [];
+          finalUrls[task._id].push(result.url);
+        } catch {
+          toast.error(`Failed to upload a screenshot for "${task.title}". Please try again.`);
+          setUploadingTaskId(null);
+          return;
+        }
+      }
+    }
+    setUploadingTaskId(null);
+    setTaskScreenshotUrls(finalUrls);
 
     const taskUpdates = tasksToSubmit.map(task => ({
       taskId: task._id,
       completion: task.progress || 0,
       note: taskNotes[task._id] || '',
+      ...(finalUrls[task._id]?.length ? { screenshotUrls: finalUrls[task._id] } : {}),
     }));
 
     if (taskUpdates.length === 0 && !reportNote.trim()) {
@@ -1794,7 +1866,7 @@ export const MyDailyReport = ({ employeeId }) => {
           <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-amber-800 text-sm">Reporting Closed For Today</p>
-            <p className="text-xs text-amber-700 mt-0.5">You can submit progress once daily before 7:00 PM. Today's report may have already been submitted or the deadline has passed.</p>
+            <p className="text-xs text-amber-700 mt-0.5">You can submit progress once daily before 9:00 PM. Today's report may have already been submitted or the deadline has passed.</p>
           </div>
         </div>
       )}
@@ -1902,6 +1974,92 @@ export const MyDailyReport = ({ employeeId }) => {
                     className="w-full text-sm border border-purple-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition resize-none disabled:opacity-60 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white text-slate-700 placeholder:text-slate-300 leading-relaxed"
                   />
                 </div>
+
+                {/* Screenshot upload — shown only when requiresScreenshot is true */}
+                {requiresScreenshot && !isReadOnlyTask && (
+                  <div className="border border-dashed border-purple-200 rounded-xl p-4 bg-purple-50/40">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                        <CameraIcon className="h-3.5 w-3.5 text-purple-500" />
+                        Screenshots <span className="text-slate-400 font-normal">(optional)</span>
+                      </label>
+                      {(taskScreenshotUrls[task._id]?.length || taskScreenshots[task._id]?.length) ? (
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                          {(taskScreenshotUrls[task._id]?.length || 0) + (taskScreenshots[task._id]?.length || 0)} file(s)
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {/* Uploaded URL thumbnails */}
+                    {taskScreenshotUrls[task._id]?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {taskScreenshotUrls[task._id].map((url, idx) => (
+                          <div key={idx} className="relative w-16 h-16 flex-shrink-0">
+                            <img src={url} alt={`screenshot-${idx+1}`} className="w-full h-full object-cover rounded-lg border border-purple-100"/>
+                            <button onClick={() => setTaskScreenshotUrls(prev => {
+                              const arr = [...(prev[task._id] || [])]; arr.splice(idx,1);
+                              return { ...prev, [task._id]: arr };
+                            })} className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center">
+                              <XCircleIcon className="h-3.5 w-3.5 text-white"/>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pending file names */}
+                    {taskScreenshots[task._id]?.length > 0 && (
+                      <div className="space-y-1 mb-2">
+                        {taskScreenshots[task._id].map((file, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-white rounded-xl border border-purple-100 px-3 py-1.5">
+                            <CameraIcon className="h-3.5 w-3.5 text-purple-400 flex-shrink-0"/>
+                            <span className="text-xs text-slate-600 truncate flex-1">{file.name}</span>
+                            {uploadingTaskId === task._id && <ArrowPathIcon className="animate-spin h-3.5 w-3.5 text-purple-400 flex-shrink-0"/>}
+                            <button onClick={() => setTaskScreenshots(prev => {
+                              const arr = [...(prev[task._id] || [])]; arr.splice(idx,1);
+                              return { ...prev, [task._id]: arr.length ? arr : undefined };
+                            })} className="text-red-400 hover:text-red-600 flex-shrink-0">
+                              <XCircleIcon className="h-3.5 w-3.5"/>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add more button */}
+                    <label className="flex items-center justify-center gap-2 w-full py-2 cursor-pointer hover:bg-purple-100/60 rounded-lg transition border border-dashed border-purple-200 mt-1">
+                      <CameraIcon className="h-4 w-4 text-purple-400"/>
+                      <span className="text-xs font-semibold text-purple-600">
+                        {(taskScreenshotUrls[task._id]?.length || 0) + (taskScreenshots[task._id]?.length || 0) === 0
+                          ? 'Click to attach screenshots'
+                          : 'Add more screenshots'}
+                      </span>
+                      <input type="file" accept="image/*" multiple className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          if (files.length) setTaskScreenshots(prev => ({
+                            ...prev,
+                            [task._id]: [...(prev[task._id] || []), ...files]
+                          }));
+                          e.target.value = '';
+                        }}/>
+                    </label>
+                  </div>
+                )}
+
+                {/* Show submitted screenshots in read-only mode */}
+                {isReadOnlyTask && (taskScreenshotUrls[task._id]?.length > 0) && (
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1"><CameraIcon className="h-3.5 w-3.5"/>Screenshots</p>
+                    <div className="flex flex-wrap gap-2">
+                      {taskScreenshotUrls[task._id].map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" rel="noreferrer">
+                          <img src={url} alt={`screenshot-${idx+1}`} className="h-20 w-20 object-cover rounded-xl border border-purple-100 hover:opacity-90 transition cursor-pointer"/>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -3,7 +3,7 @@ import {
   UserPlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon, XMarkIcon, ArrowPathIcon, ExclamationTriangleIcon, AtSymbolIcon, BuildingOffice2Icon, UserCircleIcon, EyeIcon, KeyIcon, CalendarIcon
 } from '@heroicons/react/24/outline';
 import { useAddEmployeeMutation, useGetEmployeesQuery, useGetEmployeeEOMHistoryQuery } from '../services/EmployeApi';
-import { useUpdateEmployeeMutation, useDeleteEmployeeMutation} from '../services/EmployeApi';
+import { useUpdateEmployeeMutation, useUpdateEmployeePermissionsMutation, useDeleteEmployeeMutation} from '../services/EmployeApi';
 import toast from 'react-hot-toast'; // Removed unused import of LeaveManagementModal
 import LeaveManagementModal from './LeaveManagementModal';
 
@@ -152,6 +152,21 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
   );
 };
 
+const PermissionToggle = ({ label, description, enabled, onToggle }) => (
+  <div
+    onClick={onToggle}
+    className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all ${enabled ? 'bg-blue-50 border-blue-400' : 'bg-slate-50 border-slate-200 hover:border-slate-400'}`}
+  >
+    <div className="min-w-0 flex-1 mr-3">
+      <p className={`font-semibold ${enabled ? 'text-blue-800' : 'text-slate-700'}`}>{label}</p>
+      <p className="text-xs text-slate-500">{description}</p>
+    </div>
+    <div className={`w-12 h-6 flex-shrink-0 flex items-center rounded-full p-1 transition-colors ${enabled ? 'bg-blue-500' : 'bg-slate-300'}`}>
+      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${enabled ? 'translate-x-6' : ''}`}></div>
+    </div>
+  </div>
+);
+
 const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
   const [permissions, setPermissions] = useState({
     canEditProfile: false,
@@ -161,10 +176,11 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
     canAssignTask: false,
     canDeleteTask: false,
     canViewAnalytics: false,
+    requiresScreenshot: false,
   });
 
   React.useEffect(() => {
-    if (employee) {
+    if (isOpen && employee) {
       setPermissions({
         canEditProfile: employee.canEditProfile || false,
         canViewTeam: employee.canViewTeam || false,
@@ -173,9 +189,10 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
         canAssignTask: employee.canAssignTask || false,
         canDeleteTask: employee.canDeleteTask || false,
         canViewAnalytics: employee.canViewAnalytics || false,
+        requiresScreenshot: employee.requiresScreenshot || false,
       });
     }
-  }, [employee]);
+  }, [isOpen, employee?._id]);
 
   if (!isOpen || !employee) return null;
 
@@ -186,21 +203,6 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
   const handleSave = () => {
     onSave(employee._id, permissions);
   };
-
-  const PermissionToggle = ({ label, description, enabled, onToggle }) => (
-    <div
-      onClick={onToggle}
-      className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all ${enabled ? 'bg-blue-50 border-blue-400' : 'bg-slate-50 border-slate-200 hover:border-slate-400'}`}
-    >
-      <div>
-        <p className={`font-semibold ${enabled ? 'text-blue-800' : 'text-slate-700'}`}>{label}</p>
-        <p className="text-xs text-slate-500">{description}</p>
-      </div>
-      <div className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${enabled ? 'bg-blue-500' : 'bg-slate-300'}`}>
-        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${enabled ? 'translate-x-6' : ''}`}></div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
@@ -216,6 +218,7 @@ const PermissionsModal = ({ isOpen, onClose, employee, onSave, isSaving }) => {
           <PermissionToggle label="Can Assign Tasks" description="Allows the user to assign new tasks to their team members." enabled={permissions.canAssignTask} onToggle={() => handleToggle('canAssignTask')} />
           <PermissionToggle label="Can Delete Tasks" description="Allows the user to delete tasks. Use with caution." enabled={permissions.canDeleteTask} onToggle={() => handleToggle('canDeleteTask')} />
           <PermissionToggle label="Can View Analytics" description="Allows the user to view the performance analytics page." enabled={permissions.canViewAnalytics} onToggle={() => handleToggle('canViewAnalytics')} />
+          <PermissionToggle label="Requires Screenshot" description="Employee must attach a screenshot for each task in their daily progress report." enabled={permissions.requiresScreenshot} onToggle={() => handleToggle('requiresScreenshot')} />
         </div>
         <div className="p-4 bg-slate-50 dark:bg-black rounded-b-lg flex justify-end gap-3">
           <button type="button" onClick={onClose} className="bg-white hover:bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg border border-slate-300 text-sm">Cancel</button>
@@ -571,7 +574,7 @@ export default function EmployeeManagement() {
   const [leaveUser, setLeaveUser] = useState(null);
 
   // RTK Query hook for fetching employees
-  const { data: users = [], isLoading, isError, error } = useGetEmployeesQuery();
+  const { data: users = [], isLoading, isError, error, refetch: refetchUsers } = useGetEmployeesQuery();
 
   // RTK Query mutation hook for adding an employee
   const [addEmployee, { isLoading: isAdding }] = useAddEmployeeMutation();
@@ -620,6 +623,7 @@ export default function EmployeeManagement() {
   };
 
   const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
+  const [updatePermissions, { isLoading: isSavingPerms }] = useUpdateEmployeePermissionsMutation();
   const [deleteEmployee, { isLoading: isDeleting }] = useDeleteEmployeeMutation();
 
    const handleSaveEmployee = async (employeeData) => {
@@ -648,11 +652,12 @@ export default function EmployeeManagement() {
 
   const handleSavePermissions = async (employeeId, permissions) => {
     try {
-      await updateEmployee({ id: employeeId, formData: permissions }).unwrap();
+      const result = await updatePermissions({ id: employeeId, permissions }).unwrap();
+      await refetchUsers();
+      if (result.employee) setPermissionsUser(result.employee);
       handleClosePermissionsModal();
       toast.success('Permissions updated successfully!');
     } catch (err) {
-      console.error('Failed to update permissions: ', err);
       toast.error(err.data?.message || 'Failed to update permissions.');
     }
   };
@@ -752,9 +757,9 @@ export default function EmployeeManagement() {
       <PermissionsModal
         isOpen={!!permissionsUser}
         onClose={handleClosePermissionsModal}
-        employee={permissionsUser}
+        employee={users?.find(u => u._id === permissionsUser?._id) || permissionsUser}
         onSave={handleSavePermissions}
-        isSaving={isUpdating}
+        isSaving={isSavingPerms}
       />
       <LeaveManagementModal
         isOpen={!!leaveUser}
