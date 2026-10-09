@@ -67,7 +67,7 @@ class ManageEmployeeController {
       'qualification', 'experience', 'workType', 'company', 'joiningDate',
       'dashboardAccess', 'department', 'workLocation', 'shift', 'canEditProfile', 'canViewTeam',
       'canUpdateTask', 'canApproveTask', 'canAssignTask', 'canDeleteTask', 'canViewAnalytics', 'themePreference',
-      'hasAttendancePower', 'manualAttendanceStatus', 'manualAttendanceDate', 'monitoringName'
+      'hasAttendancePower', 'manualAttendanceStatus', 'manualAttendanceDate', 'monitoringName', 'requiresScreenshot'
     ];
 
     // Iterate over the fields and add them to updateData if they exist in the request body
@@ -92,7 +92,7 @@ class ManageEmployeeController {
     });
 
     // Handle boolean fields that come as strings from FormData
-    const booleanFields = ['hasAttendancePower', 'canEditProfile', 'canViewTeam', 'canUpdateTask', 'canApproveTask', 'canAssignTask', 'canDeleteTask', 'canViewAnalytics'];
+    const booleanFields = ['hasAttendancePower', 'canEditProfile', 'canViewTeam', 'canUpdateTask', 'canApproveTask', 'canAssignTask', 'canDeleteTask', 'canViewAnalytics', 'requiresScreenshot'];
     booleanFields.forEach(field => {
       if (updateData.hasOwnProperty(field)) {
         if (updateData[field] === 'true' || updateData[field] === true) {
@@ -351,7 +351,7 @@ class ManageEmployeeController {
             _id: 1, name: 1, email: 1, role: 1, employeeId: 1, 
             profilePicture: 1, address: 1, gender: 1, country: 1, city: 1, qualification: 1, dashboardAccess: 1, department: 1, experience: 1, workType: 1, company: 1, joiningDate: 1, workLocation: 1, shift: 1, 
             canEditProfile: 1, canViewTeam: 1, canUpdateTask: 1, canApproveTask: 1, canAssignTask: 1, canDeleteTask: 1, canViewAnalytics: 1,
-            hasAttendancePower: 1, manualAttendanceStatus: 1, manualAttendanceDate: 1, monitoringName: 1,
+            hasAttendancePower: 1, manualAttendanceStatus: 1, manualAttendanceDate: 1, monitoringName: 1, requiresScreenshot: 1,
             assignmentInfo: 1, // Include the full assignmentInfo object
             // Optionally, you can still have a top-level 'department' and 'teamLead' for convenience if needed elsewhere
             department: { $ifNull: ['$assignmentInfo.department', '$department'] }, 

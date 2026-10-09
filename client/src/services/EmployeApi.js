@@ -38,6 +38,14 @@ export const extendedApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => ['Employee', { type: 'Employee', id }],
     }),
+    updateEmployeePermissions: builder.mutation({
+      query: ({ id, permissions }) => ({
+        url: `/employees/${id}/permissions`,
+        method: 'PUT',
+        body: permissions,
+      }),
+      invalidatesTags: (result, error, { id }) => ['Employee', { type: 'Employee', id }],
+    }),
     deleteEmployee: builder.mutation({
       query: (id) => ({
         url: `/employees/${id}`,
@@ -162,6 +170,13 @@ export const extendedApi = apiSlice.injectEndpoints({
         body: patch,
       }),
       invalidatesTags: ['Report', 'Notification'],
+    }),
+    uploadScreenshot: builder.mutation({
+      query: (formData) => ({
+        url: '/reports/upload-screenshot',
+        method: 'POST',
+        body: formData,
+      }),
     }),
     getAllMyReports: builder.query({
       query: (employeeId) => `/reports/my-all/${employeeId}`,
@@ -379,6 +394,7 @@ export const {
   useGetEmployeeByIdQuery,
   useAddEmployeeMutation,
   useUpdateEmployeeMutation,
+  useUpdateEmployeePermissionsMutation,
   useDeleteEmployeeMutation,
   useGetDashboardStatsQuery,
   useGetEmployeeOfTheMonthCandidatesQuery,
@@ -399,6 +415,7 @@ export const {
   useGetTasksForApprovalQuery,
   useGetTodaysReportQuery,
   useUpdateTodaysReportMutation,
+  useUploadScreenshotMutation,
   useGetAllMyReportsQuery,
   useGetReportsByEmployeeQuery, // Exported
   useDeleteReportMutation, // Exported

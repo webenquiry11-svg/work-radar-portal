@@ -2,6 +2,13 @@ const Report = require('../models/report.js');
 const Task = require('../models/task.js');
 const Notification = require('../models/notification.js');
 const Employee = require('../models/employee.js');
+
+const nowIST = () => {
+  const now = new Date();
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + IST_OFFSET_MS);
+  return new Date(Date.UTC(istTime.getUTCFullYear(), istTime.getUTCMonth(), istTime.getUTCDate()));
+};
 const Assignment = require('../models/assignment.js');
 
 class ReportController {
@@ -52,8 +59,8 @@ class ReportController {
  
       // Add a server-side time check for consistency. Assumes server is in the company's local timezone.
       const currentHour = new Date().getHours();
-      if (currentHour >= 19) { // 7 PM
-        return res.status(403).json({ message: 'The deadline for submitting reports (7:00 PM) has passed.' });
+      if (currentHour >= 21) { // 9 PM
+        return res.status(403).json({ message: 'The deadline for submitting reports (9:00 PM) has passed.' });
       }
 
       // If the report is being submitted, check for task completion updates.
@@ -85,7 +92,7 @@ class ReportController {
                 if (completion === 100 && !isFinalizedState) {
                   // If progress is 100%, move to verification
                   task.status = 'Pending Verification';
-                  task.submittedForCompletionDate = new Date(); // Set submission date to the exact time
+                  task.submittedForCompletionDate = nowIST(); // Set submission date to IST calendar date
 
                   // --- Notification Logic ---
                   // This is wrapped in a try/catch so that a failure in sending notifications

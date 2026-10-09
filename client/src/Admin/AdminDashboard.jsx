@@ -67,6 +67,7 @@ export const TeamReports = ({ seniorId }) => {
   const [deletingReport, setDeletingReport] = useState(null);
   const [viewingTaskNumber, setViewingTaskNumber] = useState(null);
   const [expandedReportId, setExpandedReportId] = useState(null);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
 
   const { data: reports, isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(selectedEmployee?._id, {
@@ -204,6 +205,28 @@ export const TeamReports = ({ seniorId }) => {
     XLSX.writeFile(wb, `Reports_${selectedEmployee.name.replace(/\s/g, '_')}.xlsx`);
   };
 
+  const renderScreenshots = (update) => {
+    const urls = update.screenshotUrls?.length ? update.screenshotUrls
+      : update.screenshotUrl ? [update.screenshotUrl]
+      : [];
+    if (!urls.length) return null;
+    return (
+      <div className="px-4 py-3 border-t border-purple-100">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+          Screenshots ({urls.length})
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {urls.map((url, idx) => (
+            <button key={idx} onClick={() => setLightboxUrl(url)}
+              className="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden border border-purple-100 hover:ring-2 hover:ring-purple-400 transition focus:outline-none">
+              <img src={url} alt={`screenshot-${idx+1}`} className="w-full h-full object-cover"/>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderReportContent = (content) => {
     try {
       const data = JSON.parse(content);
@@ -237,6 +260,7 @@ export const TeamReports = ({ seniorId }) => {
                 ) : (
                   <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                 )}
+                {renderScreenshots(update)}
               </div>
             ))}
           </div>
@@ -445,6 +469,7 @@ export const TeamReports = ({ seniorId }) => {
                           ) : (
                             <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
                           )}
+                          {renderScreenshots(update)}
                         </div>
                       ))}
 
@@ -495,6 +520,25 @@ export const TeamReports = ({ seniorId }) => {
         report={deletingReport}
         isDeleting={isDeleting}
       />
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}>
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center"
+            onClick={e => e.stopPropagation()}>
+            <img src={lightboxUrl} alt="Screenshot" className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain"/>
+            <button onClick={() => setLightboxUrl(null)}
+              className="absolute -top-4 -right-4 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-slate-100 transition">
+              <XMarkIcon className="h-5 w-5 text-slate-700"/>
+            </button>
+            <a href={lightboxUrl} target="_blank" rel="noreferrer"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-black/50 rounded-full px-4 py-1.5 hover:bg-black/70 transition">
+              Open full size
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

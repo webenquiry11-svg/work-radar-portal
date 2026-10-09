@@ -142,6 +142,10 @@ const employeeSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  requiresScreenshot: {
+    type: Boolean,
+    default: false,
+  },
   manualAttendanceStatus: {
     type: String,
     enum: ['Present', 'Absent', ''],

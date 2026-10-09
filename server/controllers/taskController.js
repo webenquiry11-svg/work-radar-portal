@@ -4,6 +4,17 @@ const Notification = require('../models/notification.js');
 const Employee = require('../models/employee.js');
 const Assignment = require('../models/assignment.js');
 
+// Returns current date at midnight in IST (UTC+5:30) stored as UTC
+// This ensures the date stored always reflects the IST calendar date
+const nowIST = () => {
+  const now = new Date();
+  // IST offset = +5h 30min = 330 minutes
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + IST_OFFSET_MS);
+  // Store as midnight UTC so toLocaleDateString in IST shows the correct day
+  return new Date(Date.UTC(istTime.getUTCFullYear(), istTime.getUTCMonth(), istTime.getUTCDate()));
+};
+
 class TaskController {
   static createTask = async (req, res) => {
     const { title, description, assignedTo, startDate, dueDate, priority } = req.body;
@@ -201,7 +212,7 @@ class TaskController {
       // it implies they believe the task is 100% complete.
       if (isAssignee && status === 'Pending Verification') {
         task.progress = 100;
-        task.submittedForCompletionDate = new Date();
+        task.submittedForCompletionDate = nowIST();
       }
 
       // If the assignee is updating the task, clear any previous rejection reason
@@ -598,7 +609,7 @@ class TaskController {
                   { 
                       $set: { 
                           status: 'Pending Verification',
-                          submittedForCompletionDate: new Date()
+                          submittedForCompletionDate: nowIST()
                       } 
                   },
                   { new: true }

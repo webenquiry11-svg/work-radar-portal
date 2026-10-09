@@ -106,4 +106,35 @@ router.delete('/announcements/:id', protect, AnnouncementController.deleteAnnoun
 // per-user dismiss
 router.post('/announcements/:id/dismiss', protect, AnnouncementController.dismissAnnouncement);
 
+// Dedicated permissions update — accepts JSON, no file upload needed
+router.put('/employees/:id/permissions', protect, async (req, res) => {
+  const { id } = req.params;
+  const permFields = ['canEditProfile','canViewTeam','canUpdateTask','canApproveTask','canAssignTask','canDeleteTask','canViewAnalytics','canDeleteReport','hasAttendancePower','requiresScreenshot'];
+  const Employee = require('../models/employee.js');
+  try {
+    const updateData = {};
+    permFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field] === true || req.body[field] === 'true';
+      }
+    });
+    const updated = await Employee.findByIdAndUpdate(id, updateData, { new: true, context: 'query' }).select('-password');
+    if (!updated) return res.status(404).json({ message: 'Employee not found.' });
+    res.status(200).json({ message: 'Permissions updated successfully', employee: updated });
+  } catch (err) {
+    console.error('Error updating permissions:', err);
+    res.status(500).json({ message: 'Server error while updating permissions.' });
+  }
+});
+
+// Screenshot upload route
+router.post('/reports/upload-screenshot', protect, upload.single('screenshot'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+    res.status(200).json({ url: req.file.path });
+  } catch (err) {
+    res.status(500).json({ message: 'Screenshot upload failed.' });
+  }
+});
+
 module.exports = router;
