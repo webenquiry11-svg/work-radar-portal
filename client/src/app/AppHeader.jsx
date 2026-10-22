@@ -101,6 +101,23 @@ const AppHeader = ({ pageTitle, onMenuClick, setActiveComponent }) => {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-200">
+      <style>{`
+        @keyframes notification-bell-ring {
+          0%, 100% { transform: rotate(0deg); }
+          4%, 16%, 28% { transform: rotate(12deg); }
+          10%, 22%, 34% { transform: rotate(-12deg); }
+          40% { transform: rotate(8deg); }
+          46% { transform: rotate(-6deg); }
+          52% { transform: rotate(0deg); }
+        }
+        .notification-bell-ring {
+          transform-origin: 50% 12%;
+          animation: notification-bell-ring 2.4s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .notification-bell-ring { animation: none; }
+        }
+      `}</style>
       <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6 w-full">
           <button onClick={onMenuClick} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700 md:hidden">
@@ -128,9 +145,17 @@ const AppHeader = ({ pageTitle, onMenuClick, setActiveComponent }) => {
             <ArrowPathIcon className="h-5 w-5" />
           </button>
           <div className="relative">
-            <button onClick={handleBellClick} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700">
-              <BellIcon className="h-5 w-5" />
-              {unreadCount > 0 && <span className="absolute right-1 top-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
+            <button
+              onClick={handleBellClick}
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
+            >
+              <BellIcon className={`h-5 w-5 ${unreadCount > 0 ? 'notification-bell-ring' : ''}`} />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
             {isNotificationOpen && (
               <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">

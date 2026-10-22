@@ -3,7 +3,7 @@ import { useGetAllTasksQuery, useGetEmployeesQuery, useUpdateTaskMutation, useDe
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
 import toast from 'react-hot-toast';
-import { MagnifyingGlassIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ArrowLeftIcon, FunnelIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon, PencilIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, EyeIcon, ArrowLeftIcon, FunnelIcon, ClockIcon, DocumentTextIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { TaskDetailsModal } from './TaskOverview.jsx';
 
 // ── Task Description History Modal ────────────────────────────────────────────
@@ -24,8 +24,13 @@ const TaskDescriptionModal = ({ isOpen, onClose, task, employeeId }) => {
             const id = typeof u.taskId === 'object' ? u.taskId?._id : u.taskId;
             return String(id) === String(task._id);
           });
-          if (update && update.note && update.note.trim()) {
-            entries.push({ date: report.reportDate, note: update.note.trim() });
+          if (update && (update.note?.trim() || update.timeSpent !== undefined || update.link)) {
+            entries.push({
+              date: report.reportDate,
+              note: update.note?.trim() || '',
+              timeSpent: update.timeSpent,
+              link: update.link || '',
+            });
           }
         }
       } catch { /* ignore */ }
@@ -77,10 +82,24 @@ const TaskDescriptionModal = ({ isOpen, onClose, task, employeeId }) => {
                       <span className="text-xs font-bold text-purple-700">
                         {new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
                       </span>
+                      {entry.timeSpent !== undefined && entry.timeSpent !== '' && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-700">
+                          <ClockIcon className="h-3 w-3 text-orange-600" aria-hidden="true" />
+                          {entry.timeSpent} {Number(entry.timeSpent) === 1 ? 'hr' : 'hrs'}
+                        </span>
+                      )}
                     </div>
                     {i === 0 && <span className="text-[10px] font-bold bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">Latest</span>}
                   </div>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{entry.note}</p>
+                  {entry.note && <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{entry.note}</p>}
+                  {entry.link && (
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 pb-3 text-xs text-slate-500">
+                      <a href={entry.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[10px] font-bold text-purple-700 shadow-sm transition hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                        <LinkIcon className="h-3 w-3" aria-hidden="true" />
+                        Open Link
+                      </a>
+                    </div>
+                  )}
                 </div>
               ))}
             </>

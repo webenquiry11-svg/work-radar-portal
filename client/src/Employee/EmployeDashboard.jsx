@@ -3,7 +3,7 @@ import { useGetTodaysReportQuery, useUpdateTodaysReportMutation, useGetEmployees
 import { apiSlice, useLogoutMutation } from '../services/apiSlice';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, PaperAirplaneIcon, DocumentTextIcon, BriefcaseIcon, CheckCircleIcon, HomeIcon, ChartBarIcon, UserGroupIcon, InformationCircleIcon, CalendarDaysIcon, ClipboardDocumentListIcon, CheckBadgeIcon, ArchiveBoxIcon, TrophyIcon, StarIcon, ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, CalendarIcon, ChevronDoubleLeftIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, ArrowDownTrayIcon, ChevronRightIcon, CameraIcon, TrashIcon, UserIcon, EnvelopeIcon, MapPinIcon, BuildingOfficeIcon, AcademicCapIcon, GlobeAltIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
-import { EyeIcon, XMarkIcon, FlagIcon, CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
+import { EyeIcon, XMarkIcon, FlagIcon, LinkIcon, CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, setCredentials, selectCurrentToken } from '../app/authSlice'; // Removed useForgotPasswordMutation as it's not used here
 import PastReportsList from './PastReports';
@@ -1431,6 +1431,12 @@ export const MyReportHistory = ({ employeeId }) => {
                                 {sc.label}
                               </span>
                             )}
+                            {update.timeSpent !== undefined && update.timeSpent !== '' && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-700 whitespace-nowrap">
+                                <ClockIcon className="h-3 w-3 text-orange-600" aria-hidden="true" />
+                                {update.timeSpent} {Number(update.timeSpent) === 1 ? 'hr' : 'hrs'}
+                              </span>
+                            )}
                             {task && (
                               <button
                                 onClick={() => { setViewingTask(task); setViewingTaskNumber(i + 1); }}
@@ -1448,6 +1454,14 @@ export const MyReportHistory = ({ employeeId }) => {
                           <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
                         ) : (
                           <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
+                        )}
+                        {update.link && (
+                          <div className="px-4 pb-3">
+                            <a href={update.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[10px] font-bold text-purple-700 shadow-sm transition hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                              <LinkIcon className="h-3 w-3" aria-hidden="true" />
+                              Open Link
+                            </a>
+                          </div>
                         )}
                         {renderScreenshots(update)}
 
@@ -1645,6 +1659,9 @@ export const MyDailyReport = ({ employeeId }) => {
   const [requestingTaskId, setRequestingTaskId] = useState(null);
   const [completionConfirmTasks, setCompletionConfirmTasks] = useState(null);
   const [taskNotes, setTaskNotes] = useState({});
+  const [taskTimeSpent, setTaskTimeSpent] = useState({});
+  const [taskLinks, setTaskLinks] = useState({});
+  const [taskLinkFields, setTaskLinkFields] = useState(new Set());
   const [taskScreenshots, setTaskScreenshots] = useState({}); // { taskId: File[] }
   const [taskScreenshotUrls, setTaskScreenshotUrls] = useState({}); // { taskId: string[] }
   const [uploadingTaskId, setUploadingTaskId] = useState(null);
@@ -1669,6 +1686,9 @@ export const MyDailyReport = ({ employeeId }) => {
   useEffect(() => {
     // Initialize or update progress state when tasks or the report status changes
     const initialNotes = {};
+    const initialTimeSpent = {};
+    const initialLinks = {};
+    const initialLinkFields = new Set();
     const initialSelected = new Set();
     if (todaysReport?.status === 'Submitted') {
       try {
@@ -1677,6 +1697,9 @@ export const MyDailyReport = ({ employeeId }) => {
           const urls = {};
           content.taskUpdates.forEach(update => {
             initialNotes[update.taskId] = update.note || '';
+            initialTimeSpent[update.taskId] = update.timeSpent ?? '';
+            initialLinks[update.taskId] = update.link || '';
+            if (update.link) initialLinkFields.add(update.taskId);
             initialSelected.add(update.taskId);
             if (update.screenshotUrls?.length) urls[update.taskId] = update.screenshotUrls;
             else if (update.screenshotUrl) urls[update.taskId] = [update.screenshotUrl]; // backward compat
@@ -1689,9 +1712,14 @@ export const MyDailyReport = ({ employeeId }) => {
       // If not submitted or reopened, initialize empty notes, nothing pre-selected
       assignedTasks.forEach(task => {
         initialNotes[task._id] = '';
+        initialTimeSpent[task._id] = '';
+        initialLinks[task._id] = '';
       });
     } 
     setTaskNotes(initialNotes);
+    setTaskTimeSpent(initialTimeSpent);
+    setTaskLinks(initialLinks);
+    setTaskLinkFields(initialLinkFields);
     setSelectedTasks(initialSelected);
   }, [assignedTasks, todaysReport]);
 
@@ -1749,6 +1777,21 @@ export const MyDailyReport = ({ employeeId }) => {
         toast.error(`The description for "${task.title}" must be at least 10 words.`);
         return;
       }
+      const timeSpent = Number(taskTimeSpent[task._id]);
+      if (!Number.isFinite(timeSpent) || timeSpent <= 0) {
+        toast.error(`Please enter time spent on "${task.title}" in hours.`);
+        return;
+      }
+      const link = (taskLinks[task._id] || '').trim();
+      if (link) {
+        try {
+          const parsedLink = new URL(link);
+          if (!['http:', 'https:'].includes(parsedLink.protocol)) throw new Error('Unsupported URL protocol');
+        } catch {
+          toast.error(`Please enter a valid link for "${task.title}".`);
+          return;
+        }
+      }
       // Screenshot is optional — no validation needed
 
     }
@@ -1781,6 +1824,8 @@ export const MyDailyReport = ({ employeeId }) => {
       taskId: task._id,
       completion: task.progress || 0,
       note: taskNotes[task._id] || '',
+      timeSpent: Number(taskTimeSpent[task._id]),
+      ...(taskLinks[task._id]?.trim() ? { link: taskLinks[task._id].trim() } : {}),
       ...(finalUrls[task._id]?.length ? { screenshotUrls: finalUrls[task._id] } : {}),
     }));
 
@@ -1973,7 +2018,72 @@ export const MyDailyReport = ({ employeeId }) => {
                     rows={4}
                     className="w-full text-sm border border-purple-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition resize-none disabled:opacity-60 disabled:bg-slate-50 disabled:cursor-not-allowed bg-white text-slate-700 placeholder:text-slate-300 leading-relaxed"
                   />
+                  {!isReadOnlyTask && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (taskLinkFields.has(task._id)) {
+                            setTaskLinkFields(prev => {
+                              const next = new Set(prev);
+                              next.delete(task._id);
+                              return next;
+                            });
+                            setTaskLinks(prev => ({ ...prev, [task._id]: '' }));
+                          } else {
+                            setTaskLinkFields(prev => new Set(prev).add(task._id));
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-800 transition"
+                      >
+                        {taskLinkFields.has(task._id) ? <XMarkIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+                        {taskLinkFields.has(task._id) ? 'Remove link' : 'Add link'}
+                        <span className="font-normal text-slate-400">(optional)</span>
+                      </button>
+                      {taskLinkFields.has(task._id) && (
+                        <input
+                          type="url"
+                          value={taskLinks[task._id] || ''}
+                          onChange={e => setTaskLinks(prev => ({ ...prev, [task._id]: e.target.value }))}
+                          placeholder="https://"
+                          aria-label={`Optional reference link for ${task.title}`}
+                          className="mt-2 w-full text-sm border border-purple-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 bg-white text-slate-700 placeholder:text-slate-300"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1.5">
+                    Time Spent (hours) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    required
+                    value={taskTimeSpent[task._id] ?? ''}
+                    onChange={e => setTaskTimeSpent(prev => ({ ...prev, [task._id]: e.target.value }))}
+                    disabled={isReadOnlyTask}
+                    placeholder="e.g. 1.5"
+                    aria-label={`Time spent on ${task.title} in hours`}
+                    className="w-full sm:max-w-xs text-sm border border-purple-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 disabled:opacity-60 disabled:bg-slate-50 bg-white text-slate-700 placeholder:text-slate-300"
+                  />
+                </div>
+
+                {isReadOnlyTask && (
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+                    {taskTimeSpent[task._id] !== '' && taskTimeSpent[task._id] !== undefined && (
+                      <span><strong className="text-slate-600">Time spent:</strong> {taskTimeSpent[task._id]} {Number(taskTimeSpent[task._id]) === 1 ? 'hour' : 'hours'}</span>
+                    )}
+                    {taskLinks[task._id] && (
+                      <a href={taskLinks[task._id]} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 underline">
+                        <LinkIcon className="h-3.5 w-3.5" /> Open submitted link
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {/* Screenshot upload — shown only when requiresScreenshot is true */}
                 {requiresScreenshot && !isReadOnlyTask && (

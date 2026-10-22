@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon, CalendarIcon, DocumentTextIcon, Cog8ToothIcon, ArrowRightOnRectangleIcon, ChevronDownIcon
+  HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon, CalendarIcon, DocumentTextIcon, Cog8ToothIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, ClockIcon, LinkIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import EmployeeManagement from './EmployeeManagement';
@@ -115,7 +115,7 @@ export const TeamReports = ({ seniorId }) => {
 
     const dataForSheet = [];
     const headers = [
-      'Employee Name', 'Employee ID', 'Report Date', 'Report Status', 'Employee Notes', 'Task Title', 'Task Description', 'Completion %'
+      'Employee Name', 'Employee ID', 'Report Date', 'Report Status', 'Employee Notes', 'Task Title', 'Task Description', 'Completion %', 'Time Spent (hours)', 'Reference Link'
     ];
 
     dataForSheet.push(headers);
@@ -134,13 +134,15 @@ export const TeamReports = ({ seniorId }) => {
           const taskRow = [
             update.taskId?.title || 'N/A',
             update.taskId?.description || 'N/A',
-            update.completion || '0'
+            update.completion || '0',
+            update.timeSpent ?? 'N/A',
+            update.link || 'N/A',
           ];
           dataForSheet.push([...baseRow, ...taskRow]);
         });
       } else {
         // If no task updates, add a row with just the report info
-        const emptyTaskRow = ['No task updates in this report', '', ''];
+        const emptyTaskRow = ['No task updates in this report', '', '', '', ''];
         dataForSheet.push([...baseRow, ...emptyTaskRow]);
       }
     });
@@ -154,7 +156,7 @@ export const TeamReports = ({ seniorId }) => {
     // 1. Set column widths
     const columnWidths = [
       { wch: 22 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }, // Employee, ID, Date, Status, Notes
-      { wch: 40 }, { wch: 55 }, { wch: 15 }  // Task Title, Description, Completion
+      { wch: 40 }, { wch: 55 }, { wch: 15 }, { wch: 18 }, { wch: 50 }  // Task details, time spent, reference link
     ];
     ws['!cols'] = columnWidths;
 
@@ -189,7 +191,7 @@ export const TeamReports = ({ seniorId }) => {
         } else { // Data rows
           const isAltRow = R % 2 === 0;
           // Center align specific columns
-          if ([2, 3, 7].includes(C)) { // Date, Status, Completion %
+          if ([2, 3, 7, 8].includes(C)) { // Date, Status, Completion %, Time Spent
             ws[address].s = centeredCellStyle(isAltRow);
           } else {
             ws[address].s = cellStyle(isAltRow);
@@ -259,6 +261,18 @@ export const TeamReports = ({ seniorId }) => {
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap px-4 py-3">{update.note}</p>
                 ) : (
                   <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
+                )}
+                {(update.timeSpent !== undefined || update.link) && (
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 pb-3 text-xs text-slate-500">
+                    {update.timeSpent !== undefined && update.timeSpent !== '' && (
+                      <span><strong className="text-slate-600">Time spent:</strong> {update.timeSpent} {Number(update.timeSpent) === 1 ? 'hour' : 'hours'}</span>
+                    )}
+                    {update.link && (
+                      <a href={update.link} target="_blank" rel="noreferrer" className="text-purple-600 hover:text-purple-800 underline">
+                        Open submitted link
+                      </a>
+                    )}
+                  </div>
                 )}
                 {renderScreenshots(update)}
               </div>
@@ -451,24 +465,48 @@ export const TeamReports = ({ seniorId }) => {
                             <p className="font-bold text-slate-800 text-sm truncate">
                               Task {i + 1}: {update.taskId?.title || 'Unknown Task'}
                             </p>
-                            {update.taskId && (
-                              <button
-                                onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }}
-                                className="text-xs font-bold px-3 py-1 rounded-lg text-white transition flex-shrink-0 ml-2"
-                                style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {update.timeSpent !== undefined && update.timeSpent !== '' && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-100 px-2.5 py-1.5 text-orange-800 shadow-sm ring-1 ring-orange-100/80 whitespace-nowrap">
+                                  <ClockIcon className="h-3.5 w-3.5 text-orange-600" aria-hidden="true" />
+                                  <span className="text-xs font-extrabold tabular-nums">{update.timeSpent}</span>
+                                  <span className="text-[9px] font-bold uppercase tracking-wider text-orange-700">
+                                    {Number(update.timeSpent) === 1 ? 'hr' : 'hrs'}
+                                  </span>
+                                </span>
+                              )}
+                              {update.taskId && (
+                                <button
+                                  onClick={() => { setViewingTask(update.taskId); setViewingTaskNumber(i + 1); }}
+                                  className="text-xs font-bold px-3 py-1 rounded-lg text-white transition flex-shrink-0 ml-2"
+                                  style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}
+                                >
+                                  Details
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white uppercase tracking-wide flex-shrink-0">Task Update</span>
+                              {update.note ? (
+                                <p className="text-sm text-white leading-relaxed whitespace-pre-wrap min-w-0">{update.note}</p>
+                              ) : (
+                                <p className="text-xs text-white/70 italic">No description submitted for this task.</p>
+                              )}
+                            </div>
+                            {update.link && (
+                              <a
+                                href={update.link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-bold text-white whitespace-nowrap transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/70"
                               >
-                                Details
-                              </button>
+                                <LinkIcon className="h-3 w-3" aria-hidden="true" />
+                                Open Link
+                              </a>
                             )}
                           </div>
-                          {update.note ? (
-                            <div className="flex items-center gap-3 px-4 py-3" style={{ background: 'linear-gradient(135deg,#48306A,#8E5FD0)' }}>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white uppercase tracking-wide flex-shrink-0">Task Update</span>
-                              <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{update.note}</p>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 italic px-4 py-3">No description submitted for this task.</p>
-                          )}
                           {renderScreenshots(update)}
                         </div>
                       ))}
