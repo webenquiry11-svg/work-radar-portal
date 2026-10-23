@@ -63,10 +63,38 @@ class ReportController {
         return res.status(403).json({ message: 'The deadline for submitting reports (9:00 PM) has passed.' });
       }
 
+      let reportContent;
+      try {
+        reportContent = JSON.parse(content);
+      } catch {
+        reportContent = null;
+      }
+
+      if (status === 'Submitted' && Array.isArray(reportContent?.taskUpdates)) {
+        for (const update of reportContent.taskUpdates) {
+          if (!update || typeof update !== 'object') {
+            return res.status(400).json({ message: 'Each reported task must include valid task details.' });
+          }
+
+          if (!Number.isFinite(update.timeSpent) || update.timeSpent <= 0) {
+            return res.status(400).json({ message: 'Enter a valid time spent for every reported task.' });
+          }
+
+          if (update.link) {
+            try {
+              if (typeof update.link !== 'string') throw new Error('Link must be a string');
+              const link = new URL(update.link);
+              if (!['http:', 'https:'].includes(link.protocol)) throw new Error('Unsupported URL protocol');
+            } catch {
+              return res.status(400).json({ message: 'Enter a valid link for every reported task.' });
+            }
+          }
+        }
+      }
+
       // If the report is being submitted, check for task completion updates.
       if (status === 'Submitted' && content) {
         try {
-          const reportContent = JSON.parse(content);
           if (reportContent.taskUpdates && Array.isArray(reportContent.taskUpdates)) {
             for (const update of reportContent.taskUpdates) {
               const task = await Task.findById(update.taskId);
