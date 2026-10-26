@@ -3,6 +3,7 @@ const Report = require('../models/report.js');
 const Notification = require('../models/notification.js');
 const Employee = require('../models/employee.js');
 const Assignment = require('../models/assignment.js');
+const { processPastDueTasks } = require('./pastDueTaskProcessor.js');
 
 // Returns current date at midnight in IST (UTC+5:30) stored as UTC
 // This ensures the date stored always reflects the IST calendar date
@@ -574,99 +575,8 @@ class TaskController {
    */
   static processPastDueTasks = async (req, res) => {
       try {
-          const now = new Date();
-          const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-          // Find potential tasks (just IDs) first
-          const pastDueTasks = await Task.find({
-              dueDate: { $lt: today },
-              status: { $in: ['Pending', 'In Progress'] },
-              // Exclude tasks that have been rejected (have a rejection reason)
-              // to prevent them from looping back to 'Pending Verification' immediately after rejection.
-              $or: [
-                  { rejectionReason: { $exists: false } },
-                  { rejectionReason: "" },
-                  { rejectionReason: null }
-              ]
-          }).select('_id');
-
-          let processedCount = 0;
-
-          for (const taskRef of pastDueTasks) {
-              // Atomically update the task status.
-              // This ensures that if multiple requests try to process the same task,
-              // only one will succeed in updating it and receiving the document back.
-              const task = await Task.findOneAndUpdate(
-                  { 
-                      _id: taskRef._id, 
-                      status: { $in: ['Pending', 'In Progress'] },
-                      $or: [
-                          { rejectionReason: { $exists: false } },
-                          { rejectionReason: "" },
-                          { rejectionReason: null }
-                      ]
-                  },
-                  { 
-                      $set: { 
-                          status: 'Pending Verification',
-                          submittedForCompletionDate: nowIST()
-                      } 
-                  },
-                  { new: true }
-              ).populate('assignedTo', 'name');
-
-              // If task is null, it means another request processed it first
-              if (!task) continue;
-
-              if (!task.assignedTo) {
-                  console.log(`Skipping past-due processing for task ${task._id}: no assignee.`);
-                  continue;
-              }
-
-              const employee = await Employee.findById(task.assignedTo._id);
-              if (!employee) {
-                  console.log(`Skipping notification for task ${task._id}: assigned employee not found.`);
-                  continue;
-              }
-
-              const message = `The due date for the task "${task.title}" assigned to ${employee.name} has passed. It has been automatically submitted for review. Final Progress: ${task.progress}%.`;
-
-              // Build a unique list of recipients who can approve the task
-              const recipientIds = new Set();
-              if (task.assignedBy) recipientIds.add(task.assignedBy.toString());
-
-              // Find assignee's team lead
-              const assignment = await Assignment.findOne({ employee: task.assignedTo._id });
-              if (assignment && assignment.teamLead) {
-                recipientIds.add(assignment.teamLead.toString());
-              }
-
-              // Add all admins
-              const admins = await Employee.find({ role: 'Admin' }).select('_id');
-              admins.forEach(admin => recipientIds.add(admin._id.toString()));
-
-              // Don't notify the person who was assigned the task
-              recipientIds.delete(task.assignedTo._id.toString());
-
-              const notifications = Array.from(recipientIds).map(id => ({
-                recipient: id,
-                subjectEmployee: employee._id,
-                message: message,
-                type: 'task_approval',
-                relatedTask: task._id,
-              }));
-
-              if (notifications.length > 0) {
-                  try {
-                      await Notification.insertMany(notifications, { ordered: false });
-                  } catch (e) {
-                      // Ignore duplicate key errors if the unique index is working
-                      if (e.code !== 11000) console.error("Error sending notifications:", e);
-                  }
-              }
-              processedCount++;
-          }
-          res.status(200).json({ message: `${processedCount} past-due tasks processed.` });
+          const processedCount = await processPastDueTasks();
+          res.status(200).json({ message: `${processedCount} due tasks processed.` });
       } catch (error) {
           console.error('Error processing past-due tasks:', error);
           res.status(500).json({ message: 'Server error while processing past-due tasks.' });
