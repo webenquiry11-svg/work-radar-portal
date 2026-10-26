@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 dotenv.config(); // This line is crucial and must be at the top
+require('./taskScheduler.js');
 const cors = require('cors');
 const connectDB = require('./db/connectDB.js');
 const webRoutes = require('./routes/web.js');
