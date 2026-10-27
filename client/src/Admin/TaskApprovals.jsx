@@ -16,6 +16,7 @@ import {
   DocumentTextIcon,
   ArrowUturnLeftIcon,
   LinkIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
@@ -368,6 +369,7 @@ const RejectModal = ({ isOpen, onClose, onConfirm, isRejecting }) => {
 const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, task, employeeId }) => {
   const [comment, setComment] = useState('');
   const [finalPercentage, setFinalPercentage] = useState(100);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
 
   const { data: reports = [], isLoading: isLoadingReports } = useGetReportsByEmployeeQuery(employeeId, {
     skip: !isOpen || !employeeId,
@@ -385,12 +387,21 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, task, employeeI
             const id = typeof u.taskId === 'object' ? u.taskId?._id : u.taskId;
             return String(id) === String(task._id);
           });
-          if (update && (update.note?.trim() || update.timeSpent !== undefined || update.link)) {
+          if (update && (
+            update.note?.trim()
+            || update.timeSpent !== undefined
+            || update.link
+            || update.screenshotUrls?.length
+            || update.screenshotUrl
+          )) {
             entries.push({
               date: report.reportDate,
               note: update.note?.trim() || '',
               timeSpent: update.timeSpent,
               link: update.link || '',
+              screenshots: update.screenshotUrls?.length
+                ? update.screenshotUrls
+                : update.screenshotUrl ? [update.screenshotUrl] : [],
             });
           }
         }
@@ -514,6 +525,31 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, task, employeeI
                         </a>
                       </div>
                     )}
+                    {entry.screenshots.length > 0 && (
+                      <div className="px-4 pb-3">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <PhotoIcon className="h-3.5 w-3.5" />
+                          Screenshots ({entry.screenshots.length})
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {entry.screenshots.map((url, screenshotIndex) => (
+                            <button
+                              key={`${url}-${screenshotIndex}`}
+                              type="button"
+                              onClick={() => setLightboxUrl(url)}
+                              aria-label={`View screenshot ${screenshotIndex + 1}`}
+                              className="h-16 w-16 rounded-lg overflow-hidden border border-purple-200 hover:ring-2 hover:ring-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                            >
+                              <img
+                                src={url}
+                                alt={`Task screenshot ${screenshotIndex + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -581,6 +617,40 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, isApproving, task, employeeI
           </button>
         </div>
       </div>
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center"
+            onClick={event => event.stopPropagation()}
+          >
+            <img
+              src={lightboxUrl}
+              alt="Task screenshot"
+              className="max-w-full max-h-[85vh] rounded-xl object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              aria-label="Close screenshot"
+              className="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow-lg"
+            >
+              <XMarkIcon className="h-5 w-5 text-slate-700" />
+            </button>
+            <a
+              href={lightboxUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={event => event.stopPropagation()}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-black/60 rounded-full px-4 py-1.5 hover:bg-black/80 transition"
+            >
+              Open full size
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

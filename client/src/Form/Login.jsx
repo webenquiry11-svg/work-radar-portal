@@ -8,7 +8,7 @@ import { useLoginMutation } from "../services/EmployeApi";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setCredentials } from "../app/authSlice";
-import portalLogo from "../assets/portal_logo.png";
+import portalLogo from "../assets/portal_logo.webp";
 
 const getGreeting = () => {
   const h = new Date().getHours();

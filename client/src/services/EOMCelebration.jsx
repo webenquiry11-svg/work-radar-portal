@@ -337,10 +337,10 @@ export default function EOMCelebration({ announcement, onDismiss }) {
 
         {/* Name badge */}
         <div style={{
-          animation:'eomBadge .6s .2s cubic-bezier(.34,1.56,.64,1) both',
+          animation:'eomBadge .6s .2s cubic-bezier(.34,1.56,.64,1) both, eomSh 3s ease-in-out infinite',
           padding:'2px', borderRadius:'50px',
           background:'linear-gradient(135deg,#7a4800,#F5C842,#D4A017,#F5C842,#7a4800)',
-          backgroundSize:'200% 100%', animation:'eomSh 3s ease-in-out infinite',
+          backgroundSize:'200% 100%',
           boxShadow:'0 0 28px rgba(212,160,23,.4)',
           margin:'0 24px',
         }}>

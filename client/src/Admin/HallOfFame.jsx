@@ -102,10 +102,10 @@ const WinnerSpotlight = ({ winner, month, year }) => {
 
         {/* Name badge */}
         <div style={{
-          animation:'hofBadge .6s .15s cubic-bezier(.34,1.56,.64,1) both',
+          animation:'hofBadge .6s .15s cubic-bezier(.34,1.56,.64,1) both, hofSh 3s ease-in-out infinite',
           padding:'2px',borderRadius:'50px',
           background:'linear-gradient(135deg,#7a4800,#F5C842,#D4A017,#F5C842,#7a4800)',
-          backgroundSize:'200% 100%',animation:'hofSh 3s ease-in-out infinite',
+          backgroundSize:'200% 100%',
           boxShadow:'0 0 28px rgba(212,160,23,.35)',margin:'0 24px',
         }}>
           <div style={{
