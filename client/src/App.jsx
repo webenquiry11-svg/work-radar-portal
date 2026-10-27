@@ -1,18 +1,19 @@
 import React from "react";
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import AdminDashboard from "./Admin/AdminDashboard";
 import { Toaster } from "react-hot-toast";
 import Login from "./Form/Login";
 import { selectCurrentUser } from "./app/authSlice";
-import EmployeeDashboard from "./Employee/EmployeDashboard";
 import ResetPassword from "./Form/ResetPassword.jsx";
 import ForgotPassword from "./Form/ForgotPassword.jsx";
-import ManagerDashboard from "./Senior/ManagerDashboard"; 
 import { useCheckAdminSetupQuery } from "./services/EmployeApi";
 import AdminSetup from "./Form/AdminSetup";
 import InactivityDetector from "./app/InactivityDetector";
-import portalLogo from "./assets/portal_logo.png";
+import portalLogo from "./assets/portal_logo.webp";
+
+const AdminDashboard = React.lazy(() => import("./Admin/AdminDashboard"));
+const EmployeeDashboard = React.lazy(() => import("./Employee/EmployeDashboard"));
+const ManagerDashboard = React.lazy(() => import("./Senior/ManagerDashboard"));
 
 const AppLoader = () => (
   <div style={{
@@ -115,27 +116,29 @@ function App() {
     <InactivityDetector>
       {/* CurrentUserProvider is now in main.jsx */}
       <Toaster position="top-right" />
-      <Routes>
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/login" element={!user ? <Login /> : <Navigate to={getDefaultRoute()} />} />
-        <Route
-          path="/employee-dashboard"
-          element={isEmployeeUser ? <EmployeeDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
-        />
-        <Route
-          path="/manager-dashboard"
-          element={isManagerUser ? <ManagerDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
-        />
-        <Route
-          path="/admin-dashboard"
-          element={isAdminUser ? <AdminDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
-        />
-        <Route 
-          path="/*" 
-          element={<Navigate to={getDefaultRoute()} />} 
-        />
-      </Routes>
+      <React.Suspense fallback={<AppLoader />}>
+        <Routes>
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to={getDefaultRoute()} />} />
+          <Route
+            path="/employee-dashboard"
+            element={isEmployeeUser ? <EmployeeDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
+          />
+          <Route
+            path="/manager-dashboard"
+            element={isManagerUser ? <ManagerDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
+          />
+          <Route
+            path="/admin-dashboard"
+            element={isAdminUser ? <AdminDashboard /> : <Navigate to={user ? getDefaultRoute() : '/login'} />}
+          />
+          <Route
+            path="/*"
+            element={<Navigate to={getDefaultRoute()} />}
+          />
+        </Routes>
+      </React.Suspense>
     </InactivityDetector>
   );
 }

@@ -3,33 +3,33 @@ import {
   HomeIcon, UsersIcon, ClipboardDocumentCheckIcon, UserGroupIcon, CalendarDaysIcon, ClipboardDocumentListIcon, EyeIcon, ListBulletIcon, CheckBadgeIcon, ChartBarIcon, TrophyIcon, TrashIcon, MegaphoneIcon, ChevronDoubleLeftIcon, ArrowLeftIcon, BuildingOffice2Icon, BuildingLibraryIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, BriefcaseIcon, CalendarIcon, DocumentTextIcon, Cog8ToothIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, ClockIcon, LinkIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import EmployeeManagement from './EmployeeManagement';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../app/authSlice';
-import AssignEmployee from './AssignEmployee';
 import { useGetEmployeesQuery, useGetReportsByEmployeeQuery, useDeleteReportMutation, useProcessPastDueTasksMutation } from '../services/EmployeApi';
-import Dashboard from './Dashboard.jsx';
-import HolidayManagement from './HolidayManagement';
-// logos imported previously but unused; removed to satisfy lint
-import ViewAllTasks from './ViewAllTasks';
-import TaskOverview from './TaskOverview';
-import TaskApprovals from './TaskApprovals';
-import AssignTask from './AssignTask';
-import SeniorAssignTask from '../Senior/AssignTask';
-import EmployeeOfTheMonth from './EmployeeOfTheMonth'; // New import
 import Sidebar from '../shared/Sidebar.jsx';
-import HallOfFame from './HallOfFame';
-import AdminProfile from './AdminProfile'; 
 import AppHeader from '../app/AppHeader.jsx';
-import AttendanceManagement from './AttendanceManagement.jsx';
-import ManageAnnouncements from './ManageAnnouncements';
-import AllEmployeeAttendance from './AllEmployeeAttendance';
-import GooglePieChart from './GooglePieChart.jsx';
-import { TaskDetailsModal } from './TaskOverview.jsx';
-import * as XLSX from 'xlsx'; 
-import { Analytics } from '../Employee/EmployeDashboard.jsx';
 // useLogoutMutation removed (unused)
 import { XMarkIcon } from '@heroicons/react/24/outline';
+
+const EmployeeManagement = React.lazy(() => import('./EmployeeManagement'));
+const AssignEmployee = React.lazy(() => import('./AssignEmployee'));
+const Dashboard = React.lazy(() => import('./Dashboard.jsx'));
+const HolidayManagement = React.lazy(() => import('./HolidayManagement'));
+const ViewAllTasks = React.lazy(() => import('./ViewAllTasks'));
+const TaskOverview = React.lazy(() => import('./TaskOverview'));
+const TaskApprovals = React.lazy(() => import('./TaskApprovals'));
+const AssignTask = React.lazy(() => import('./AssignTask'));
+const SeniorAssignTask = React.lazy(() => import('../Senior/AssignTask'));
+const EmployeeOfTheMonth = React.lazy(() => import('./EmployeeOfTheMonth'));
+const HallOfFame = React.lazy(() => import('./HallOfFame'));
+const AdminProfile = React.lazy(() => import('./AdminProfile'));
+const AttendanceManagement = React.lazy(() => import('./AttendanceManagement.jsx'));
+const ManageAnnouncements = React.lazy(() => import('./ManageAnnouncements'));
+const AllEmployeeAttendance = React.lazy(() => import('./AllEmployeeAttendance'));
+const TaskDetailsModal = React.lazy(() => import('./TaskOverview.jsx')
+  .then(module => ({ default: module.TaskDetailsModal })));
+const Analytics = React.lazy(() => import('../Employee/EmployeDashboard.jsx')
+  .then(module => ({ default: module.Analytics })));
 
 const DeleteReportModal = ({ isOpen, onClose, onConfirm, report, isDeleting }) => {
   if (!isOpen) return null;
@@ -107,104 +107,54 @@ export const TeamReports = ({ seniorId }) => {
     );
   }, [employees, searchTerm, seniorId]);
 
-  const handleDownloadSheet = () => {
+  const handleDownloadSheet = async () => {
     if (!selectedEmployee || !reports || reports.length === 0) {
       toast.error('No reports available to download for this employee.');
       return;
     }
 
-    const dataForSheet = [];
-    const headers = [
-      'Employee Name', 'Employee ID', 'Report Date', 'Report Status', 'Employee Notes', 'Task Title', 'Task Description', 'Completion %', 'Time Spent (hours)', 'Reference Link'
-    ];
-
-    dataForSheet.push(headers);
-
-    reports.forEach(report => {
-      let data = {};
-      try { data = JSON.parse(report.content); } catch { /* ignore */ }
-
-      const reportDate = new Date(report.reportDate).toLocaleDateString();
-      const baseRow = [
-        selectedEmployee.name, selectedEmployee.employeeId, reportDate, report.status, data.reportNote || 'N/A'
+    try {
+      const { downloadReportSpreadsheet } = await import('../utils/reportSpreadsheet.js');
+      const headers = [
+        'Employee Name', 'Employee ID', 'Report Date', 'Report Status', 'Employee Notes',
+        'Task Title', 'Task Description', 'Completion %', 'Time Spent (hours)', 'Reference Link',
       ];
+      const rows = [headers];
 
-      if (data.taskUpdates && data.taskUpdates.length > 0) {
-        data.taskUpdates.forEach(update => {
-          const taskRow = [
-            update.taskId?.title || 'N/A',
-            update.taskId?.description || 'N/A',
-            update.completion || '0',
-            update.timeSpent ?? 'N/A',
-            update.link || 'N/A',
-          ];
-          dataForSheet.push([...baseRow, ...taskRow]);
-        });
-      } else {
-        // If no task updates, add a row with just the report info
-        const emptyTaskRow = ['No task updates in this report', '', '', '', ''];
-        dataForSheet.push([...baseRow, ...emptyTaskRow]);
-      }
-    });
+      reports.forEach(report => {
+        let data = {};
+        try { data = JSON.parse(report.content); } catch { /* ignore */ }
 
-    // Create a new workbook and a worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
+        const reportDate = new Date(report.reportDate).toLocaleDateString();
+        const baseRow = [
+          selectedEmployee.name, selectedEmployee.employeeId, reportDate, report.status,
+          data.reportNote || 'N/A',
+        ];
 
-    // --- Professional Styling ---
-
-    // 1. Set column widths
-    const columnWidths = [
-      { wch: 22 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }, // Employee, ID, Date, Status, Notes
-      { wch: 40 }, { wch: 55 }, { wch: 15 }, { wch: 18 }, { wch: 50 }  // Task details, time spent, reference link
-    ];
-    ws['!cols'] = columnWidths;
-
-    // 2. Define styles
-    const border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFFFF" } },
-      fill: { fgColor: { rgb: "FF4F81BD" } }, // Dark Blue
-      alignment: { vertical: "center", horizontal: "center" },
-      border,
-    };
-    const cellStyle = (isAlt) => ({
-      fill: { fgColor: { rgb: isAlt ? "FFF2F2F2" : "FFFFFFFF" } }, // Zebra stripes
-      alignment: { vertical: "top", wrapText: true },
-      border,
-    });
-    const centeredCellStyle = (isAlt) => ({
-      ...cellStyle(isAlt),
-      alignment: { ...cellStyle(isAlt).alignment, horizontal: "center" },
-    });
-
-    // 3. Apply styles to all cells
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cell_address = { c: C, r: R };
-        const address = XLSX.utils.encode_cell(cell_address);
-        if (!ws[address]) continue;
-
-        if (R === 0) { // Header row
-          ws[address].s = headerStyle;
-        } else { // Data rows
-          const isAltRow = R % 2 === 0;
-          // Center align specific columns
-          if ([2, 3, 7, 8].includes(C)) { // Date, Status, Completion %, Time Spent
-            ws[address].s = centeredCellStyle(isAltRow);
-          } else {
-            ws[address].s = cellStyle(isAltRow);
-          }
+        if (data.taskUpdates && data.taskUpdates.length > 0) {
+          data.taskUpdates.forEach(update => {
+            rows.push([
+              ...baseRow,
+              update.taskId?.title || 'N/A',
+              update.taskId?.description || 'N/A',
+              update.completion || '0',
+              update.timeSpent ?? 'N/A',
+              update.link || 'N/A',
+            ]);
+          });
+        } else {
+          rows.push([...baseRow, 'No task updates in this report', '', '', '', '']);
         }
-      }
+      });
+
+      downloadReportSpreadsheet(
+        rows,
+        `Reports_${selectedEmployee.name.replace(/\s/g, '_')}.xlsx`
+      );
+    } catch (error) {
+      console.error('Failed to generate the report spreadsheet:', error);
+      toast.error('Failed to generate the report spreadsheet.');
     }
-
-    // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Reports');
-
-    // Generate and trigger the download of the .xlsx file
-    XLSX.writeFile(wb, `Reports_${selectedEmployee.name.replace(/\s/g, '_')}.xlsx`);
   };
 
   const renderScreenshots = (update) => {
@@ -760,7 +710,12 @@ export default function AdminPageLayout() {
       case 'task-approvals': return <TaskApprovals />;
       case 'employee-of-the-month': return <EmployeeOfTheMonth />; // New component
       case 'hall-of-fame': return <HallOfFame />;
-      case 'analytics': return <Analytics user={user} />;
+      case 'analytics':
+        return (
+          <React.Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading analytics...</div>}>
+            <Analytics user={user} />
+          </React.Suspense>
+        );
       case 'announcements': return <ManageAnnouncements />;
       case 'all-attendance': return <AllEmployeeAttendance />;
       case 'profile': return <AdminProfile user={user} onNavigate={handleNavigation} />;
@@ -782,7 +737,11 @@ export default function AdminPageLayout() {
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm">
         <AppHeader pageTitle={pageTitles[activeView.component]} setActiveComponent={handleNavigation} onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto">{renderActiveComponent()}</main>
+        <main className="flex-1 overflow-y-auto">
+          <React.Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading section...</div>}>
+            {renderActiveComponent()}
+          </React.Suspense>
+        </main>
       </div>
     </div>
   );

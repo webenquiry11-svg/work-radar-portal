@@ -3,7 +3,7 @@ import { useForgotPasswordMutation } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { ArrowPathIcon, EnvelopeIcon, ArrowLeftIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import portalLogo from "../assets/portal_logo.png";
+import portalLogo from "../assets/portal_logo.webp";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

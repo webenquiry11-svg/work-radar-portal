@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useResetPasswordMutation } from '../services/EmployeApi';
 import toast from 'react-hot-toast';
 import { ArrowPathIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import portalLogo from "../assets/portal_logo.png";
+import portalLogo from "../assets/portal_logo.webp";
 
 const ResetPassword = () => {
   const { token } = useParams();
